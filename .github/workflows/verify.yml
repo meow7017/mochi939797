@@ -1,0 +1,38 @@
+name: verify
+
+# 每次 push / PR 自动跑构建 + 三套验证（Chrome 布局 / WebKit 引擎 / 设备伪装回归）
+# 防止「改完就发、发完才发现坏」——失败会标红，构建者提交前就能看到。
+# 注意：本工作流只验证产物正确性，不构建、不部署（部署仍是构建者手动 node build.mjs）。
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 安装 WebKit 引擎（Playwright）
+        run: npx playwright install --with-deps webkit
+
+      - name: 构建
+        run: node build.mjs
+
+      - name: Chrome 布局验证
+        run: node tools/verify.mjs
+
+      - name: WebKit 引擎验证
+        run: node tools/verify-webkit.mjs
+
+      - name: 设备伪装场景回归
+        run: node tools/verify-device-regression.mjs

@@ -1,0 +1,953 @@
+/* ===== v3.6.x 深色模式覆盖 ===== */
+/* 仅 [data-theme="dark"] 生效；覆盖 home/setting/chat-main/chat-pages 中硬编码色 */
+/* 已用 var(--ink)/var(--muted)/var(--widget-bg) 等变量的元素由 base.css [data-theme=dark] 自动切换，此处不重复 */
+
+[data-theme="dark"] {
+  /* 通用色 */
+  --dark-card: #1e1e1e;
+  --dark-card-92: rgba(30,30,30,.92);
+  --dark-card-97: rgba(30,30,30,.97);
+  --dark-input: #2a2a2a;
+  --dark-border: rgba(255,255,255,.1);
+  --dark-border-12: rgba(255,255,255,.12);
+  --dark-soft: #aaa;
+  --dark-hover: rgba(255,255,255,.06);
+  /* v3.11.x 深色重设计：桌面小组件五件套默认值（home.css :root 里是纯白，
+     此前深色模式从未覆盖——桌面卡片/按钮白底黑字刺眼）。
+     用户在桌面美化里自定义过颜色时 JS 写的内联变量仍优先生效 */
+  --widget-bg:#1e1e1e; --widget-border:rgba(255,255,255,.12);
+  --widget-btn:#f0f0f0; --widget-btn-text:#111111; --widget-heart:#f0f0f0;
+  /* 新组件大量使用 var(--ink-soft,#999) 兜底；浅色无定义走灰色兜底即可，深色给亮灰 */
+  --ink-soft:#aaaaaa;
+  /* 原生控件（输入框/日期选择器/滚动条）跟随深色 */
+  color-scheme:dark;
+
+  /* ---- home.css ---- */
+  /* v3.7.x：背景遮罩深色覆盖——浅色模式是白色蒙层，深色模式改黑（此前 dark.css 无覆盖） */
+  .phone-bg-mask { background:rgba(0,0,0,var(--desk-bg-mask-op,0)); }
+  .deco-avatar .ring { background:#2a2a2a; border-color:var(--dark-border); }
+  .deco-avatar .lbl { color:#aaa; background:var(--dark-card); border-color:var(--dark-border-12); }
+  .deco-avatar .lbl:hover { background:var(--dark-hover); }
+  .deco-heart { color:#f0f0f0; }
+  .deco-love { border-top-color:var(--dark-border); }
+  .ck-txt { color:#aaa; }
+  .ck-btn.done { background:#333; color:#777; }
+  .we-ta { color:#aaa; }
+  .we-sep { color:#555; }
+  .app .app-ico { background:rgba(40,40,40,.92); border-color:var(--dark-border); }
+  .app-badge { background:var(--dark-card); color:#ccc; border-color:rgba(255,255,255,.2); }
+  .dot { background:rgba(255,255,255,.2); }
+  .dot.active { background:var(--ink); }
+  .desk-page-add { border-color:rgba(255,255,255,.2); background:rgba(30,30,30,.6); }
+  .desk-lib { background:rgba(0,0,0,.6); }
+  .desk-lib-box { background:var(--dark-card); }
+  .desk-lib-sub { color:#888; }
+  .desk-lib-item { border-color:#3a3a3a; }
+  .desk-lib-item .dl-where { color:#777; }
+  .desk-lib-item .dl-btn { background:#f0f0f0; color:#111; }
+  .desk-lib-item .dl-btn:disabled { background:#333; color:#777; }
+  .mw-bar { background:#3a3a3a; }
+  .mw-fill { background:linear-gradient(90deg,#aaa,#f0f0f0); }
+  .mw-knob { background:#f0f0f0; }
+  .mw-play { background:#2a2a2a; color:#f0f0f0; border-color:var(--dark-border); }
+  .mw-play svg { fill:#f0f0f0; }
+  #mw-cover { background:#2a2a2a; border-color:rgba(255,255,255,.08); }
+  #mw-cover .mw-cover-ico { color:#666; }
+  .week-day { background:var(--dark-hover); }
+  .week-day.today { background:var(--ink); color:#111; }
+  .week-day.today b { color:#111; }
+  .desk-msg { background:rgba(30,30,30,.96); border-color:var(--dark-border); }
+  .desk-msg-av { background:#2a2a2a; }
+  .desk-msg-av svg { stroke:#777; }
+
+  /* ---- setting.css ---- */
+  .set-row { border-bottom-color:rgba(255,255,255,.05); }
+  .set-row .arrow { color:#666; }
+  .set-row .arrow svg { stroke:#666; }
+  .set-row.sub .txt { color:#ccc; }
+  .ver { color:#666; }
+  .ver-credit { color:#777; }
+  .gs-row { border-bottom-color:rgba(255,255,255,.05); }
+  .stp-min, .stp-max { background:var(--dark-hover); color:#aaa; }
+  .stp-min:active, .stp-max:active { background:var(--ink); color:#111; }
+  .stp-val { border-bottom-color:rgba(255,255,255,.25); }
+  .tk { background:#444; }
+  .tk::before { background:#f0f0f0; }
+  .toggle input:checked + .tk { background:var(--ink); }
+  .bg-notify-test { border-color:rgba(255,255,255,.15); background:var(--dark-card); color:#ccc; }
+  .bg-notify-test:active { background:var(--dark-hover); }
+
+  /* ---- chat-main.css 全面覆盖 ---- */
+  .chat-head { background:var(--dark-card-92); border-bottom-color:var(--dark-border); }
+  /* v3.11.x：.page.full（进入聊天页挂 full 类）3 级特异性压过上面的 2 级覆盖，
+     全屏聊天模式顶栏回白底+白字看不见——同链覆盖 */
+  .page.full .chat-head { background:var(--dark-card-92); border-bottom-color:var(--dark-border); box-shadow:none; }
+  .msg-av { background:#2a2a2a; }
+  .msg-bubble { border-color:var(--dark-border); }
+  .msg-in .msg-bubble { background:var(--msg-in-bg, var(--dark-card)); }
+  .msg-out .msg-bubble { color:var(--msg-out-ink, #f0f0f0); }
+  .msg-time, .msg-date-sep { color:var(--muted); }
+  .msg-date-sep span { background:var(--dark-card-92); color:var(--muted); }
+  .chat-search-new { background:var(--dark-hover); }
+  .chat-search-new:active { background:rgba(255,255,255,.1); }
+  .chat-search-bar { background:var(--dark-input); border-color:var(--dark-border-12); }
+  .chat-search-input { background:var(--dark-input); border-color:var(--dark-border-12); color:var(--ink); }
+  .chat-search-input:focus { border-color:var(--ink); background:var(--dark-card); }
+  .chat-search-go { background:var(--btn-bg); color:var(--btn-ink); }
+  .chat-search-results .tc-listitem:active { background:var(--dark-hover); }
+  .chat-search-hl { background:#7a6a1f; color:#fff; }
+  .chat-search-empty { color:#666; }
+  .chat-ask-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .chat-ask-input:focus { border-color:var(--ink); }
+  .chat-ask-type-btn { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .chat-ask-type-btn.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+  .chat-ask-opts { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .chat-ask-opts:focus { border-color:var(--ink); }
+  .chat-input-row { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .chat-input { color:var(--ink); }
+  .chat-input:empty::before { color:var(--hint-ink); }
+  .chat-send { background:var(--send-bg, var(--btn-bg)); color:var(--send-ink, var(--btn-ink)); }
+  .chat-plus-btn { background:var(--dark-card-92); border-color:var(--dark-border); color:var(--ink); }
+  .more-panel { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .more-tab { background:var(--dark-card-92); color:var(--dark-soft); border-color:var(--dark-border); }
+  .more-tab.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+  .more-tab:active { background:var(--dark-hover); }
+
+  .poke-card { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .poke-card-head { border-bottom-color:var(--dark-border); }
+  .poke-card-close { background:var(--dark-hover); color:var(--ink); }
+  /* v3.11.x：主操作按钮统一跟 accent（原 dark-hover 底 + 后加的 #111 深字相撞成深底深字） */
+  .poke-big { background:var(--btn-bg); color:var(--btn-ink); }
+  .poke-big:active { background:rgba(255,255,255,.1); }
+  .poke-groups .emoji-g-chip { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .poke-groups .emoji-g-chip.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+  .poke-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .poke-input:focus { border-color:var(--ink); background:var(--dark-card); }
+  .poke-input-go { background:var(--btn-bg); color:var(--btn-ink); }
+  .poke-card-op { background:rgba(255,255,255,.12); color:var(--dark-soft); }
+  .poke-card-op:active { background:rgba(255,255,255,.2); }
+  .poke-op-del:active { background:rgba(224,85,85,.3); color:#ff8080; }
+
+  .emoji-card { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .emoji-g-chip { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .emoji-g-chip.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+  .emoji-tab { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .emoji-tab.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+  .emoji-tool { background:var(--dark-hover); color:var(--dark-soft); }
+  .emoji-tool:active { background:rgba(255,255,255,.1); }
+  .emoji-batch { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .emoji-batch-btn { border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .emoji-batch-btn:active { background:var(--dark-hover); }
+  .emoji-item { border-color:rgba(255,255,255,.06); }
+  .emoji-item:active { background:var(--dark-hover); }
+  .emoji-item.sel { background:rgba(255,255,255,.08); }
+  .emoji-empty { color:#666; }
+  .emoji-check { background:var(--btn-bg); color:var(--btn-ink); }
+
+  .msg-voice-play { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .msg-voice-play.playing { background:var(--ink); color:#111; border-color:var(--ink); }
+  .msg-reactions { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .msg-reaction { background:var(--dark-hover); border-color:var(--dark-border-12); }
+  .msg-edit-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .cc-tool-bar { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .cc-tool-btn { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .cc-quote-preview { background:var(--dark-card-92); border-color:var(--dark-border); }
+
+  /* 通话面板 */
+  .call-mask { background:rgba(0,0,0,.7); }
+  .call-panel { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .call-info { color:var(--ink); }
+  .call-name { color:var(--ink); }
+  /* v3.12.x：通话半框「联系人头像/通话背景图片」编辑行深色覆盖（chat-main.css 浅色为白底） */
+  .call-panel-row { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .call-panel-row-danger .cpr-txt { color:#ff7a7f; }
+
+  /* ---- chat-pages.css 全面覆盖 ---- */
+  .card-tabs { background:transparent; }
+  .card-tab, .cc-tab { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .card-tab.sel, .cc-tab.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+  .cc-tab-n { background:var(--dark-border-12); color:var(--dark-soft); }
+  /* v3.11.x：选中 tab 深色下是浅底(--btn-bg #f0f0f0)，徽标白字改深字（原 #fff 白字白底不可见） */
+  .cc-tab.sel .cc-tab-n { background:rgba(17,17,17,.12); color:var(--btn-ink); }
+  .card-search { background:var(--dark-input); border-color:var(--dark-border-12); }
+  .card-search-input { background:transparent; color:var(--ink); }
+  .card-search-input::placeholder { color:var(--muted); }
+  .cc-item { background:var(--dark-card); border-color:var(--dark-border); }
+  .cc-item:active { background:var(--dark-hover); }
+  .cc-item.sel { background:rgba(255,255,255,.06); }
+  .cc-ico { background:var(--dark-hover); }
+  .cc-tool { background:var(--dark-hover); color:var(--dark-soft); }
+  .cc-tool:active { background:var(--btn-bg); color:var(--btn-ink); }
+  .cc-tool-danger:active { background:#d64545; color:#fff; }
+  .cc-add { background:var(--dark-hover); border-color:var(--dark-border); color:var(--dark-soft); }
+  .cc-empty { color:#666; }
+  .cc-group-header { color:var(--dark-soft); }
+  .cc-g-chip { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .cc-g-chip.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+  .cc-check { background:var(--dark-card); border-color:#555; }
+  .cc-check.on { background:var(--btn-bg); border-color:var(--btn-bg); }
+  .cc-check.on::after { color:var(--btn-ink); }
+  .cc-managing .cc-item::before { background:var(--btn-bg); color:var(--btn-ink); }
+  .mg-handle { color:var(--dark-soft); }
+  .mg-rn { background:var(--dark-hover); color:var(--dark-soft); }
+  .mg-drag-clone, .cc-drag-clone { background:var(--dark-card); }
+
+  .fav-empty { color:#666; }
+  .fav-tab { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .fav-tab.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+
+  .mem-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .mem-tip { background:var(--dark-hover); }
+  .mem-extra { background:var(--dark-hover); }
+  .mem-extra .me-del { background:var(--dark-hover); color:var(--dark-soft); }
+  .mem-extra .me-del:active { background:rgba(224,85,85,.15); color:#e05555; }
+  .mem-add { background:var(--dark-hover); border-color:var(--dark-border); color:var(--dark-soft); }
+  .mem-add:active { background:rgba(255,255,255,.08); }
+  .mem-add-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .mem-add-input:focus { border-color:var(--ink); }
+  .mem-cal-btn { background:var(--dark-hover); color:var(--dark-soft); }
+  .mem-cal-btn:active { background:var(--ink); color:#111; }
+  .mem-cal-cell { background:var(--dark-hover); color:var(--dark-soft); }
+  .mem-cal-cell:hover { background:rgba(255,255,255,.08); }
+  .mem-cal-cell.sel { background:var(--ink); color:#111; }
+  .mem-type-pill { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .mem-type-pill.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+  .mem-add-cancel { border-color:var(--dark-border-12); background:var(--dark-card-92); color:#aaa; }
+  .mem-add-ok { background:var(--ink); color:#111; }
+
+  .cal-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .cal-cat-tag { background:var(--dark-hover); color:var(--dark-soft); }
+  .cal-activity { background:var(--dark-hover); }
+  .cal-message { background:var(--dark-hover); color:var(--dark-soft); }
+  .cal-month-btn { background:var(--dark-hover); color:var(--dark-soft); }
+  .cal-month-btn:active { background:var(--ink); color:#111; }
+  .cal-grid .cal-cell { background:var(--dark-hover); color:var(--dark-soft); }
+  .cal-grid .cal-cell.today { background:var(--ink); color:#111; }
+  .cal-grid .cal-cell.sel { background:var(--ink); color:#111; }
+  .cal-edit-btn { background:var(--dark-card-92); color:var(--ink); }
+  .cal-edit-btn:active { background:rgba(255,255,255,.08); }
+  .cal-nav { background:var(--dark-card-92); color:var(--ink); }
+
+  .div-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .div-card-meaning { background:var(--dark-hover); }
+  .div-mode { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .div-mode.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+  .div-btn { background:var(--btn-bg); color:var(--btn-ink); }
+  .div-result { background:var(--dark-card-92); border-color:var(--dark-border); }
+
+  .mail-item { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .mail-item:active { background:var(--dark-hover); }
+  .mail-item.unread { background:rgba(255,255,255,.06); }
+  .mail-compose { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .mail-compose .mail-paper { background:var(--dark-card); }
+  .mail-write-area, .mail-write-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  /* v3.11.x：文字跟 --btn-ink（原硬编码 #fff 在默认黑 accent 反转成浅底后白字白底不可见） */
+  .mail-tag.new { color:var(--btn-ink); background:var(--btn-bg); border-color:var(--btn-bg); }
+
+  .feed-post { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .feed-comment { background:var(--dark-hover); }
+  .feed-input, .feed-write-area { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .feed-cover-edit { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .feed-all-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+
+  .sm-item { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .sm-item:active { background:var(--dark-hover); }
+  .sm-song.active .sm-song-ico { background:var(--ink); color:#111; }
+  .music-batch { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .music-batch-btn { background:var(--dark-card); color:var(--ink); border-color:var(--dark-border-12); }
+  .music-batch-btn.music-batch-del { background:var(--ink); color:#111; border-color:var(--ink); }
+  .music-upload-area { background:var(--dark-card-92); border-color:var(--dark-border); }
+
+  .stats-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .stats-bar-track { background:var(--dark-hover); }
+  .stats-top-name { color:var(--ink); }
+
+  .tc-listitem { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .tc-listitem:active { background:var(--dark-hover); }
+  .tc-q { color:var(--ink); }
+  .tc-opt { background:var(--dark-hover); color:var(--dark-soft); }
+  .tc-opt:active { background:rgba(255,255,255,.08); }
+  .tc-hint { color:var(--muted); }
+  .tc-li-q { color:var(--ink); }
+  /* v3.26.x：通话中断记录暗色适配 */
+  .tc-call-interrupt { background:rgba(224,85,85,.14); border-left-color:#e05555; }
+
+  .qa-mask { background:rgba(0,0,0,.6); }
+  .qa-body { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .qa-q { color:var(--ink); }
+  .qa-opt { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .qa-opt:active { background:rgba(255,255,255,.1); }
+
+  .gs-title { color:var(--muted); }
+  .lic-card, .cal-card.lic-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .lic-h, .lic-title { color:var(--ink); }
+  .lic-p, .lic-li { color:var(--dark-soft); }
+
+  /* 互动/查岗/决策 */
+  .it-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .it-btn { background:var(--dark-card-92); color:var(--ink); }
+  .it-btn:active { background:rgba(255,255,255,.08); }
+  .ck-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .ck-refresh { background:var(--dark-card-92); color:var(--ink); }
+  .ck-refresh:active { background:rgba(255,255,255,.1); }
+  .dc-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .dc-tab { background:var(--dark-hover); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .dc-tab.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+
+  /* 头像库 */
+  .avlib-panel { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .avlib-tab { background:var(--dark-hover); color:var(--dark-soft); }
+  .avlib-tab.active { background:var(--ink); color:#111; }
+  .avlib-grid-item { background:var(--dark-hover); }
+
+  /* 装修模式 */
+  .decor-bar { background:rgba(17,17,17,.9); color:#fff; }
+  .decor-add { background:var(--dark-hover); color:#f0f0f0; }
+  .decor-add:active { background:rgba(255,255,255,.15); }
+  .decor-done { background:transparent; color:#fff; }
+
+  /* 通用输入框 */
+  .card-search-input, .chat-search-input, .mail-write-area, .mail-write-input,
+  .feed-input, .feed-write-area, .mem-add-input, .poke-input,
+  .chat-ask-input, .chat-ask-opts, .msg-edit-input {
+    background: var(--dark-card);
+    color: var(--ink);
+  }
+  .card-search-input:focus, .chat-search-input:focus, .poke-input:focus,
+  .mem-add-input:focus, .chat-ask-input:focus, .chat-ask-opts:focus {
+    background: var(--dark-card);
+  }
+
+  /* 通用面板/卡片背景 */
+  .cal-card, .div-card, .mail-card, .feed-card, .stats-card,
+  .mem-card, .sm-item, .mail-item, .feed-post, .tc-listitem, .cc-item,
+  .it-card, .ck-card, .dc-card, .avlib-panel {
+    background: var(--dark-card-92);
+  }
+
+  /* 通用 hover/active 态 */
+  .chat-search-new:active, .emoji-tool:active, .emoji-item:active,
+  .cc-item:active, .mail-item:active, .sm-item:active, .tc-listitem:active,
+  .mem-cal-cell:hover, .emoji-batch-btn:active, .cc-tool:active,
+  .cal-edit-btn:active, .it-btn:active, .ck-refresh:active {
+    background: var(--dark-hover);
+  }
+
+  /* v3.7.x：我的添加自定义分组区块深色适配 */
+  .mg-op { border-color: var(--dark-border-12); color: var(--muted); }
+  .mg-op:active { background: var(--dark-hover); color: var(--ink); }
+  .mg-subcat { border-top-color: var(--dark-border-12); }
+
+  /* ---- tabbar.css ---- */
+  /* v3.6.x：tabbar 硬编码白色背景在深色页面上形成突兀白条 + 间隙露出深色背景，
+     视觉上"底部导航栏多出一块灰色长方形遮挡上方文字"——补深色覆盖。
+     box-shadow 与浅色模式同步去掉（纯色背景上投影即"灰"，不必要） */
+  .tabbar { background:var(--dark-card-92); border-color:var(--dark-border-12); }
+  .tabbar .tab.active { background:var(--dark-hover); }
+
+  /* SVG stroke 兜底 */
+  .ch-back svg, .set-row .ico svg, .app .app-ico svg,
+  .chat-search svg, .msg-av svg, .mw-btn, .mw-heart,
+  .cal-month-btn svg, .mem-cal-btn svg, .more-tab svg {
+    stroke: var(--ink);
+  }
+
+  /* placeholder */
+  .card-search-input::placeholder,
+  .chat-search-input::placeholder,
+  .mail-write-area::placeholder, .mail-write-input::placeholder,
+  .feed-input::placeholder, .feed-write-area::placeholder,
+  .mem-add-input::placeholder, .poke-input::placeholder,
+  .chat-ask-input::placeholder, .chat-ask-opts::placeholder {
+    color: var(--muted);
+  }
+
+  /* ---- v3.6.x 补漏：浅色模式硬编码 #fff 但上方未覆盖的元素 ---- */
+  /* chat-main.css */
+  .msg-inplace .ip-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .msg-inplace .ip-opt-row { background:var(--dark-card); border-color:var(--dark-border-12); }
+  .msg-inplace .ip-opt-row.sel { border-color:var(--ink); background:rgba(255,255,255,.06); }
+  .msg-ask-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .msg-choose-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .call-minimize { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .call-mini { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .msg-poke-seg { background:var(--dark-card); border-color:var(--dark-border-12); }
+  .msg-rps-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .msg-rps-ico { background:rgba(255,255,255,.06); }
+  .msg-rps-ico svg { color:var(--dark-soft); }
+  .msg-rps-result { border-top-color:var(--dark-border-12); }
+  .rp-amt { background:var(--dark-card); border-color:var(--dark-border-12); }
+  .rp-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .rp-side { background:var(--dark-card); border-color:var(--dark-border-12); }
+  .rp-balance { border-bottom-color:var(--dark-border-12); }
+  .msg-rp-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .msg-rp-card.opened { border-color:var(--dark-border-12); }
+  .msg-rp-card.has-cover::before { background:rgba(30,30,30,.8); }
+  .msg-rp-foot { border-top-color:var(--dark-border-12); }
+  .rps-choice { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .rps-c-ico { background:rgba(255,255,255,.06); }
+  .rps-c-ico svg { color:var(--dark-soft); }
+
+  /* chat-pages.css */
+  .cc-manage-bar { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .cc-m-btn { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .cc-m-btn:active { background:var(--dark-hover); }
+  .card-list.cc-managing .cc-item::before { background:var(--dark-card); border-color:#555; }
+  .fav-item-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .fav-item-tag { background:var(--dark-hover); color:var(--dark-soft); }
+  .div-switch-knob::after { background:#f0f0f0; }
+  .div-drawn-card .ddc-face { background:var(--dark-card); border-color:var(--dark-border); }
+  .ta-add input, .ta-add .ce-box { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .ta-add .ta-opts { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .tc-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .tc-qrow { background:var(--dark-card); border-color:var(--dark-border-12); }
+  .qa-chip { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .qa-chip:active { background:var(--dark-hover); }
+  .qa-input { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .mail-paper { background:var(--dark-card); border-color:var(--dark-border); }
+  .sm-batch-chk { background:var(--dark-card); border-color:#555; }
+  .feed-comment-ico { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--dark-soft); }
+  .feed-comment-ico:active { background:var(--dark-hover); }
+  .feed-pick-img { background:var(--dark-card); border-color:var(--dark-border-12); color:var(--ink); }
+  .feed-pick-img:active { background:var(--dark-hover); }
+  .feed-comment-input { background:var(--dark-input); border-color:var(--dark-border-12); color:var(--ink); }
+  .feed-comment-input:focus { background:var(--dark-card); }
+
+  /* sfx.js 内置音效预设胶囊 */
+  .sfx-preset { background:var(--dark-hover); color:var(--dark-soft); border-color:var(--dark-border-12); }
+  .sfx-preset:active { background:var(--btn-bg); color:var(--btn-ink); }
+  .sfx-preset.on { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+}
+
+/* ======================================================================
+   v3.11.x 深色模式重设计补齐（用户反馈：深色下大量白底/纯黑字看不见）
+   背景：8/20 后新增的 chat-pages/chat-main/group-chat/garden/memo/market
+   组件从未做过深色适配，本段集中补齐。garden.css / memo.css 在构建顺序中
+   位于本文件之后，这两节使用镜像完整选择器链（[data-theme] 前缀 +1 层
+   特异性保证覆盖）；其余文件在本文件之前加载，同特异性后到者胜。
+   ====================================================================== */
+
+[data-theme="dark"] {
+  /* ---- home.css 补漏 ---- */
+  .desk-cal .dcal-cell.today { background:#f0f0f0; color:#111; }
+  .desk-cal .dcal-cell.today.has-msg::after { background:#111; }
+  .desk-cal .dcal-cell:not(.empty):active { background:rgba(255,255,255,.08); }
+  .desk-timer .dt-btn { border-color:rgba(255,255,255,.12); background:var(--static-bg); }
+  .desk-timer .dt-btn:active { background:rgba(255,255,255,.12); }
+  .week-day:not(.today):active { background:rgba(255,255,255,.10); }
+  .desk-image-widget { background:rgba(255,255,255,.06); }
+
+  /* ---- chat-main.css 补漏 ---- */
+  .ch-back, .ch-settings { background:rgba(40,40,40,.92); border-color:var(--dark-border); }
+  .ch-av { background:#2a2a2a; }
+  body.cs-time-under-bubble .msg-side .msg-time,
+  body.cs-time-bubble .msg-side .msg-time,
+  body.cs-time-center .msg-side .msg-time { background:rgba(255,255,255,.08); }
+  body.cs-time-float .msg-side .msg-time { background:rgba(255,255,255,.10); }
+  .msg-time-divider span { background:rgba(255,255,255,.08); }
+  .chat-draft-quote-img, .chat-draft-item { border-color:rgba(255,255,255,.1); }
+  .chat-search-date-input { border-color:var(--dark-border-12); background:var(--dark-input); color:var(--ink); }
+  .chat-search-date-input:focus { background:var(--dark-card); border-color:var(--ink); }
+  .chat-search-date-clear { border-color:var(--dark-border-12); background:var(--dark-input); color:#aaa; }
+  .chat-search-date-clear:active { background:var(--dark-hover); }
+  #chat-divine-body .div-mode { border-color:var(--dark-border-12); background:var(--dark-hover); color:var(--dark-soft); }
+  #chat-divine-body .div-mode.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+  #chat-divine-body .div-card-face { background:#262a30; border-color:rgba(255,255,255,.08); }
+  #chat-divine-body .div-result-empty { color:#666; }
+  .ch-input-btn { background:rgba(40,40,40,.92); border-color:var(--dark-border); color:var(--soft-ink); box-shadow:none; }
+  .ch-input-btn:active { background:rgba(255,255,255,.08); }
+  .msg-poke { background:var(--static-bg); border-color:rgba(255,255,255,.07); }
+  .more-item .mi-ico { background:var(--dark-card); border-color:var(--dark-border); box-shadow:none; }
+  .more-item .mi-ico svg { color:#ccc; }
+  .rp-cover-preview { background:#2a2a2a; border-color:var(--dark-border-12); }
+  .rp-cover-btn { border-color:var(--dark-border-12); background:var(--dark-card); }
+  .rp-cover-btn:active { background:var(--dark-hover); }
+  .rp-send { background:var(--btn-bg); color:var(--btn-ink); }
+  .rp-side.sel, .rp-amt.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+  .poke-tabs-row .poke-tab { border-color:var(--dark-border-12); background:var(--dark-hover); color:var(--dark-soft); }
+  .poke-tabs-row .poke-tab.poke-tab-pub.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+  .poke-add-btn { border-color:rgba(255,255,255,.3); background:var(--dark-hover); color:var(--dark-soft); }
+  .my-mg-panel .mg-row .mg-rn { border-color:var(--dark-border-12); background:var(--dark-card); color:var(--dark-soft); }
+  .emoji-grid, #emoji-list .emoji-grid { background:rgba(40,40,40,.92); border-color:rgba(255,255,255,.08); }
+  #emoji-list .cc-group-header { background:rgba(255,255,255,.06); }
+  .batch-tool { border-color:var(--dark-border-12); background:var(--dark-hover); }
+  .batch-tool:active { background:rgba(255,255,255,.1); }
+  .batch-empty { color:#666; }
+  .batch-item { background:var(--static-bg); border-color:var(--dark-border); }
+  .batch-item-media { border-color:var(--dark-border-12); }
+  .batch-item-type { color:#888; }
+  .batch-item-x { background:rgba(255,255,255,.1); color:#aaa; }
+  .batch-item-x:active { background:rgba(255,255,255,.2); }
+  .batch-clear { border-color:var(--dark-border-12); background:var(--dark-card); color:var(--dark-soft); }
+  .batch-clear:active { background:var(--dark-hover); }
+  .msg-actions { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .ma-btn { color:#ccc; }
+  .ma-btn:active { background:rgba(255,255,255,.08); }
+  .msg-quote { background:var(--static-bg); }
+  .msg-moods { border-top-color:rgba(255,255,255,.14); }
+  .msg-mood .msg-mood-tag { background:rgba(255,255,255,.1); }
+  .msg-fav-heart { background:rgba(255,255,255,.07); }
+  .msg-inplace .ip-opt, .msg-inplace .ip-chip { border-color:var(--dark-border-12); background:var(--dark-card); }
+  .msg-inplace .ip-opt:active, .msg-inplace .ip-chip:active { background:var(--dark-hover); }
+  /* var(--ink) 底+白字的按钮族：深色下底变浅、白字隐形，统一改深字
+     （.poke-big 已单独跟 accent 变量，不在此列） */
+  .msg-inplace .ip-send, .call-panel-dial { color:#111; }
+  .call-av, .call-mini-av { background:#2a2a2a; }
+  .msg-poke-seg-detail { background:var(--static-bg); }
+  /* 鲜花卡：浅粉渐变改暗玫瑰，文字提亮 */
+  .msg-flower-card { background:linear-gradient(160deg,#3a2530 0%,#2e1c26 55%,#241620 100%); border-color:rgba(233,30,99,.3); }
+  .msg-flower-name { color:#ff8ab3; }
+  .msg-flower-wish { color:#d98caf; }
+  .msg-flower-foot { color:rgba(255,150,190,.55); border-top-color:rgba(233,30,99,.25); }
+
+  /* ---- chat-pages.css 补齐：字卡库/收藏/纪念日/日历 ---- */
+  .cc-modal-topbar { background:var(--dark-card-97); border-bottom-color:rgba(255,255,255,.08); }
+  .cc-modal-top-ok { background:var(--btn-bg); color:var(--btn-ink); }
+  .ccg-name { color:#ddd; }
+  .ccg-count { background:var(--dark-hover); }
+  .cc-type, .cc-img { border-color:var(--dark-border); }
+  .card-list.cc-grid .cc-ico { background:var(--dark-hover) !important; }
+  .card-list.cc-grid2 .cc-ico { background:var(--dark-hover) !important; }
+  .card-list.cc-managing .cc-item.sel::before { color:var(--btn-ink); }
+  #poke-list .cc-item, #poke-list .cc-group-header { background:var(--dark-card); border-color:var(--dark-border); }
+  #poke-list .cc-group-header { background:var(--dark-hover); }
+  #poke-list .cc-item .ccg-name, #poke-list .ccg-name { color:#ddd; }
+  #poke-list .cc-item .ccg-count { background:var(--dark-hover); color:var(--dark-soft); }
+  .mem-date-btn { border-color:var(--dark-border-12); background:var(--static-bg); }
+  .fs-stat-head { border-top-color:rgba(255,255,255,.06); }
+  .fs-stat-label { color:#ccc; }
+  .cal-sec { border-top-color:rgba(255,255,255,.07); }
+  .cal-grid .cal-cell.today.cal-water::after,
+  .cal-grid .cal-cell.sel.cal-water::after { background:rgba(17,17,17,.85); box-shadow:0 0 0 1px rgba(255,255,255,.2); }
+
+  /* ---- chat-pages.css 补齐：经期页（整页白底大区） ---- */
+  .period-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .period-status-ico { background:#555; }
+  .period-phase-bar .seg { color:#999; background:var(--static-bg); }
+  .period-phase-bar .seg-0 { background:rgba(232,90,143,.18); color:#ff9ec4; }
+  .period-phase-bar .seg-1 { background:rgba(245,166,35,.16); color:#ffc76e; }
+  .pms-badge.pms-none { background:var(--dark-hover); color:#999; }
+  .pms-badge.pms-light { background:rgba(76,175,80,.15); color:#81c784; }
+  .pms-badge.pms-mid { background:rgba(245,166,35,.15); color:#ffb74d; }
+  .pms-badge.pms-heavy { background:rgba(232,90,143,.16); color:#f48fb1; }
+  .period-btn { border-color:var(--dark-border-12); background:var(--dark-card-92); }
+  .period-month-btn { border-color:var(--dark-border-12); background:var(--dark-card); color:var(--ink); }
+  .period-month-btn:active { background:var(--dark-hover); }
+  .period-legend .lg { color:#999; }
+  .period-legend .lg-predict::before { background:rgba(232,90,143,.12); }
+  .period-grid .pc-cell { color:#999; background:var(--dark-card); border-color:var(--dark-border); }
+  .period-grid .pc-cell.ph-predict { background:rgba(232,90,143,.14); color:#f48fb1; border-color:#b04a67; }
+  .period-grid .pc-cell.band.ph-predict { color:#ef7fa4; }
+  .period-hist-row { background:var(--dark-card-92); border-color:rgba(255,255,255,.09); }
+  .reg-badge.reg-good { background:rgba(58,155,90,.16); color:#7ed6a2; }
+  .reg-badge.reg-mid { background:rgba(245,166,35,.15); color:#ffb74d; }
+  .reg-badge.reg-bad { background:rgba(214,69,120,.16); color:#f48fb1; }
+  .period-report-btn { background:var(--dark-card-92); }
+  .ps-bar .ps-track { background:var(--dark-hover); }
+  /* 日详情浮层（底部白色大弹层） */
+  .period-day-pop .dp-sheet { background:#1e1e1e; }
+  .period-day-pop .dp-close { background:var(--dark-hover); }
+  .period-day-pop .dp-flow,
+  .period-day-pop .dp-sym,
+  .period-day-pop .dp-temp,
+  .period-day-pop .dp-hour,
+  .period-day-pop .dp-date-input { border-color:var(--dark-border); background:var(--dark-card); }
+  .period-day-pop .dp-flow.on { background:rgba(232,90,143,.18); border-color:#e85a8f; color:#f48fb1; }
+  .period-day-pop .dp-sym.on { background:rgba(245,166,35,.15); border-color:#f5a623; color:#ffc76e; }
+  .period-day-pop .dp-note { border-color:var(--dark-border); }
+  .period-day-pop .dp-mood { border-color:var(--dark-border); background:var(--dark-card); }
+  .period-day-pop .dp-mood.on { background:rgba(76,175,80,.15); border-color:#4caf50; color:#81c784; }
+  .period-day-pop .dp-toggle { border-color:var(--dark-border); background:var(--dark-card); }
+  .period-day-pop .dp-toggle.on { background:rgba(58,155,90,.16); border-color:#3a9b5a; color:#7ed6a2; }
+  .period-day-pop .dp-care-mgr { border-color:#b05677; background:var(--dark-card); color:#f48fb1; }
+  .period-day-pop .dp-add-row .dp-care-input { border-color:var(--dark-border); }
+  .period-day-pop .care-row { background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.07); }
+  .period-day-pop .care-txt.off { color:#666; }
+  .period-day-pop .care-toggle { border-color:var(--dark-border); background:var(--dark-card); }
+  .period-day-pop .care-toggle.on { background:rgba(58,155,90,.16); border-color:#3a9b5a; color:#7ed6a2; }
+  .period-day-pop .care-del { color:#888; }
+  .period-day-pop .care-del:active { background:rgba(255,255,255,.08); }
+  .period-day-pop .dp-del { border-color:#444; background:var(--dark-card); color:#999; }
+  .period-day-pop .st-btn { border-color:var(--dark-border-12); background:var(--dark-card); }
+  .period-day-pop .st-btn:active { background:var(--dark-hover); }
+
+  /* ---- chat-pages.css 补齐：TA的小问题/问答/记录/记账/决策/统计 ---- */
+  .tc-panel { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .tc-res-mine { background:var(--static-bg); }
+  .tc-res-line { border-top-color:rgba(255,255,255,.1); }
+  .tc-res-match { background:rgba(245,222,140,.1); color:#d9c37e; }
+  .tc-res-match.pref { background:rgba(110,190,130,.12); color:#8fd0a0; }
+  .tc-res-close { border-color:var(--dark-border-12); }
+  .tc-cat-t { color:#aaa; }
+  .tc-li-match { color:#d9c37e; }
+  .tc-known { color:#8fd0a0; border-color:#3d5c46; }
+  .qa-panel { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .qa-close { border-color:var(--dark-border-12); }
+  .qa-mine { background:var(--static-bg); }
+  .qa-send { color:#111; }
+  .acc-month-btn:active { background:var(--dark-hover); }
+  .dec-inp-clear { background:var(--dark-hover); color:#aaa; }
+  .dec-inp-clear:active { background:rgba(255,255,255,.15); }
+  .dc-result { background:var(--static-bg); }
+  .dc-credit { border-top-color:rgba(255,255,255,.12); }
+  .decide-opt { border-color:var(--dark-border-12); background:var(--dark-card-92); }
+  .decide-opt .do-x { background:var(--dark-hover); color:#999; }
+  .decide-add { border-color:rgba(255,255,255,.28); }
+  .stats-row { border-bottom-color:rgba(255,255,255,.06); }
+  .stats-sec-title { color:#bbb; }
+  .stats-sec-count { background:var(--dark-hover); }
+  .stats-top { background:var(--dark-hover); }
+  .stats-top-tag { border-color:var(--dark-border-12); }
+  .stats-item-name { color:#bbb; }
+  .rec-av-img { border-color:rgba(255,255,255,.09); }
+  .it-ico { background:var(--dark-hover); }
+  .lic-code { color:#aaa; background:var(--static-bg); }
+
+  /* ---- chat-pages.css 补齐：占卜/查岗位置面板/管理分组/装修 ---- */
+  .div-hero, .div-summary { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .div-hero-ico, .div-draw, .div-send-btn { color:#111; }
+  .div-input { border-color:var(--dark-border-12); background:var(--dark-card); color:var(--ink); }
+  .div-card-face { background:#262a30; border-color:rgba(255,255,255,.08); }
+  .div-card-ico { background:var(--dark-hover); }
+  .div-mini-tag { background:var(--dark-hover); }
+  .div-copy-btn { background:var(--dark-hover); }
+  .div-h-item { border-color:rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+  .div-h-view, .div-chat-hist-view { background:var(--dark-hover); }
+  .div-chat-hist { border-top-color:rgba(255,255,255,.14); }
+  .div-chat-hist-item { border-color:rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+  .div-drawn-card .ddc-face::before {
+    border-color:rgba(255,255,255,.12);
+    background:
+      radial-gradient(circle at 5px 5px, rgba(255,255,255,.16) 1.1px, transparent 1.6px),
+      radial-gradient(circle at calc(100% - 5px) 5px, rgba(255,255,255,.16) 1.1px, transparent 1.6px),
+      radial-gradient(circle at 5px calc(100% - 5px), rgba(255,255,255,.16) 1.1px, transparent 1.6px),
+      radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), rgba(255,255,255,.16) 1.1px, transparent 1.6px);
+  }
+  .ck-location { border-bottom-color:rgba(255,255,255,.06); }
+  .ck-loc-entry { border-color:rgba(255,255,255,.22); background:var(--static-bg); }
+  .ck-loc-entry:active { background:var(--dark-hover); }
+  .loc-panel { background:var(--dark-card-97); }
+  .loc-head, .loc-section { border-bottom-color:rgba(255,255,255,.07); }
+  .loc-send-area { border-top-color:rgba(255,255,255,.07); }
+  .loc-ask-btn { color:#111; }
+  .loc-card { border-color:var(--dark-border); background:var(--dark-card-92); }
+  .loc-card:active { background:var(--dark-hover); }
+  .loc-card-egg { border-color:rgba(255,180,80,.4); background:rgba(255,180,80,.12); color:#ffc97e; }
+  .loc-card-egg:active { background:rgba(255,180,80,.2); }
+  .loc-day-btn { border-color:var(--dark-border-12); background:var(--dark-card-92); }
+  .loc-day-btn:active { background:var(--dark-hover); }
+  .loc-switch-tk { background:rgba(255,255,255,.2); }
+  .loc-combo-pending { background:rgba(255,180,80,.1); border-color:rgba(255,180,80,.35); }
+  .loc-combo-pending b { color:#ffc97e; }
+  .loc-sense-box { background:linear-gradient(135deg, rgba(255,180,80,.14), rgba(255,160,60,.08)); }
+  .loc-sense-title { color:#ffc97e; }
+  .loc-add-custom { border-color:rgba(255,255,255,.25); }
+  .loc-add-custom:active { background:var(--dark-hover); }
+  .loc-tl-tag { background:var(--dark-hover); }
+  .loc-tl-auto { color:#ffc97e; background:rgba(255,180,80,.14); }
+  .fw-sense { border-bottom-color:rgba(255,255,255,.07); background:linear-gradient(160deg, rgba(255,180,80,.08), rgba(255,160,60,.04)); }
+  .fw-circle { border-color:rgba(255,255,255,.2); background:radial-gradient(circle, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 60%, rgba(255,255,255,0) 75%); }
+  .fw-dir { border-color:rgba(255,255,255,.16); background:rgba(255,255,255,.1); color:rgba(255,255,255,.6); }
+  .fw-dir.on { background:#b7791f; border-color:#b7791f; color:#fff; }
+  .fw-me { background:var(--ink); color:var(--card-bg, #fff); }
+  .fw-cur-dir { color:#ffc97e; }
+  .fw-row { background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.08); }
+  .fw-row-val { color:var(--ink); }
+  .fw-perceive { color:#111; }
+  .fw-result { background:rgba(255,180,80,.1); border-color:rgba(255,180,80,.35); }
+  .fw-p-line { color:rgba(255,255,255,.75); }
+  .fw-result .fw-p-line:first-child { color:#ffc97e; }
+  /* v3.26.x：全屏位置页（聊天寻踪半框 / 桌面寻踪页两入口统一全屏）暗色适配 */
+  .loc-panel.loc-full { background:var(--dark-card-97); }
+  .loc-head { background:rgba(30,30,30,.96); }
+  .loc-back { border-color:rgba(255,255,255,.14); background:rgba(255,255,255,.06); }
+  .loc-back svg { stroke:#f0f0f0; }
+  .loc-back:active { background:rgba(255,255,255,.12); }
+  .loc-section { background:var(--dark-card-92); border-color:rgba(255,255,255,.07); }
+  .loc-tl-item { border-bottom-color:rgba(255,255,255,.07); }
+  .loc-tl-tag { background:var(--dark-hover); }
+  .loc-send-area { border-top-color:rgba(255,255,255,.07); }
+  .fw-sense { background:linear-gradient(160deg, rgba(255,180,80,.08), rgba(255,160,60,.04)), rgba(30,30,30,.5); }
+  .fw-row { background:var(--dark-card-92); border-color:rgba(255,255,255,.08); }
+  .mg-panel { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .mg-close { background:var(--dark-hover); color:#aaa; }
+  .mg-close:active { background:rgba(255,255,255,.12); }
+  .mg-empty { color:#666; }
+  .mg-row { background:var(--dark-card-92); border-color:var(--dark-border); }
+  .mg-tag { border-color:var(--dark-border-12); }
+  .mg-del { background:var(--dark-hover); color:#999; }
+  .mg-add { border-color:var(--dark-border); }
+  .mg-add:active { background:var(--dark-hover); }
+  .decor-done { background:rgba(255,255,255,.15); color:#fff; }
+  .avlib-cell { background:var(--dark-hover); border-color:var(--dark-border); }
+  .ff-sec, .ff-row { background:var(--dark-card-92); border-color:rgba(255,255,255,.08); }
+  .ff-desktop-av { background:#2a2a2a; }
+  .ff-pill { border-color:var(--dark-border-12); background:var(--dark-card); }
+  .ff-pill:active { background:var(--dark-hover); }
+  .ff-pill .ff-cur { color:#999; }
+  .fish-total .ft-item { background:var(--dark-card-92); border-color:var(--dark-border); }
+
+  /* ---- chat-pages.css 补齐：问答历史行/字卡编辑 ---- */
+  .ta-row { border-bottom-color:rgba(255,255,255,.08); }
+  .ta-del { background:var(--dark-hover); color:#999; }
+  .ta-mv { background:var(--dark-hover); color:#999; }
+  .ta-mv:active { background:rgba(255,255,255,.12); }
+  .ta-add-btn { color:#111; }
+  .ta-h { border-bottom-color:rgba(255,255,255,.08); }
+
+  /* ---- chat-pages.css 补齐：信箱 ---- */
+  .mail-item-av { background:#2a2a2a; }
+  .mail-paper-head { border-bottom-color:rgba(255,255,255,.09); }
+  .mail-paper-body { color:#ccc; }
+  .mail-tb { background:var(--dark-card-92); border-color:var(--dark-border); color:var(--soft-ink); }
+
+  /* ---- chat-pages.css 补齐：朋友圈/通知面板 ---- */
+  .feed-av { background:#2a2a2a; }
+  .feed-actions { border-top-color:rgba(255,255,255,.06); }
+  .feed-likes { background:rgba(255,255,255,.04); }
+  .feed-comments { background:rgba(255,255,255,.04); border-top-color:rgba(255,255,255,.06); }
+  .feed-comment { color:#bbb; }
+  .feed-reply { color:#aaa; }
+  .feed-head-btn { color:var(--ink); }
+  .feed-head-btn.feed-head-clear { color:#e05b5b; }
+  .feed-comment-bar { background:var(--dark-card-97); border-top-color:var(--dark-border); }
+  .feed-comment-send { color:#111; }
+  .feed-notice-panel { background:var(--dark-card-97); border-color:var(--dark-border); }
+  .fn-av { background:#2a2a2a; }
+  .feed-notice-item { color:#ccc; }
+  .feed-notice-item:active { background:var(--dark-hover); }
+  .feed-notice-item .fn-thumb { background:#2a2a2a; }
+  .feed-imgs img { background:#2a2a2a; }
+
+  /* ---- chat-pages.css 补齐：音乐页/悬浮播放器 ---- */
+  .ch-more { color:var(--ink); }
+  .sm-float-row { color:var(--soft-ink); border-bottom-color:rgba(255,255,255,.07); }
+  .sm-tool { border-color:var(--dark-border-12); background:var(--dark-card-92); color:var(--ink); }
+  .sm-tool:active { background:var(--dark-hover); }
+  .mlf-chip { border-color:var(--dark-border-12); background:var(--dark-hover); color:var(--dark-soft); }
+  .mlf-chip.sel { background:var(--ink); color:#111; border-color:var(--ink); }
+  .sm-song-ico { background:var(--static-bg); color:#aaa; }
+  .sm-src { border-color:var(--dark-border-12); }
+  .sm-cov-prev { background:var(--static-bg); border-color:rgba(255,255,255,.09); }
+  .music-batch-bar { background:var(--dark-card-97); border-top-color:var(--dark-border); }
+  .sm-pl-ico, .sm-his-ico { background:var(--static-bg); color:#aaa; }
+  .sm-his-subtabs { border-bottom-color:rgba(255,255,255,.07); }
+  .sm-his-subtab.sel { background:var(--btn-bg); color:var(--btn-ink); border-color:var(--btn-bg); }
+  .sm-pb-play { color:#111; }
+  .cc-play { color:#111; }
+  .sm-player-bar { background:var(--dark-card-97); border-top-color:rgba(255,255,255,.09); }
+  .sm-pb-btn { background:var(--dark-hover); color:#ddd; }
+  .sm-float { background:var(--dark-card-97); border-color:rgba(255,255,255,.09); }
+  .sm-f-name, .sm-f-btn { color:#ddd; }
+  .sm-f-artist { color:#9a9a9a; }
+  .sm-f-times { color:#9a9a9a; }
+  .sm-f-progress { background:rgba(255,255,255,.12); }
+  .sm-f-fill { background:#f0f0f0; }
+  .sm-f-play { color:#f0f0f0; }
+  .sm-f-heart.liked svg { fill:#ff8ab3; stroke:#ff8ab3; }
+  .sm-f-collapse { color:#9a9a9a; }
+  .sm-f-collapse:hover { background:var(--dark-hover); color:#ddd; }
+  .sm-f-mini-play { color:#f0f0f0; }
+  .sm-f-mini-name { color:#ddd; }
+  .sm-f-mini-expand { color:#9a9a9a; }
+  .sm-f-mini-expand:hover { background:var(--dark-hover); color:#ddd; }
+  .sm-req-ico { background:var(--static-bg); color:#ccc; }
+
+  /* ---- chat-pages.css 补齐：小游戏/桌面浮字/喝水/吃饭/番茄钟/存钱罐 ---- */
+  .pong-diff, .snake-diff { border-color:var(--dark-border-12); background:var(--static-bg); }
+  .pong-sound, .pong-icon-btn, .snake-icon-btn { background:var(--dark-hover); }
+  .snake-toggle.on, .snake-btn { color:#111; }
+  #chat-snake-panel.snake-fs { background:#15151a; }
+  #chat-snake-panel.snake-fs .poke-card-head { border-bottom-color:rgba(255,255,255,.1); }
+  .snake-dp { border-color:var(--dark-border-12); background:var(--dark-card-92); }
+  .snake-dp:active { background:var(--dark-hover); }
+  .msg-snake-title { border-bottom-color:rgba(255,255,255,.12); }
+  .tp-refresh { border-color:var(--dark-border-12); }
+  .tp-dot { background:rgba(255,255,255,.14); }
+  .tp-knock-area { background:var(--static-bg); color:#bbb; }
+  .water-bar, .piggy-bar, .pg-bar { background:rgba(255,255,255,.1); }
+  .water-minus { background:var(--dark-hover); color:#ccc; }
+  .water-week { background:rgba(30,30,30,.6); }
+  .water-col i { background:rgba(255,255,255,.1); }
+  .water-col em { color:#aaa; }
+  .water-col.today em { color:#ddd; }
+  .water-msg { color:#ccc; }
+  .eat-change { background:var(--dark-hover); color:#ccc; }
+  .eat-send { background:var(--btn-bg); color:var(--btn-ink); }
+  .pmp-menu button { border-color:var(--dark-border); background:var(--dark-card-97); color:var(--ink); }
+  .pomo-ring-bg { stroke:rgba(255,255,255,.1); }
+  .pomo-reset { background:var(--dark-hover); color:#ccc; }
+  .piggy-out { background:var(--dark-hover); color:#ccc; }
+  .pg-chip { background:var(--dark-hover); color:#bbb; }
+  .piggy-reply-in { border-color:var(--dark-border-12); color:var(--ink); }
+  .piggy-reply-send { background:var(--btn-bg); color:var(--btn-ink); }
+  .piggy-reply-skip { background:var(--dark-hover); color:#aaa; }
+  .ta-chime-note { background:rgba(35,32,34,.96); border-color:rgba(232,83,61,.35); }
+}
+
+/* ===== group-chat.css 全套（8/21 新增，此前零覆盖） ===== */
+[data-theme="dark"] {
+  .gc-from-name { color:#999; }
+  .gc-input:empty:before { color:#777; }
+  .gc-more-menu { background:var(--dark-card-97); border-color:var(--dark-border); box-shadow:0 6px 24px rgba(0,0,0,.5); }
+  .gc-more-item { color:#ddd; }
+  .gc-more-item:active { background:var(--dark-hover); }
+  .gc-more-item svg { color:#aaa; }
+  .gc-settings-panel { background:var(--dark-card-97); box-shadow:0 -4px 20px rgba(0,0,0,.5); }
+  .gc-set-head { border-bottom-color:rgba(255,255,255,.07); }
+  .gc-set-title { color:#999; }
+  .gc-set-av { background:#2a2a2a; }
+  .gc-set-name { color:#eee; }
+  .gc-set-tag { color:#999; background:var(--dark-hover); }
+  .gc-set-desk { color:#888; }
+  .gc-set-btn { border-color:var(--dark-border); background:var(--dark-card); color:#ccc; }
+  .gc-set-btn:active { background:var(--dark-hover); }
+  .gc-set-btn.ghost { color:#e08a7a; border-color:rgba(224,138,122,.35); background:rgba(224,138,122,.08); }
+  .gc-set-note { color:#888; }
+  .gc-set-back { color:#aaa; }
+  .gc-set-back:active { color:#fff; }
+  .gc-set-link:active { background:var(--dark-hover); }
+  .gc-set-chev { color:#666; }
+  .gc-set-row:active { background:var(--dark-hover); }
+  .gc-set-row .txt { color:#ddd; }
+  .gc-set-row .val { color:#888; }
+  .gc-set-row .chev { color:#555; }
+  .gc-set-warn { color:#e08a7a; background:rgba(224,138,122,.08); border-color:rgba(224,138,122,.35); }
+  #page-group-chat.cs-time-under-bubble .msg-side .msg-time,
+  #page-group-chat.cs-time-bubble .msg-side .msg-time,
+  #page-group-chat.cs-time-center .msg-side .msg-time { background:rgba(255,255,255,.08); }
+  #page-group-chat.cs-time-float .msg-side .msg-time { background:rgba(255,255,255,.10); }
+  .gc-members-panel { background:var(--dark-card-97); box-shadow:0 8px 32px rgba(0,0,0,.55); }
+  .gc-mp-head { border-bottom-color:rgba(255,255,255,.07); }
+  .gc-mp-close { color:#888; }
+  .gc-mp-av { background:#2a2a2a; }
+  .gc-mp-sub { color:#888; }
+  .gc-mp-tag { color:#999; background:var(--dark-hover); }
+  .gc-at-panel { background:var(--dark-card-97); box-shadow:0 -4px 20px rgba(0,0,0,.5); }
+  .gc-at-head { border-bottom-color:rgba(255,255,255,.07); color:#999; }
+  .gc-at-item:active { background:var(--dark-hover); }
+  .gc-at-av { background:#2a2a2a; }
+}
+
+/* ===== garden.css 全套（构建顺序在本文件之后，镜像完整选择器链保证覆盖） ===== */
+[data-theme="dark"] {
+  .garden-plot { background:rgba(36,40,36,.94); border-color:rgba(255,255,255,.1); }
+  .garden-plot:active { border-color:rgba(255,255,255,.3); }
+  .garden-plot.empty { border-color:rgba(255,255,255,.16); background:rgba(255,255,255,.03); }
+  .garden-plot.wilted { border-color:rgba(160,110,60,.55); background:rgba(120,80,50,.14); }
+  .garden-plot.selected { border-color:#f0f0f0; }
+  .garden-water-bar, .garden-grow-bar, .garden-lv-track { background:rgba(255,255,255,.1); }
+  .garden-tool { border-color:var(--dark-border); background:rgba(40,40,40,.92); }
+  .garden-tool:active { background:#f0f0f0; color:#111; }
+  .garden-tool:active svg { stroke:#111; }
+  .garden-seed { border-color:rgba(255,255,255,.1); }
+  .garden-seed:active { background:rgba(255,255,255,.06); border-color:#f0f0f0; }
+  .garden-dex-item, .garden-inv-item, .garden-decor-item, .garden-recipe,
+  .garden-achv-item { background:rgba(255,255,255,.05); }
+  .garden-daily-task { background:rgba(255,255,255,.07); }
+  .garden-daily-task.done { color:#7ed6a2; }
+  .garden-achv { background:rgba(255,255,255,.05); }
+  .garden-craft { background:rgba(255,255,255,.05); }
+  .garden-tab { background:var(--dark-hover); }
+  .report-row { background:rgba(255,255,255,.08); }
+  .garden-dex-search { border-color:var(--dark-border-12); background:rgba(40,40,40,.8); }
+  .garden-dex-season { background:var(--dark-hover); }
+  .garden-qual-tag, .garden-pot-mark { color:#ffcc66; }
+}
+
+/* ===== memo.css 全套（构建顺序在本文件之后，镜像完整选择器链保证覆盖） ===== */
+[data-theme="dark"] {
+  .memo-inp { background:rgba(40,40,40,.75); box-shadow:inset 0 0 0 1px rgba(255,255,255,.12); color:var(--ink); }
+  .memo-inp:focus { box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3); }
+  .memo-add { background:var(--btn-bg); color:var(--btn-ink); }
+  .memo-cleardone { border-color:rgba(255,255,255,.18); }
+  .mm-check { border-color:rgba(255,255,255,.45); }
+  .memo-item.done .mm-check { background:#f0f0f0; border-color:#f0f0f0; }
+  .memo-item.done .mm-check svg { stroke:#111; }
+  .memo-item.urgent .mm-text { color:#e07a6a; }
+  .memo-item.urgent.done .mm-text { color:var(--muted); }
+  .mm-act:active { background:rgba(255,255,255,.08); }
+  .memo-send-btn { color:var(--ink-soft,#aaa); background:rgba(40,40,40,.7); border-color:rgba(255,255,255,.18); }
+  .memo-send-btn:active { background:rgba(255,255,255,.08); }
+}
+
+/* ===== 日历页·摸鱼/工作「当日统计」条状图 深色适配 ===== */
+[data-theme="dark"] .fh-track { background:rgba(255,255,255,.1); }
+[data-theme="dark"] .fh-fill { background:var(--ink,#e6e6e6); }
+[data-theme="dark"] .fh-bar-row.work .fh-fill { background:rgba(255,255,255,.4); }
+
+/* ======================================================================
+   深色模式补漏（AI-A 会话代改，请知悉）：聊天内置卡片 + 此间（cjian）页面
+   ——此前深色下白底白字/黑字黑卡看不见，以下覆盖补齐。
+   ====================================================================== */
+
+/* 聊天里居中的轻型内容卡（通话/心意币回执/感知等见 .msg-center）：
+   浅色是白底 + var(--ink)（深色下 --ink 变白）→ 白字白底。背景改深即可，文字是变量 */
+[data-theme="dark"] .msg-center-card { background:var(--dark-card); border-color:var(--dark-border); }
+/* 游戏结算卡（记忆翻牌/双人 Pong/打砖块）：同白底白字问题 */
+[data-theme="dark"] .msg-pong-card { background:var(--dark-card-92); border-color:var(--dark-border); }
+
+/* ---- 此间（梦角世界时间与在场感知）页面全面深色覆盖 ----
+   该页背景随 var(--card-bg) 变深，但内文多是硬编码 rgba(0,0,0,.x) 黑字
+   读不清楚，本地浅底块也照抄为深色。var(--ink)/var(--muted) 的无需重复。 */
+[data-theme="dark"] {
+  .cj-hero { background:linear-gradient(150deg,#252530 0%,#1e1e26 60%,#1a1a22 100%); border-color:var(--dark-border); }
+  .cj-hero-sub { color:#b9b6b0; }
+  .cj-hero-range { color:#9a978f; }
+
+  .cj-card-range { color:#9a978f; }
+  .cj-tag-a { background:var(--dark-hover); color:#bfbfbf; border-color:var(--dark-border-12); }
+  .cj-card-note { color:#9a978f; }
+
+  .cj-empty { background:var(--dark-card); border-color:rgba(255,255,255,.16); color:#9a978f; }
+  .cj-empty-sub { color:#7d7d7d; }
+
+  .cj-perceive-result { background:var(--dark-hover); color:#c9c6c0; }
+  .cj-perceive-result .cj-p-note { color:#ffc97e; }
+
+  .cj-today-note { color:#9a978f; }
+  .cj-today-row { border-bottom-color:rgba(255,255,255,.07); }
+  .cj-today-range { color:#9a978f; }
+  .cj-today-chars { color:#c9c6c0; }
+  .cj-today-mute { color:rgba(255,255,255,.35); }
+  .cj-card-hint { color:#8a8a8a; }
+  .cj-ta-time-hint { color:#8a8a8a; }
+  .cj-ta-time-item + .cj-ta-time-item { border-top-color:rgba(255,255,255,.07); }
+  .cj-ta-time-sh { color:#7d7d7d; }
+  .cj-ta-time-slot { color:#8a8a8a; }
+  .cj-ta-time-shi { color:#9a978f; }
+  .cj-detail-back { background:var(--dark-card); border-color:var(--dark-border-12); color:#eaeaea; }
+  .cj-d-range { color:#9a978f; }
+  .cj-d-real { color:#8a8a8a; }
+  .cj-d-note { color:#9a978f; }
+  .cj-d-row { border-bottom-color:rgba(255,255,255,.07); }
+  .cj-d-row-p { color:#c9c6c0; }
+  .cj-d-foot { color:#8a8a8a; }
+
+  .cj-groups.stuck { background:#22222a; border-bottom-color:rgba(255,255,255,.08); box-shadow:0 4px 14px rgba(0,0,0,.4); }
+  .cj-gchip { background:var(--dark-hover); border-color:var(--dark-border-12); color:#aaa; }
+  .cj-gchip.on { color:#111; }
+  .cj-group-empty { color:#8a8a8a; }
+  .cj-all-tip { color:#9a978f; }
+  .cj-d-src { color:#9a978f; }
+  .cj-d-nav-btn { background:var(--dark-card); border-color:var(--dark-border-12); color:#eaeaea; }
+  .cj-d-nav-pos { color:#8a8a8a; }
+}
+
+/* ======================================================================
+   深色模式补漏（AI-A）：全部是「background:var(--ink) + color:#fff」型
+   元素，深色下 --ink 变白 → 白底白字看不见。统一改深色下为白底深字
+   （与 garden-tool/cj-gchip.on 的反色约定一致）。
+   涉及：梦角档案(memo-arc)、批量发送序号、字卡版本徽章、日历心情、按钮按下态。
+   ====================================================================== */
+[data-theme="dark"] .batch-item-idx,
+[data-theme="dark"] .lic-badge,
+[data-theme="dark"] .gd-btn-sm:active,
+[data-theme="dark"] .cal-mood-ico,
+[data-theme="dark"] .narc-empty .ne-btn,
+[data-theme="dark"] .nm-core,
+[data-theme="dark"] .narc-chip.on,
+[data-theme="dark"] .narc-navchip.on,
+[data-theme="dark"] .narc-btab.on {
+  color: var(--card-bg, #1e1e1e);
+}
