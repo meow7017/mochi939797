@@ -31,7 +31,7 @@
 .ch-settings svg { width:18px; height:18px; }
 /* 椤堕儴鏍忚仈绯讳汉澶村儚锛堢偣鍑绘墦寮€鏌ュ矖鍗婃锛?*/
 .ch-av {
-  width:34px; height:34px; border-radius:var(--msg-av-radius, 50%); flex-shrink:0;
+  width:34px; height:34px; border-radius:var(--msg-av-radius, 4px); flex-shrink:0;
   background:#e9e9e9; overflow:hidden;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
@@ -78,7 +78,7 @@
 .chat-loading-txt { font-size:12px; color:#888; }
 @keyframes chatLoadSlide { 0% { left:-40%; } 100% { left:100%; } }
 
-.msg { display:flex; align-items:flex-end; gap:8px; max-width:85%; }
+.msg { display:flex; align-items:flex-start; gap:10px; max-width:85%; }
 .msg-in { align-self:flex-start; }
 .msg-out { align-self:flex-end; flex-direction:row; }
 .msg-av {
@@ -91,17 +91,32 @@
 .msg-bubble {
   /* v3.6.x锛歳elative 渚涗富鍔ㄥ彂閫佺埍蹇冩爣璇嗭紙.msg-hi-heart锛夌粷瀵瑰畾浣?*/
   position:relative;
-  padding: var(--chat-bubble-pad, 11px 14px);
+  padding: var(--chat-bubble-pad, 9px 12px);
   font-size: var(--chat-font-size, 14px);
-  border-radius: var(--chat-bubble-radius, 18px); line-height:1.5; word-break:break-word;
-  background:#fff; border:1px solid rgba(255,255,255,.9); box-shadow:0 2px 8px rgba(0,0,0,.05);
+  border-radius: var(--chat-bubble-radius, 4px); line-height:1.5; word-break:break-word;
+  background:#fff; border:none; box-shadow:none;
   /* v3.5.107锛氬厑璁告皵娉℃敹缂╋紝闃叉鍥剧墖/闀垮唴瀹规妸鍙充晶澶村儚鍒楁尋鍑哄睆澶栵紙flex 榛樿 min-width:auto锛?*/
   min-width:0;
   /* v3.6.x锛氱鐢ㄦ枃鏈€夋嫨鈥斺€旀皵娉＄偣鍑?闀挎寜鏄脊鎿嶄綔鑿滃崟锛孉ndroid 闀挎寜涓嶅啀鍙犲姞绯荤粺鏂囨湰閫夋嫨/澶嶅埗宸ュ叿鏍?*/
   user-select:none; -webkit-user-select:none;
 }
 .msg-in .msg-bubble { background: var(--msg-in-bg, #ffffff); color: var(--msg-in-ink, #111111); }
-.msg-out .msg-bubble { background: var(--msg-out-bg, #111111); color: var(--msg-out-ink, #ffffff); }
+.msg-out .msg-bubble { background: var(--msg-out-bg, #95ec69); color: var(--msg-out-ink, #111111); }
+
+/* iOS 微信风格：气泡头像侧的小尖角 */
+.msg-in .msg-bubble::before,
+.msg-out .msg-bubble::before {
+  content:""; position:absolute; top:16px;
+  width:8px; height:8px; transform:rotate(45deg);
+}
+.msg-in .msg-bubble::before {
+  left:-3px; background:var(--msg-in-bg, #ffffff);
+  border-bottom-left-radius:1px;
+}
+.msg-out .msg-bubble::before {
+  right:-3px; background:var(--msg-out-bg, #95ec69);
+  border-top-right-radius:1px;
+}
 
 /* 消息入场动画：仅新增消息（非批量渲染）时触发 */
 .msg-enter {
@@ -1501,3 +1516,43 @@ body.cs-time-divider .msg-time-divider { display:flex; }
 [data-theme="dark"] .voice-card.recording .voice-wave i { opacity:.9; }
 [data-theme="dark"] .msg-voice-play.voice-play-btn { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.16); }
 [data-theme="dark"] .voice-rec-btn { border-color:rgba(255,255,255,.28); color:#fff; }
+
+/* ===== 纯表情包/图片消息：去气泡外框（个人定制） =====
+   纯表情包/图片的气泡由 JS 统一设了内边距 6px，以此作标记，
+   只影响纯图消息，不影响“文字+图片”的混合消息 */
+
+/* 气泡本身：背景透明、去掉圆角与尖角、无边框 → 不再有一圈框 */
+.msg .msg-bubble[style*="padding: 6px"] {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.msg .msg-bubble[style*="padding: 6px"]::before { display: none !important; }
+
+/* 表情包（小图）：无边框、无圆角 */
+.msg .msg-bubble[style*="padding: 6px"] .msg-img-sm { border-radius: 0 !important; }
+
+/* 图片（大图）：无边框、圆角 4px */
+.msg .msg-bubble[style*="padding: 6px"] .msg-img-big { border-radius: 4px !important; }
+
+/* ===== 表情包/图片消息：去掉外圈气泡（记号 .msg-media 由 JS 添加） ===== */
+.msg-bubble.msg-media {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0px !important;   /* 只留极小的边距，图不贴头像 */
+}
+.msg-bubble.msg-media::before { display: none !important; }
+
+/* 表情包（小图）：无边框、无圆角 */
+.msg-bubble.msg-media .msg-img-sm,
+.msg-bubble.msg-media img.msg-img-sm { border-radius: 0 !important; }
+
+/* 图片（大图）：无边框、圆角 4px */
+.msg-bubble.msg-media .msg-img-big,
+.msg-bubble.msg-media img.msg-img-big { border-radius: 4px !important; }
+
+/* 图片不要太大：限制宽高为 220px（想改大小就改这两个数字） */
+.msg-bubble.msg-media img.msg-img-big { max-width: 120px !important; max-height: 120px !important; }

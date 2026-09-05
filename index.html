@@ -25,7 +25,7 @@
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 :root {
 --ink:#111111; --muted:#8a8a8a; --line:#e6e6e6;
---page-bg:#e9e9e9; --page-bg-grad:#f6f6f6;
+--page-bg:#ededed; --page-bg-grad:#ededed;
 --phone-bg-a:#ffffff; --phone-bg-b:#f2f2f2; --phone-inset:#e8e8e8;
 --card-bg:#ffffff; --card-bg-97:rgba(255,255,255,.97); --card-border:rgba(0,0,0,.1); --card-shadow:rgba(0,0,0,.04);
 --input-bg:#ffffff; --input-border:#e0e0e0; --input-focus-border:#999;
@@ -41,7 +41,7 @@
 }
 [data-theme="dark"] {
 --ink:#f0f0f0; --muted:#8a8a8a; --line:#333333;
---page-bg:#0c0c0c; --page-bg-grad:#1a1a1a;
+--page-bg:#111111; --page-bg-grad:#111111;
 --phone-bg-a:#1c1c1c; --phone-bg-b:#0e0e0e; --phone-inset:rgba(255,255,255,.08);
 --card-bg:#1e1e1e; --card-bg-97:rgba(30,30,30,.97); --card-border:rgba(255,255,255,.1); --card-shadow:rgba(0,0,0,.4);
 --input-bg:#2a2a2a; --input-border:#3a3a3a; --input-focus-border:#666;
@@ -312,6 +312,8 @@ padding-bottom: calc(10px + var(--mochi-safe-bottom,env(safe-area-inset-bottom,0
 html.force-mobile .phone .page.full .chat-head { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
 html.force-mobile .phone .page.full { padding-bottom: 0; }
 html.force-mobile #page-chat { background: var(--page-bg-grad); }
+#page-chat { background:#ededed; }
+[data-theme="dark"] #page-chat { background:#191919; }
 html.force-mobile button, html.force-mobile .app, html.force-mobile .set-row,
 html.force-mobile .tab, html.force-mobile .msg, html.force-mobile .feed-post,
 html.force-mobile .mail-item { -webkit-tap-highlight-color:transparent; }
@@ -1253,7 +1255,7 @@ display:flex; align-items:center; justify-content:center; cursor:pointer; flex-s
 }
 .ch-settings svg { width:18px; height:18px; }
 .ch-av {
-width:34px; height:34px; border-radius:var(--msg-av-radius, 50%); flex-shrink:0;
+width:34px; height:34px; border-radius:var(--msg-av-radius, 4px); flex-shrink:0;
 background:#e9e9e9; overflow:hidden;
 display:flex; align-items:center; justify-content:center;
 cursor:pointer;
@@ -1291,7 +1293,7 @@ animation:chatLoadSlide 1.1s ease-in-out infinite;
 }
 .chat-loading-txt { font-size:12px; color:#888; }
 @keyframes chatLoadSlide { 0% { left:-40%; } 100% { left:100%; } }
-.msg { display:flex; align-items:flex-end; gap:8px; max-width:85%; }
+.msg { display:flex; align-items:flex-start; gap:10px; max-width:85%; }
 .msg-in { align-self:flex-start; }
 .msg-out { align-self:flex-end; flex-direction:row; }
 .msg-av {
@@ -1303,15 +1305,28 @@ display:flex; align-items:center; justify-content:center;
 .msg-av img { width:100%; height:100%; object-fit:cover; border-radius:var(--msg-av-radius, 50%); display:block; }
 .msg-bubble {
 position:relative;
-padding: var(--chat-bubble-pad, 11px 14px);
+padding: var(--chat-bubble-pad, 9px 12px);
 font-size: var(--chat-font-size, 14px);
-border-radius: var(--chat-bubble-radius, 18px); line-height:1.5; word-break:break-word;
-background:#fff; border:1px solid rgba(255,255,255,.9); box-shadow:0 2px 8px rgba(0,0,0,.05);
+border-radius: var(--chat-bubble-radius, 4px); line-height:1.5; word-break:break-word;
+background:#fff; border:none; box-shadow:none;
 min-width:0;
 user-select:none; -webkit-user-select:none;
 }
 .msg-in .msg-bubble { background: var(--msg-in-bg, #ffffff); color: var(--msg-in-ink, #111111); }
-.msg-out .msg-bubble { background: var(--msg-out-bg, #111111); color: var(--msg-out-ink, #ffffff); }
+.msg-out .msg-bubble { background: var(--msg-out-bg, #95ec69); color: var(--msg-out-ink, #111111); }
+.msg-in .msg-bubble::before,
+.msg-out .msg-bubble::before {
+content:""; position:absolute; top:16px;
+width:8px; height:8px; transform:rotate(45deg);
+}
+.msg-in .msg-bubble::before {
+left:-3px; background:var(--msg-in-bg, #ffffff);
+border-bottom-left-radius:1px;
+}
+.msg-out .msg-bubble::before {
+right:-3px; background:var(--msg-out-bg, #95ec69);
+border-top-right-radius:1px;
+}
 .msg-enter {
 animation: msgFadeUp .28s cubic-bezier(.25,.1,.25,1) both;
 }
@@ -2504,6 +2519,27 @@ border:1.5px solid transparent; background:var(--btn-bg,#111); color:var(--btn-i
 [data-theme="dark"] .voice-card.recording .voice-wave i { opacity:.9; }
 [data-theme="dark"] .msg-voice-play.voice-play-btn { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.16); }
 [data-theme="dark"] .voice-rec-btn { border-color:rgba(255,255,255,.28); color:#fff; }
+.msg .msg-bubble[style*="padding: 6px"] {
+background: transparent !important;
+border-radius: 0 !important;
+border: none !important;
+box-shadow: none !important;
+}
+.msg .msg-bubble[style*="padding: 6px"]::before { display: none !important; }
+.msg .msg-bubble[style*="padding: 6px"] .msg-img-sm { border-radius: 0 !important; }
+.msg .msg-bubble[style*="padding: 6px"] .msg-img-big { border-radius: 4px !important; }
+.msg-bubble.msg-media {
+background: transparent !important;
+border: none !important;
+box-shadow: none !important;
+border-radius: 0 !important;
+padding: 0px !important;   }
+.msg-bubble.msg-media::before { display: none !important; }
+.msg-bubble.msg-media .msg-img-sm,
+.msg-bubble.msg-media img.msg-img-sm { border-radius: 0 !important; }
+.msg-bubble.msg-media .msg-img-big,
+.msg-bubble.msg-media img.msg-img-big { border-radius: 4px !important; }
+.msg-bubble.msg-media img.msg-img-big { max-width: 120px !important; max-height: 120px !important; }
 #page-chatcard { scrollbar-width:none; -ms-overflow-style:none; }
 #page-chatcard::-webkit-scrollbar { display:none; }
 .chat-title { font-size:22px; font-weight:700; padding:4px 2px 8px; letter-spacing:1px; }
@@ -7691,9 +7727,9 @@ transition-duration: .01ms !important;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788271139403">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.0</b></span>
-        <span class="sv-deploy">部署于 2026-09-01 21:58<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1788618791473">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.2</b></span>
+        <span class="sv-deploy">部署于 2026-09-05 22:33<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8436,7 +8472,7 @@ transition-duration: .01ms !important;
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.0</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.2</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8657,7 +8693,7 @@ transition-duration: .01ms !important;
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.0</span>
+              <span class="lic-ver">v3.26.2</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -10307,7 +10343,6 @@ transition-duration: .01ms !important;
         <span class="ch-back" id="chat-back">
           <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </span>
-        <span class="ch-av" id="chat-partner-av" title="点击查看 TA 的日常"></span>
         <span class="ch-name" id="chat-partner-name" title="点击让对方继续说">TA</span>
         <span class="ch-settings" id="chat-settings-btn" title="聊天设置">
           <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
@@ -11065,11 +11100,6 @@ transition-duration: .01ms !important;
             <span class="mi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>
             <span>帮我决定</span>
           </button>
-          <button class="more-item" id="more-gdecide" data-mcat="tool" title="多人决定">
-            <span class="mi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.6" cy="8.8" r="2.4"/><path d="M3.4 19c.6-3.3 2.8-5 5.2-5s4.6 1.7 5.2 5"/><circle cx="15.4" cy="8.8" r="2.4"/><path d="M10.2 19c.6-3.3 2.8-5 5.2-5s4.6 1.7 5.2 5"/></svg></span>
-            <span>多人决定</span>
-          </button>
-
           <button class="more-item" id="more-ask" data-mcat="tool" title="问问TA">
             <span class="mi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.6a2.4 2.4 0 114.8.4c0 1.7-2.4 2.1-2.4 3.3"/><path d="M12 16.7h.01"/></svg></span>
             <span>问问TA</span>
@@ -11093,14 +11123,6 @@ transition-duration: .01ms !important;
           <button class="more-item" id="more-invite" data-mcat="chat" title="邀请TA">
             <span class="mi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span>
             <span>邀请TA</span>
-          </button>
-          <button class="more-item" id="more-avatar" data-mcat="chat" title="头像互动">
-            <span class="mi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg></span>
-            <span>头像互动</span>
-          </button>
-          <button class="more-item" id="more-drift" data-mcat="chat" title="漂流瓶（两个世界之间的海）">
-            <span class="mi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h4v3.2l1.5 2A7.2 7.2 0 0117 11.6V19a2 2 0 01-2 2H9a2 2 0 01-2-2v-7.4c0-1.4.46-2.77 1.5-3.9L10 5.7z"/><path d="M10.4 12.6h3.2"/><path d="M2.5 18.6c1.5 1.1 3 1.1 4.5 0s3-1.1 4.5 0 3 1.1 4.5 0 3-1.1 4.5 0"/></svg></span>
-            <span>漂流瓶</span>
           </button>
           <button class="more-item" id="more-divine" data-mcat="tool" title="占卜">
             <span class="mi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M12 8.5l1.15 2.4 2.4 1.15-2.4 1.15L12 15.6l-1.15-2.4-2.4-1.15 2.4-1.15z"/></svg></span>
@@ -21328,6 +21350,7 @@ b.dataset.orig = rec.orig || rec.text;
 b.innerHTML = '<span style="opacity:.6;font-size:12px;cursor:pointer">' + (rec.side === 'out' ? '我' : '对方') + '撤回了一条消息</span>';
 bindToggle(b, rec.side);
 } else if (rec.type === 'sticker' || rec.type === 'image') {
+b.classList.add('msg-media');
 b.style.padding = '6px';
 b.style.background = '';
 b.style.border = '';
@@ -24984,6 +25007,7 @@ if (isVoice) {
 b.style.padding = '8px 10px';
 fillVoiceBubble(b, f.text);
 } else if (isImg) {
+b.classList.add('msg-media');
 b.style.padding = '6px';
 b.innerHTML = '<img class="msg-img" src="' + attrEsc(f.text) + '" alt="表情">';
 } else {
@@ -26943,6 +26967,7 @@ b.dataset.showing = '1';
 }
 };
 } else if (rec.type === 'sticker' || rec.type === 'image') {
+b.classList.add('msg-media');
 b.style.padding = '6px';
 b.style.background = '';
 b.style.border = '';
@@ -30636,7 +30661,7 @@ const BUBBLE_RADII = [
 { label: '大圆角', value: '18px' },
 { label: '特圆', value: '28px' }
 ];
-const BUBBLE_RADIUS_DEFAULT = '18px';
+const BUBBLE_RADIUS_DEFAULT = '4px';
 const TIME_STYLES = [
 { label: '头像下方', value: 'under-av' },
 { label: '气泡下方', value: 'under-bubble' },
@@ -30694,7 +30719,7 @@ const inInk = store.get('cs-in-ink') || DEF.inInk;
 const outBg = store.get('cs-out-bg') || DEF.outBg;
 const outInk = store.get('cs-out-ink') || DEF.outInk;
 const fs = store.get('cs-font-size') || '14px';
-const pad = store.get('cs-bubble-size') || '11px 14px';
+const pad = store.get('cs-bubble-size') || '9px 12px';
 root.style.setProperty('--msg-in-bg', inBg);
 root.style.setProperty('--msg-in-ink', inInk);
 root.style.setProperty('--msg-out-bg', outBg);
@@ -30721,7 +30746,7 @@ set('cs-out-ink-val', outInk === DEF.outInk ? '默认 ' + DEF.outInk : outInk);
 set('cs-in-bg-val', inBg === DEF.inBg ? '默认 ' + DEF.inBg : inBg);
 set('cs-in-ink-val', inInk === DEF.inInk ? '默认 ' + DEF.inInk : inInk);
 const avShape = store.get('cs-av-shape') || 'circle';
-root.style.setProperty('--msg-av-radius', avShape === 'square' ? '10px' : '50%');
+root.style.setProperty('--msg-av-radius', avShape === 'square' ? '4px' : '50%');
 set('cs-av-shape-val', avShape === 'square' ? '方形' : '圆形');
 const ts = store.get('cs-time-style') || 'under-av';
 const tsLabel = (TIME_STYLES.find(s => s.value === ts) || {}).label || '头像下方';
@@ -30964,7 +30989,9 @@ const BUBBLE_BG_COLORS = [
 { color: '#d8f5e0', label: '薄荷绿' },
 { color: '#fff3d6', label: '奶油黄' },
 { color: '#e8dcff', label: '淡紫' },
-{ color: '#ffdcc0', label: '暖橘' }
+{ color: '#ffdcc0', label: '暖橘' },
+{ color: '#95ec69', label: '微信绿' },
+{ color: '#1a6630', label: '深色模式绿' }
 ];
 const BUBBLE_INK_COLORS = [
 { color: '#111111', label: '默认黑' },
@@ -32003,7 +32030,7 @@ val.value = str;
 val.setAttribute('value', str);
 }
 });
-['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'ckq-en', 'call-resume'].forEach(k => {
+['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'gc-as-en', 'ckq-en', 'call-resume'].forEach(k => {
 const el = document.getElementById(k);
 if (el) el.checked = cfg[k] === 1;
 });
@@ -32075,7 +32102,7 @@ try { val.blur(); } catch (err) {}
 }
 });
 });
-['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'ckq-en', 'call-resume'].forEach(k => {
+['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'gc-as-en', 'ckq-en', 'call-resume'].forEach(k => {
 const el = document.getElementById(k);
 if (el) {
 el.addEventListener('change', () => {
@@ -32110,7 +32137,7 @@ v = Math.min(max, Math.max(min, v));
 window.saveReplyCfg(k, v);
 }
 });
-['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'ckq-en', 'call-resume'].forEach(k => {
+['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'gc-as-en', 'ckq-en', 'call-resume'].forEach(k => {
 const el = document.getElementById(k);
 if (el) window.saveReplyCfg(k, el.checked ? 1 : 0);
 });
@@ -48797,929 +48824,582 @@ document.addEventListener('contact-switched', () => { lastTa = null; });
 })();
 } catch (__e) { try { console.error("[JS] p2-features.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
 (function () { try {
+/* =========================================================
+milk「抉择助手」原样移植（抛硬币 + 随机抽签）
+替换 mochi 原来的「帮我决定」。
+视觉/动画保持 milk 原版，仅结果发送接到 mochi 聊天。
+========================================================= */
 (function () {
-const KEY = 'drift-data';
-const page = document.getElementById('page-drift');
-if (!page) return;
-function S() { try { return window.activeStore(); } catch (e) { return null; } }
-function pn() {
-try { const s = S(); return (s && (s.get('cs-lbl-partner') || s.get('lbl-partner'))) || 'TA'; } catch (e) { return 'TA'; }
+'use strict';
+/* ---------- 0. 引入 Font Awesome（milk 原版图标依赖它） ---------- */
+if (!document.getElementById('milk-fa')) {
+var fa = document.createElement('link');
+fa.id = 'milk-fa';
+fa.rel = 'stylesheet';
+fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
+document.head.appendChild(fa);
 }
-function rnd(a) { return a[Math.floor(Math.random() * a.length)]; }
-function ri(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
-function vib(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
-function todayKey() { const t = new Date(); return t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate(); }
-function fmtDay(ts) { const d = new Date(ts); return (d.getMonth() + 1) + '月' + d.getDate() + '日'; }
-function fmtTime(ts) { const d = new Date(ts); const h = d.getHours(), m = d.getMinutes(); return fmtDay(ts) + ' ' + (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m; }
-let toastT = null;
-function toast(t) {
-let el = document.getElementById('cc-toast');
-if (!el) { el = document.createElement('div'); el.id = 'cc-toast'; document.body.appendChild(el); }
-el.textContent = t; el.className = 'cc-toast'; void el.offsetWidth; el.className = 'cc-toast show';
-clearTimeout(toastT); toastT = setTimeout(() => { el.className = 'cc-toast'; }, 2200);
-}
-function taFit(t) { let s = String(t == null ? '' : t).replace(/\{n\}/g, pn()); try { if (window.taFit) s = window.taFit(s); } catch (e) {} return s; }
-function histMsgOk(m) {
-if (!m || m.side !== 'in' || m.retracted) return false;
-if (m.type && m.type !== 'text') return false;                  // 表情包/图片/语音/拍一拍等整条跳过
-if (m.voice || m.img || m.gift) return false;
-if (m.special || m.mailNotice) return false;                    // 系统提示 / 来信通知
-if (m.askQuestion != null || m.askStatus != null || m.choiceQuestion != null || m.choiceStatus != null ||
-m.curiousQuestion != null || m.curiousStatus != null || m.roastStatus != null ||
-m.rpAmount != null || m.rpWish != null) return false;       // 提问/选择/好奇/吐槽/红包等互动组件
-return true;
-}
-function candText(t) {
-const s = String(t == null ? '' : t).trim();
-if (!s || s.length > 100) return '';                            // 超长不装瓶（与放瓶输入上限一致）
-if (s.indexOf('|||') >= 0) return '';                           // 语音卡标记
-if (/^(https?:|data:)/i.test(s)) return '';                     // 链接 / 内联图片
-return s;
-}
-function histCandidates() {
-try {
-const cid = window.__activeCid || 'default';
-const raw = localStorage.getItem('xy-home-v2:' + cid + ':chat-msgs');
-if (!raw || raw.length > 600000) return [];                   // 超大记录守卫：直接回退字卡库
-const arr = JSON.parse(raw);
-if (!Array.isArray(arr)) return [];
-const out = [];
-const scan = Math.min(arr.length, 400);                       // 只看最近约 400 条，够回忆也不卡
-for (let i = arr.length - 1; i >= arr.length - scan && out.length < 80; i--) {
-const m = arr[i];
-if (!histMsgOk(m)) continue;
-if (Array.isArray(m.parts) && m.parts.length) {
-for (let j = 0; j < m.parts.length && out.length < 80; j++) {
-const p = m.parts[j];
-if (!p || p.k !== 'text') continue;
-const s = candText(p.v);
-if (s) out.push(s);
-}
-} else {
-const s = candText(m.text);
-if (s) out.push(s);
-}
-}
-return out;
-} catch (e) { return []; }
-}
-function sampleHistLine() {
-const cands = histCandidates();
-if (!cands.length) return '';
-const seen = Array.isArray(d.histSeen) ? d.histSeen : [];
-let pool = cands.filter(c => seen.indexOf(c) < 0);              // 近期漂过的先避开，减少连重复
-if (!pool.length) pool = cands.slice();
-const t = rnd(pool);
-d.histSeen = seen.concat([t]).slice(-8);
-save();
-return t;
-}
-function myHistMsgOk(m) {
-if (!m || m.side !== 'out' || m.retracted) return false;
-if (m.type && m.type !== 'text') return false;
-if (m.voice || m.img || m.gift) return false;
-if (m.special || m.mailNotice) return false;
-if (m.askQuestion != null || m.askStatus != null || m.choiceQuestion != null || m.choiceStatus != null ||
-m.curiousQuestion != null || m.curiousStatus != null || m.roastStatus != null ||
-m.rpAmount != null || m.rpWish != null) return false;
-return true;
-}
-function myHistCandidates() {
-try {
-const cid = window.__activeCid || 'default';
-const raw = localStorage.getItem('xy-home-v2:' + cid + ':chat-msgs');
-if (!raw || raw.length > 600000) return [];                   // 超大记录守卫
-const arr = JSON.parse(raw);
-if (!Array.isArray(arr)) return [];
-const out = [];
-const scan = Math.min(arr.length, 400);                       // 只看最近约 400 条
-for (let i = arr.length - 1; i >= arr.length - scan && out.length < 80; i--) {
-const m = arr[i];
-if (!myHistMsgOk(m)) continue;
-if (Array.isArray(m.parts) && m.parts.length) {
-for (let j = 0; j < m.parts.length && out.length < 80; j++) {
-const p = m.parts[j];
-if (!p || p.k !== 'text') continue;
-const s = candText(p.v);
-if (s) out.push(s);
-}
-} else {
-const s = candText(m.text);
-if (s) out.push(s);
-}
-}
-return out;
-} catch (e) { return []; }
-}
-function mySampleLine() {
-const cands = myHistCandidates();
-if (!cands.length) return '';
-const seen = Array.isArray(d.mySeen) ? d.mySeen : [];
-let pool = cands.filter(c => seen.indexOf(c) < 0);              // 近期捡过的先避开
-if (!pool.length) pool = cands.slice();
-const t = rnd(pool);
-d.mySeen = seen.concat([t]).slice(-8);
-save();
-return t;
-}
-const FB = {
-ta: ['过来一点。', '我在。', '今天也陪着你。', '别急，慢慢来。'],
-reply: ['看到了。', '好。等我。', '嗯，收到了。', '我也想你。这句是回礼。'],
-sea: ['今天有没有好好休息？', '慢慢来，海不催任何人。', '你已经做得很好了。', '想见的人，总会再见的。']
+/* ---------- 1. 主题色（想改成你 milk 里的主色，改这一组即可） ----------
+如果你想要和你 milk 网站一模一样的颜色，把下面这 7 行的
+颜色值换成你 milk 主题里 :root 的 --accent-color 等数值即可。 */
+var PALETTE = {
+accent: '#ff6b81',        // 主色
+accentRGB: '255,107,129', // 主色的 RGB（逗号分隔）
+bg1: '#ffffff',           // 弹窗卡片底色
+bg2: '#ffffff',           // 渐变第二底色
+line: '#eee8f0',          // 边框色
+ink: '#2e2a38',           // 主文字
+sub: '#948d9e',           // 次级文字
+soft: '#f6f2f8'           // 浅色按钮/输入底色
 };
-function poolLine(group, fbKey, fit) {
-let arr = null;
-try { arr = window.getLibPool ? window.getLibPool('drift', group, FB[fbKey] || []) : null; } catch (e) {}
-if (!arr || !arr.length) arr = FB[fbKey] || [];
-else {
-try { if (window.isDefaultCardOff) { const f = arr.filter(c => !window.isDefaultCardOff('drift', c)); if (f.length) arr = f; } } catch (e) {}
+/* ---------- 2. 样式（milk 原版 CSS，仅把变量名换成上面这组） ---------- */
+var cssText = `
+#milk-decision-root {
+--milk-accent: ${PALETTE.accent};
+--milk-accent-rgb: ${PALETTE.accentRGB};
+--milk-bg1: ${PALETTE.bg1};
+--milk-bg2: ${PALETTE.bg2};
+--milk-line: ${PALETTE.line};
+--milk-ink: ${PALETTE.ink};
+--milk-sub: ${PALETTE.sub};
+--milk-soft: ${PALETTE.soft};
+--milk-font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
-const t = String(rnd(arr));
-return fit === false ? t : taFit(t);
+/* ===== 弹窗外壳（milk 风格：居中卡片 + 半透明毛玻璃底） ===== */
+#milk-decision-root .modal {
+position: fixed; inset: 0; z-index: 9999;
+display: none;
+align-items: center; justify-content: center;
+background: rgba(20,20,20,0.5);
+backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
-const ITEMS = [
-{ e: '🌸', n: '一朵花' }, { e: '🐚', n: '一个小贝壳' }, { e: '🪶', n: '一根软软的羽毛' },
-{ e: '⭐', n: '一颗星星贴纸' }, { e: '🍬', n: '一颗没化掉的糖' }, { e: '🧸', n: '一只迷你小熊' }
-];
-const EMPTY_LINES = [
-'瓶子里什么都没有，只有一点海的味道。',
-'空瓶子。软木塞倒是雕了一朵小花。',
-'只有一张被海水晕开的白纸。',
-'瓶底躺着两粒沙，亮晶晶的。'
-];
-const ITEM_LINES = [
-'瓶子里装着{g}，还有一张小纸条：「给捡到它的人。」',
-'摇晃的声响很轻——里面是{g}。',
-'{g}躺在瓶底，像特意留下的。'
-];
-const MINE_CAP = 50, GOT_CAP = 120, THEIRS_CAP = 60, PICK_CD = 20000;
-function fresh() {
-return {
-mine: [], got: [], theirs: [], histSeen: [], mySeen: [], dry: 0,
-day: { date: '', picks: 0, coin: 0, taGot: 0 },
-lastVisit: 0, cdUntil: 0
-};
+#milk-decision-root .modal.show { display: flex; }
+#milk-decision-root .modal-content {
+width: min(92vw, 400px);
+max-height: 90vh; overflow-y: auto;
+background: var(--milk-bg2);
+border-radius: 20px;
+box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+padding: 22px 20px 16px;
+font-family: var(--milk-font);
+color: var(--milk-ink);
+animation: milkIn .28s cubic-bezier(0.34,1.3,0.64,1);
 }
-let d = null;
-function fix(o) {
-if (!Array.isArray(o.mine)) o.mine = [];
-if (!Array.isArray(o.got)) o.got = [];
-if (!Array.isArray(o.theirs)) o.theirs = [];
-if (!Array.isArray(o.histSeen)) o.histSeen = [];
-if (!Array.isArray(o.mySeen)) o.mySeen = [];
-if (typeof o.dry !== 'number' || o.dry < 0 || !isFinite(o.dry)) o.dry = 0;
-if (!o.day || typeof o.day !== 'object') o.day = { date: '', picks: 0, coin: 0, taGot: 0 };
-o.mine.forEach(m => { if (typeof m.fav !== 'number') m.fav = 0; });
-o.got.forEach(g => { if (typeof g.fav !== 'number') g.fav = 0; });
-o.theirs.forEach(g => { if (typeof g.fav !== 'number') g.fav = 0; });
-if (!isFinite(o.lastVisit)) o.lastVisit = 0;
-if (!isFinite(o.cdUntil)) o.cdUntil = 0;
-if (o.mine.length > MINE_CAP) o.mine = o.mine.slice(-MINE_CAP);
-if (o.got.length > GOT_CAP) o.got = o.got.slice(-GOT_CAP);
-if (o.theirs.length > THEIRS_CAP) o.theirs = o.theirs.slice(-THEIRS_CAP);
+@keyframes milkIn { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+#milk-decision-root .modal-content::-webkit-scrollbar { display: none; }
+#milk-decision-root .modal-title {
+display: flex; align-items: center; gap: 8px;
+font-size: 17px; font-weight: 700; color: var(--milk-ink);
+margin-bottom: 4px;
 }
-function load() {
-try {
-const v = S().get(KEY);
-if (v) { const o = JSON.parse(v); if (o && typeof o === 'object') { fix(o); return o; } }
-} catch (e) {}
-return fresh();
+#milk-decision-root .modal-title i { color: var(--milk-accent); font-size: 16px; }
+#milk-decision-root .modal-buttons {
+display: flex; justify-content: flex-end; gap: 10px;
+margin-top: 16px; flex-wrap: wrap;
 }
-function save() {
-try { S().set(KEY, JSON.stringify(d)); } catch (e) {}
-try { if (window.idbSet) window.idbSet(window.activePrefix() + ':' + KEY, JSON.stringify(d)); } catch (e) {}
+#milk-decision-root .modal-btn {
+padding: 10px 20px; border: none; border-radius: 12px;
+font-size: 13px; cursor: pointer; font-family: var(--milk-font);
+transition: all 0.2s ease; font-weight: 600;
 }
-(function restoreIdb() {
-try {
-const s = S(); if (!s || !window.idbGet || s.get(KEY)) return;
-const pf = window.activePrefix();
-window.idbGet(pf + ':' + KEY).then(v => {
-if (!v || window.activePrefix() !== pf || s.get(KEY)) return;
-try {
-const o = typeof v === 'string' ? JSON.parse(v) : v;
-if (!o || typeof o !== 'object') return;
-fix(o);
-s.set(KEY, JSON.stringify(o));
-const empty = !d || ((!d.mine.length && !d.got.length));
-if (!booted || empty) { d = o; if (!page.hidden) renderAll(); }
-} catch (e) {}
-});
-} catch (e) {}
-})();
-function addCoin(fen) {
-if (!fen) return false;
-ensureDaily();
-if (d.day.coin >= DAILY_COIN_CAP) return false;
-const real = Math.min(fen, DAILY_COIN_CAP - d.day.coin);
-try {
-if (typeof window.giftWalletChange !== 'function') return false;
-window.giftWalletChange(real, real, '漂流瓶');
-d.day.coin += real;
-save();
-return true;
-} catch (e) { return false; }
+#milk-decision-root .modal-btn:active { transform: scale(0.96); }
+#milk-decision-root .modal-btn-primary { background: var(--milk-accent); color: #fff; }
+#milk-decision-root .modal-btn-primary:hover { filter: brightness(1.08); }
+#milk-decision-root .modal-btn-secondary { background: var(--milk-soft); color: var(--milk-ink); }
+#milk-decision-root .modal-btn-secondary:hover { background: rgba(0,0,0,0.06); }
+#milk-decision-root .modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ===== 抉择助手菜单（两张卡片） ===== */
+#milk-decision-root .decision-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 14px 0; }
+#milk-decision-root .decision-option-card {
+background: var(--milk-bg1);
+border: 1px solid var(--milk-line);
+border-radius: 16px; padding: 26px 12px; text-align: center;
+cursor: pointer; transition: all 0.25s ease;
 }
-const FIRST_PICK_COIN = 200, SPECIAL_COIN = 500, DAILY_COIN_CAP = 1000;
-function outCountToday() {
-try {
-const cid = window.__activeCid || 'default';
-const raw = localStorage.getItem('xy-home-v2:' + cid + ':chat-msgs');
-if (!raw || raw.length > 400000) return 0;
-const arr = JSON.parse(raw);
-if (!Array.isArray(arr)) return 0;
-const tk = todayKey();
-let n = 0;
-for (let i = arr.length - 1, seen = 0; i >= 0 && seen < 30; i--, seen++) {
-const m = arr[i];
-if (!m || !m.ts || m.side !== 'out') continue;
-const t = new Date(m.ts);
-if (tk === t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate()) n++;
+#milk-decision-root .decision-option-card:hover {
+transform: translateY(-4px);
+border-color: var(--milk-accent);
+box-shadow: 0 6px 16px rgba(var(--milk-accent-rgb),0.2);
 }
-return n;
-} catch (e) { return 0; }
+#milk-decision-root .decision-option-card i { font-size: 34px; margin-bottom: 10px; color: var(--milk-accent); display:block; }
+#milk-decision-root .decision-option-card h3 { font-size: 16px; margin: 0 0 4px; color: var(--milk-ink); }
+#milk-decision-root .decision-option-card p { font-size: 12px; margin: 0; color: var(--milk-sub); }
+/* ===== 随机抽签 ===== */
+#milk-decision-root .picker-box-stage {
+display: flex; flex-direction: column; align-items: center; gap: 16px;
+margin: 8px 0;
 }
-let _forceKind = '';
-function rollKind() {
-if (_forceKind) { const k = _forceKind; _forceKind = ''; return k; }
-ensureDaily();
-const absentH = d.lastVisit ? (Date.now() - d.lastVisit) / 3600000 : 999;
-let taW;
-if (absentH >= 48 && d.day.taGot < 1) {
-taW = 26;
-} else {
-const n = outCountToday();
-taW = n <= 0 ? 5 : (n <= 5 ? 7 : 9);
-const dry = d.dry || 0;
-if (dry >= 12) taW += Math.min(40, (dry - 11) * 8);
+#milk-decision-root .picker-cards-row {
+display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+min-height: 90px; align-items: center; width: 100%;
 }
-if (d.day.taGot >= 3) taW = 0;
-const table = [['normal', Math.max(0, 60 + (5 - taW) - (taW >= 26 ? 16 : 0))], ['item', 25], ['special', 10], ['ta', taW]];
-let total = 0; table.forEach(x => total += x[1]);
-let r = Math.random() * total;
-for (let i = 0; i < table.length; i++) { r -= table[i][1]; if (r < 0) return table[i][0]; }
-return 'normal';
+#milk-decision-root .picker-card {
+width: 70px; height: 92px; border-radius: 12px;
+background: linear-gradient(135deg, var(--milk-bg2) 0%, var(--milk-bg1) 100%);
+border: 1.5px solid var(--milk-line);
+display: flex; align-items: center; justify-content: center;
+font-size: 13px; font-weight: 600; color: var(--milk-sub);
+cursor: default; transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+text-align: center; padding: 6px; word-break: break-all; position: relative; overflow: hidden;
+animation: milkCardEnter 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
 }
-function settleSchedules() {
-ensureDaily();
-const now = Date.now();
-d.mine.forEach(m => {
-if (!m.backed && m.backAt && now >= m.backAt) {
-if (Math.random() < 0.7) { m.backed = true; m.pendingBack = true; }
-else { m.backAt = now + ri(24, 72) * 3600000; }
+@keyframes milkCardEnter { from { opacity: 0; transform: translateY(12px) scale(0.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
+#milk-decision-root .picker-card.selected {
+background: linear-gradient(135deg, var(--milk-accent) 0%, rgba(var(--milk-accent-rgb),0.75) 100%);
+color: #fff; border-color: transparent;
+transform: translateY(-6px) scale(1.08);
+box-shadow: 0 10px 28px rgba(var(--milk-accent-rgb),0.4);
+animation: milkCardWin 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
 }
-});
-d.mine.forEach(m => {
-if (m.willReply && !m.replied && m.replyAt && now >= m.replyAt) {
-m.replied = now;
-pushGot({ kind: 'reply', from: 'ta', text: poolLine('TA的回应', 'reply'), relateId: m.id });
-if (!m.noticed) {
-m.noticed = true;
-notifyChat('🌊 海上好像有什么漂回来了——去漂流瓶看看吧。');
+@keyframes milkCardWin {
+0% { transform: translateY(0) scale(1); }
+40% { transform: translateY(-10px) scale(1.12) rotate(-2deg); }
+70% { transform: translateY(-5px) scale(1.1) rotate(1deg); }
+100% { transform: translateY(-6px) scale(1.08) rotate(0deg); }
 }
+#milk-decision-root .picker-card.unselected { opacity: 0.4; transform: scale(0.94); }
+#milk-decision-root .picker-result-text {
+font-size: 18px; font-weight: 700; color: var(--milk-accent); text-align: center;
+min-height: 28px; padding: 8px 16px; border-radius: 10px;
+background: rgba(var(--milk-accent-rgb),0.08);
+border: 1px solid rgba(var(--milk-accent-rgb),0.2);
+opacity: 0; transition: opacity 0.4s ease; width: 100%;
 }
-});
+#milk-decision-root .picker-result-text.show { opacity: 1; }
+#milk-decision-root .picker-controls { width: 100%; }
+#milk-decision-root .picker-options-label {
+font-size: 12px; font-weight: 600; color: var(--milk-sub);
+letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
 }
-function takePendingBack() {
-for (let i = 0; i < d.mine.length; i++) {
-const m = d.mine[i];
-if (m.pendingBack) {
-m.pendingBack = false; m.backedAt = Date.now(); m.gone = true;
-return m;
+#milk-decision-root .picker-options-list {
+max-height: 150px; overflow-y: auto;
+border: 1.5px solid var(--milk-line); border-radius: 12px;
+padding: 6px; margin-bottom: 10px; background: var(--milk-bg1);
 }
+#milk-decision-root .picker-options-list::-webkit-scrollbar { display: none; }
+#milk-decision-root .picker-option-item { display: flex; gap: 8px; padding: 7px 8px; align-items: center; border-radius: 8px; }
+#milk-decision-root .picker-option-item:hover { background: var(--milk-soft); }
+#milk-decision-root .picker-option-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+#milk-decision-root .picker-option-input {
+flex: 1; border: none; background: transparent;
+border-bottom: 1px solid var(--milk-line); padding: 3px 4px;
+font-size: 14px; outline: none; font-family: var(--milk-font); color: var(--milk-ink);
 }
-return null;
+#milk-decision-root .picker-option-remove { color: var(--milk-sub); cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 12px; }
+#milk-decision-root .picker-option-remove:hover { color: #ff4757; background: rgba(255,71,87,0.1); }
+#milk-decision-root .picker-add-btn {
+width: 100%; margin-bottom: 0;
+font-size: 13px; border-style: dashed !important;
+opacity: 0.75; background: var(--milk-soft);
 }
-function notifyChat(text) {
-try { if (window.chatAddIn) window.chatAddIn(text, { tag: '漂流瓶' }); } catch (e) {}
+#milk-decision-root .picker-add-btn:hover { opacity: 1 !important; }
+/* ===== 抛硬币全屏浮层（milk 原版：深色毛玻璃 + 3D 翻币） ===== */
+#milk-decision-root .coin-toss-overlay {
+position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(20,20,20,0.72);
+backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+z-index: 9999; display: none;
+flex-direction: column; align-items: center; justify-content: center;
+opacity: 0; transition: opacity 0.4s ease;
+font-family: var(--milk-font);
 }
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-function pushGot(rec) {
-rec.id = rec.id || uid();
-rec.ts = rec.ts || Date.now();
-if (typeof rec.fav !== 'number') rec.fav = 0;
-d.got.push(rec);
-if (d.got.length > GOT_CAP) d.got = d.got.slice(-GOT_CAP);
-save();
-return rec;
+#milk-decision-root .coin-toss-overlay.visible { display: flex; opacity: 1; }
+#milk-decision-root .coin-container { perspective: 1200px; margin-bottom: 20px; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.25)); }
+#milk-decision-root .coin { width: 170px; height: 170px; position: relative; transform-style: preserve-3d; border-radius: 50%; }
+#milk-decision-root .coin.flipping-heads { animation: milkFlipHeads 3s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+#milk-decision-root .coin.flipping-tails { animation: milkFlipTails 3s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+#milk-decision-root .coin-face {
+position: absolute; width: 100%; height: 100%;
+-webkit-backface-visibility: hidden; backface-visibility: hidden;
+border-radius: 50%;
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+font-family: "Noto Serif SC", "Songti SC", serif;
+border: 8px solid rgba(255,255,255,0.18);
+box-shadow: inset 0 0 20px rgba(0,0,0,0.08);
 }
-function pushTheirs(rec) {
-rec.id = rec.id || uid();
-rec.ts = rec.ts || Date.now();
-if (typeof rec.fav !== 'number') rec.fav = 0;
-d.theirs.push(rec);
-if (d.theirs.length > THEIRS_CAP) d.theirs = d.theirs.slice(-THEIRS_CAP);
-save();
-return rec;
+#milk-decision-root .coin-front { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); color: #333; transform: rotateY(0deg); }
+#milk-decision-root .coin-front::after {
+content: ""; position: absolute; top: 9px; left: 9px; right: 9px; bottom: 9px;
+border: 1px dashed #bdc3c7; border-radius: 50%;
 }
-const CONTACT_PICK_CHANCE = 0.25;
-function maybeContactPick() {
-if (Math.random() >= CONTACT_PICK_CHANCE) return null;
-const line = mySampleLine();
-if (!line) return null;
-return pushTheirs({ text: line });
+#milk-decision-root .coin-back { background: linear-gradient(135deg, #2c3e50 0%, #000000 100%); color: #fdfbfb; transform: rotateY(180deg); }
+#milk-decision-root .coin-back::after {
+content: ""; position: absolute; top: 9px; left: 9px; right: 9px; bottom: 9px;
+border: 1px dashed #7f8c8d; border-radius: 50%;
 }
-function pickBottle() {
-if (Date.now() < (d.cdUntil || 0)) { toast('海面还没恢复平静，稍等一下'); return; }
-settleSchedules();
-ensureDaily();
-const backMine = takePendingBack();
-let head, note, sig = '', gift = null, kind;
-let coinMsg = '';
-if (backMine) {
-kind = 'back';
-head = '🕰 你在海边捡到一个熟悉的瓶子';
-note = backMine.text;
-sig = '这是你以前写下的话';
-} else {
-kind = rollKind();
-if (kind === 'ta') {
-d.dry = 0;                                        // 出了 TA 瓶，软保底计数清零
-d.day.taGot++;
-head = '💙 ' + pn() + '漂来的瓶子';
-note = sampleHistLine() || poolLine('TA的话', 'ta');
-sig = '—— ' + pn();
-if (Math.random() < 0.2) gift = rnd(ITEMS);
-} else if (kind === 'special') {
-head = '✨ 一个特别的瓶子';
-note = poolLine('海风', 'sea');
-sig = '瓶身缠着小小的星星绳';
-} else if (kind === 'item') {
-gift = rnd(ITEMS);
-head = '🫙 沉甸甸的小瓶子';
-note = rnd(ITEM_LINES).replace(/\{g\}/g, gift.e + ' ' + gift.n);
-} else if (kind === 'empty') {
-head = '🫙 一只空瓶子';
-note = rnd(EMPTY_LINES);
-} else {
-head = '🫙 你捡到了一个漂流瓶';
-note = poolLine('海风', 'sea');
+#milk-decision-root .coin-text-main { font-size: 46px; font-weight: 400; letter-spacing: 4px; margin-bottom: 4px; }
+#milk-decision-root .coin-text-sub { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.75; font-family: sans-serif; }
+#milk-decision-root .coin-result-container { min-height: 50px; display: flex; justify-content: center; }
+#milk-decision-root .coin-result-text {
+font-family: "Noto Serif SC", "Songti SC", serif;
+font-size: 15px; color: #fff; font-weight: 300; opacity: 0.8;
+letter-spacing: 3px; transition: all 0.5s cubic-bezier(0.2,0.8,0.2,1);
+margin-top: 16px; text-align: center;
 }
+#milk-decision-root .coin-toss-overlay.finished .coin-result-text {
+font-size: 28px; opacity: 1; font-weight: 500; letter-spacing: 2px;
+text-shadow: 0 0 20px rgba(255,255,255,0.5); transform: scale(1.1);
 }
-const firstToday = d.day.picks === 0;
-let coin = 0;
-if (kind === 'special') coin = SPECIAL_COIN;
-else if (firstToday) coin = FIRST_PICK_COIN;
-if (coin && addCoin(coin)) coinMsg = coin === SPECIAL_COIN ? '🪙 +5 心意币' : '🪙 +2 心意币（今日首捡）';
-d.day.picks++;
-d.cdUntil = Date.now() + PICK_CD;
-const rec = pushGot({ kind: kind, from: kind === 'ta' || kind === 'reply' ? 'ta' : 'sea', text: note, gift: gift ? gift.e + ' ' + gift.n : '', coinFen: coin });
-const theirsRec = maybeContactPick();
-save();
-renderPickAnim(head, note, sig, gift, coinMsg, rec, theirsRec);
-renderStats(); renderList();
-tickCd();
+#milk-decision-root .coin-confirm-buttons {
+display: flex; gap: 14px; margin-top: 26px; justify-content: center;
+opacity: 0; transform: translateY(20px); pointer-events: none;
+transition: opacity 0.3s ease, transform 0.3s ease;
 }
-function putBottle() {
-if (!window.openModal) return;
-window.openModal('写一句话，放进海里', '', function (val) {
-const text = String(val == null ? '' : val).trim().slice(0, 100);
-if (!text) { toast('空的瓶子漂不远，写点什么吧'); return; }
-ensureDaily();
-const rec = {
-id: uid(), text: text, ts: Date.now(), fav: 0,
-backAt: Date.now() + ri(36, 96) * 3600000,
-willReply: d.mine.filter(m => m.willReply && !m.replied).length < 2 && Math.random() < 0.45,
-replyAt: 0
-};
-if (rec.willReply) rec.replyAt = Date.now() + ri(6, 40) * 3600000;
-d.mine.push(rec);
-if (d.mine.length > MINE_CAP) d.mine = d.mine.slice(-MINE_CAP);
-save();
-vib(18);
-toast('瓶子已经放进海里了 🌊');
-renderStats(); renderList();
-}, { textarea: true, textareaPlaceholder: '今天也很想你。（最多 100 字）', maxlength: 100 });
+#milk-decision-root .coin-toss-overlay.finished .coin-confirm-buttons {
+opacity: 1; transform: translateY(0); pointer-events: auto; transition-delay: 0.3s;
 }
-const $ = (id) => document.getElementById(id);
-let openRecId = '';
-function renderPickAnim(head, note, sig, gift, coinMsg, rec, theirs) {
-const box = $('d-open');
-if (!box) return;
-openRecId = rec.id;
-const bob = $('drift-bob');
-if (bob) { bob.classList.remove('d-arrive'); void bob.offsetWidth; bob.classList.add('d-arrive'); }
-setTimeout(() => {
-if (!rec || rec.id !== openRecId) return;
-const fav = rec.fav ? ' ♡已收藏' : ' ♡ 收藏';
-const theirsHtml = theirs ?
-'<div class="do-theirs"><div class="do-theirs-head"></div>' +
-'<div class="do-theirs-txt"></div><div class="do-theirs-sig"></div></div>' : '';
-box.innerHTML =
-'<div class="do-head">' + taFit(head) + '</div>' +
-'<div class="do-paper"><div class="do-txt"></div>' +
-(sig ? '<div class="do-sig"></div>' : '') + '</div>' +
-'<div class="do-extra">' +
-(gift ? '<span class="do-gift">' + gift.e + ' ' + taFit(gift.n) + '</span>' : '') +
-(coinMsg ? '<span class="do-coin">' + coinMsg + '</span>' : '') +
-'</div>' +
-theirsHtml +
-'<div class="do-btns">' +
-(kindCanFav(rec.kind) ? '<button class="do-fav" id="d-fav">' + (rec.fav ? '♥ 已收藏' : '♡ 收藏') + '</button>' : '') +
-'<button class="do-ok" id="d-ok">收好</button>' +
-'</div>';
-box.querySelector('.do-txt').textContent = note;
-const sigEl = box.querySelector('.do-sig');
-if (sigEl) sigEl.textContent = sig;
-if (theirs) {
-box.querySelector('.do-theirs-head').textContent = '💌 ' + pn() + '也捡到一个瓶子';
-box.querySelector('.do-theirs-txt').textContent = theirs.text;
-box.querySelector('.do-theirs-sig').textContent = '—— 你在聊天里说过的话';
+#milk-decision-root .coin-btn-action {
+padding: 10px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.25);
+background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85);
+font-size: 13px; cursor: pointer; transition: all 0.2s ease;
+font-family: var(--milk-font); backdrop-filter: blur(5px);
 }
-box.hidden = false;
-box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
-const favBtn = $('d-fav');
-if (favBtn) favBtn.addEventListener('click', () => {
-rec.fav = rec.fav ? 0 : 1;
-save();
-favBtn.textContent = rec.fav ? '♥ 已收藏' : '♡ 收藏';
-toast(rec.fav ? '已收进收藏' : '已取消收藏');
-renderStats(); renderList();
-});
-$('d-ok').addEventListener('click', () => { box.hidden = true; openRecId = ''; });
-vib(12);
-}, 850);
+#milk-decision-root .coin-btn-action:hover { background: rgba(255,255,255,0.2); color: #fff; transform: translateY(-2px); }
+#milk-decision-root .coin-btn-primary { background: #fff; color: #000; border-color: #fff; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+#milk-decision-root .coin-btn-primary:hover { background: #f0f0f0; box-shadow: 0 6px 20px rgba(255,255,255,0.3); transform: translateY(-2px) scale(1.02); }
+@keyframes milkFlipHeads {
+0% { transform: rotateY(0deg) scale(1); animation-timing-function: ease-in; }
+35% { transform: rotateY(900deg) scale(1.35); animation-timing-function: ease-out; }
+75% { transform: rotateY(1800deg) scale(1.1); }
+100% { transform: rotateY(2160deg) scale(1); }
 }
-function kindCanFav(k) { return k !== 'empty'; }
-function renderStats() {
-const el = $('d-stats');
-if (!el) return;
-const taCnt = d.got.filter(g => g.from === 'ta').length;
-const favCnt = d.got.filter(g => g.fav).length + d.mine.filter(m => m.fav).length + d.theirs.filter(t => t.fav).length;
-el.textContent = '我放入 ' + d.mine.length + ' · ' + pn() + '漂来 ' + taCnt + ' · ' + pn() + '捡到 ' + d.theirs.length + ' · 收藏 ' + favCnt;
+@keyframes milkFlipTails {
+0% { transform: rotateY(0deg) scale(1); animation-timing-function: ease-in; }
+35% { transform: rotateY(900deg) scale(1.35); animation-timing-function: ease-out; }
+75% { transform: rotateY(1980deg) scale(1.1); }
+100% { transform: rotateY(2340deg) scale(1); }
 }
-function renderList() {
-const el = $('d-list');
-if (!el) return;
-const tab = curTab;
-el.innerHTML = '';
-let rows = [];
-if (tab === 'mine') rows = d.mine.slice().reverse().map(m => ({
-ts: m.ts, ico: m.replied ? '💙' : (m.backed ? '🕰' : '🌊'),
-text: m.text,
-sub: m.replied ? pn() + '回应了这个瓶子' : (m.backed ? '这个瓶子漂回来过' : '漂流中'),
-key: 'm:' + m.id, rec: m, mine: true
-}));
-else if (tab === 'got') rows = d.got.slice().reverse().map(g => ({
-ts: g.ts, ico: KIND_ICO[g.kind] || '🫙', text: g.text,
-sub: (g.from === 'ta' ? '来自 ' + pn() : '海边') + (g.coinFen ? ' · 🪙+' + Math.round(g.coinFen / 100) : ''),
-key: 'g:' + g.id, rec: g, mine: false
-}));
-else if (tab === 'theirs') rows = d.theirs.slice().reverse().map(t => ({
-ts: t.ts, ico: '💌', text: t.text,
-sub: pn() + '捡到的 · 你聊天里的话',
-key: 't:' + t.id, rec: t, mine: false
-}));
-else rows = d.got.filter(g => g.fav).slice().reverse().map(g => ({
-ts: g.ts, ico: KIND_ICO[g.kind] || '🫙', text: g.text,
-sub: g.from === 'ta' ? '来自 ' + pn() : '海边',
-key: 'gf:' + g.id, rec: g, mine: false
-})).concat(d.theirs.filter(t => t.fav).slice().reverse().map(t => ({
-ts: t.ts, ico: '💌', text: t.text, sub: pn() + '捡到的', key: 'tf:' + t.id, rec: t, mine: false
-}))).concat(d.mine.filter(m => m.fav).slice().reverse().map(m => ({
-ts: m.ts, ico: '🌊', text: m.text, sub: '我放入的', key: 'mf:' + m.id, rec: m, mine: true
-}))).sort((a, b) => b.ts - a.ts);
-if (!rows.length) {
-el.innerHTML = '<div class="dl-empty">' + (tab === 'mine' ? '还没有放过的瓶子。写一句话放进海里吧。' : tab === 'got' ? '还没有捡到的瓶子。去海边捡一个试试。' : tab === 'theirs' ? '还没有捡到过你说的话。多去捡几次，说不定就被 TA 捞起来了。' : '还没有收藏的瓶子。') + '</div>';
-return;
+`;
+var style = document.createElement('style');
+style.textContent = cssText;
+document.head.appendChild(style);
+/* ---------- 3. 界面结构（milk 原版 HTML） ---------- */
+var root = document.createElement('div');
+root.id = 'milk-decision-root';
+document.body.appendChild(root);
+root.innerHTML = `
+<div class="modal" id="decision-menu-modal">
+<div class="modal-content">
+<div class="modal-title">
+<i class="fas fa-balance-scale"></i><span>抉择助手</span>
+</div>
+<div class="decision-menu-grid">
+<div class="decision-option-card" id="open-coin-toss">
+<i class="fas fa-coins"></i>
+<h3>抛硬币</h3>
+<p>是 / 否 二元选择</p>
+</div>
+<div class="decision-option-card" id="open-wheel">
+<i class="fas fa-magic"></i>
+<h3>随机抽签</h3>
+<p>自定义选项随机抽取</p>
+</div>
+</div>
+<div class="modal-buttons">
+<button class="modal-btn modal-btn-secondary" id="close-decision-menu">关闭</button>
+</div>
+</div>
+</div>
+<div class="modal" id="wheel-modal">
+<div class="modal-content">
+<div class="modal-title">
+<i class="fas fa-magic"></i><span>随机抽签</span>
+</div>
+<div class="picker-box-stage">
+<div class="picker-cards-row" id="picker-cards-row"></div>
+<div class="picker-result-text" id="wheel-result"></div>
+</div>
+<div class="picker-controls">
+<div class="picker-options-label">选项列表（至少 2 项）</div>
+<div class="picker-options-list" id="wheel-options-list"></div>
+<button class="modal-btn modal-btn-secondary picker-add-btn" id="add-wheel-option">
+<i class="fas fa-plus"></i> 添加选项
+</button>
+</div>
+<div class="modal-buttons">
+<button class="modal-btn modal-btn-secondary" id="close-wheel">关闭</button>
+<button class="modal-btn modal-btn-primary" id="spin-wheel-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 12a10 10 0 0 1 18.8-3.6M22 12a10 10 0 0 1-18.8 3.6"/></svg> 开始抽签</button>
+<button class="modal-btn modal-btn-primary" id="send-wheel-result" style="display:none;">发送结果</button>
+</div>
+</div>
+</div>
+<div class="coin-toss-overlay" id="coin-toss-overlay">
+<div class="coin-container">
+<div class="coin" id="animated-coin">
+<div class="coin-face coin-front">
+<div class="coin-text-main">是</div>
+<div class="coin-text-sub">YES</div>
+</div>
+<div class="coin-face coin-back">
+<div class="coin-text-main">否</div>
+<div class="coin-text-sub">NO</div>
+</div>
+</div>
+</div>
+<div class="coin-result-container">
+<div class="coin-result-text" id="coin-result-text"></div>
+</div>
+<div class="coin-confirm-buttons" id="coin-action-area">
+<button class="coin-btn-action" id="cancel-coin-result">取消</button>
+<button class="coin-btn-action" id="retry-coin-toss"><i class="fas fa-redo-alt"></i> 再来一次</button>
+<button class="coin-btn-action coin-btn-primary" id="send-coin-result">发送结果</button>
+</div>
+</div>
+`;
+/* ---------- 4. 逻辑（milk 原版，发送结果改为接 mochi 聊天） ---------- */
+var menu = document.getElementById('decision-menu-modal');
+var wheel = document.getElementById('wheel-modal');
+var overlay = document.getElementById('coin-toss-overlay');
+var coin = document.getElementById('animated-coin');
+var coinResultText = document.getElementById('coin-result-text');
+var coinSendBtn = document.getElementById('send-coin-result');
+var coinRetryBtn = document.getElementById('retry-coin-toss');
+var coinCancelBtn = document.getElementById('cancel-coin-result');
+var wheelOptions = ['是', '否', '再想一想', '听你的'];
+var wheelResultText = '';
+var lastCoinResult = null;
+function showModal(m) { if (m) m.classList.add('show'); }
+function hideModal(m) { if (m) m.classList.remove('show'); }
+function hideCoin() {
+if (overlay) { overlay.classList.remove('visible', 'finished'); }
+lastCoinResult = null;
 }
-rows.slice(0, 60).forEach(r => {
-const row = document.createElement('div');
-row.className = 'dl-row glass';
-row.innerHTML =
-'<span class="dl-ico">' + r.ico + '</span>' +
-'<div class="dl-main"><div class="dl-txt"></div>' +
-'<div class="dl-sub">' + fmtTime(r.ts) + ' · ' + taFit(r.sub) + '</div></div>' +
-'<button class="dl-fav" title="收藏">' + (r.rec.fav ? '♥' : '♡') + '</button>';
-row.querySelector('.dl-txt').textContent = r.text;
-const fv = row.querySelector('.dl-fav');
-fv.addEventListener('click', (e) => {
-e.stopPropagation();
-r.rec.fav = r.rec.fav ? 0 : 1;
-save();
-fv.textContent = r.rec.fav ? '♥' : '♡';
-renderStats(); renderList();
-});
-el.appendChild(row);
-});
+function showCoin() {
+hideModal(menu); hideModal(wheel);
+if (overlay) { overlay.classList.remove('finished'); overlay.classList.add('visible'); }
+if (coin) coin.style.transform = '';
+startCoinFlipAnimation();
 }
-const KIND_ICO = { normal: '🫙', empty: '🫙', item: '🎁', special: '✨', ta: '💙', back: '🕰', reply: '💙' };
-function renderSea() {
-const night = isNight();
-page.classList.toggle('night', night);
-const cap = $('drift-sea-cap');
-if (cap) cap.textContent = night ? '夜里的海，把声音都藏起来了' : '两个世界之间的海';
-}
-function isNight() { const h = new Date().getHours(); return h >= 19 || h < 6; }
-function renderAll() { renderSea(); renderStats(); renderList(); tickCd(); updateTheirsTab(); }
-function updateTheirsTab() {
-const t = $('d-tab-theirs');
-if (t) t.textContent = pn() + '捡到的漂流瓶';
-}
-function ensureDaily() {
-const tk = todayKey();
-if (d.day.date !== tk) d.day = { date: tk, picks: 0, coin: 0, taGot: 0 };
-}
-let cdTimer = null;
-function tickCd() {
-const btn = $('drift-pick');
-if (!btn) return;
-clearInterval(cdTimer);
-const step = () => {
-const left = (d.cdUntil || 0) - Date.now();
-if (left > 0) {
-btn.disabled = true;
-btn.textContent = '海面恢复中… ' + Math.ceil(left / 1000) + 's';
-} else {
-btn.disabled = false;
-btn.textContent = '捡一个';
-clearInterval(cdTimer);
-}
-};
-step();
-cdTimer = setInterval(step, 500);
-}
-function infoModal() {
-if (!window.openModal) return;
-window.openModal('漂流瓶 · 关于这片海', '', function () {}, {
-noInput: true,
-staticText: '你写下的话会漂到两个世界之间：过几天它可能自己漂回来，也可能收到一句回应。\n\n有时候，也会捡到「' + pn() + '」漂来的瓶子——TA以前在聊天里说过的字卡，都可能单独漂回来；没有合适的话时，才从字卡库的漂流瓶分组里取一句。\n\n我捡瓶的时候，' + pn() + '偶尔也会从我在聊天里说过的话中捞起一句——它们会收进「' + pn() + '捡到的漂流瓶」分类里。\n\n每日首次捡瓶送 2 心意币，特殊瓶 +5（每天最多 10）。瓶子是偶尔的惊喜，不用一直守着海。'
-});
-}
-function openDrift() {
-d = load();
-ensureDaily();
-settleSchedules();
-save();
-document.querySelectorAll('.page').forEach(p => p.hidden = true);
-page.hidden = false;
-renderAll();
-d.lastVisit = Date.now();
-save();
-}
-function closeDrift(toChat) {
-save();
-page.hidden = true;
-document.querySelectorAll('.page').forEach(p => p.hidden = true);
-const target = toChat ? document.getElementById('page-chat') : document.getElementById('page-phone');
-if (target) target.hidden = false;
-}
-function boot() {
-d = load();
-const back = $('drift-back');
-if (back) back.addEventListener('click', function (e) {
-e.stopPropagation();
-closeDrift(window.__driftFrom === 'chat');
-window.__driftFrom = '';
-});
-const moreBtn = $('more-drift');
-if (moreBtn) moreBtn.addEventListener('click', function (e) {
-e.stopPropagation();
-const mp = $('chat-more-panel');
-if (mp) mp.hidden = true;
-window.__driftFrom = 'chat';
-openDrift();
-});
-const pick = $('drift-pick');
-if (pick) pick.addEventListener('click', function (e) { e.stopPropagation(); pickBottle(); });
-const put = $('d-put');
-if (put) put.addEventListener('click', function (e) { e.stopPropagation(); putBottle(); });
-const info = $('drift-info-btn');
-if (info) info.addEventListener('click', function (e) { e.stopPropagation(); infoModal(); });
-document.querySelectorAll('#page-drift .d-tab').forEach(tab => {
-tab.addEventListener('click', function () {
-document.querySelectorAll('#page-drift .d-tab').forEach(t => t.classList.remove('sel'));
-tab.classList.add('sel');
-curTab = tab.dataset.t || 'mine';
-renderList();
-});
-});
-document.addEventListener('contact-switched', function () {
-d = load();
-if (!page.hidden) { openRecId = ''; const ob = $('d-open'); if (ob) ob.hidden = true; renderAll(); }
-});
-document.addEventListener('visibilitychange', function () {
-if (!document.hidden && !page.hidden) { settleSchedules(); save(); renderAll(); }
-});
-window.__driftNext = function (k) { _forceKind = k; };
-window.__driftState = function () { return JSON.parse(JSON.stringify(d)); };
-window.__driftPeek = function () { const f = _forceKind; _forceKind = ''; const k = rollKind(); _forceKind = f; return k; };
-booted = true;
-}
-let booted = false;
-let curTab = 'mine';
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-else boot();
-})();
-} catch (__e) { try { console.error("[JS] drift-bottle.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
-(function () { try {
-(function () {
-const uid = window.activePrefix(); // 历史遗留声明（未使用），保留兼容
-const store = window.xyStore('xy-home-v2');
-const HISTORY_KEY = 'decision-history';
-const SETTINGS_KEY = 'decision-settings';
-const MIGRATE_KEY = 'dec-global-migrated';
+/* 轻提示（复用 mochi 的黑字 toast；没有就自己做一个） */
 function toast(msg) {
-let t = document.getElementById('cc-toast');
-if (!t) { t = document.createElement('div'); t.id = 'cc-toast'; document.body.appendChild(t); }
+var t = document.getElementById('cc-toast');
+if (!t) {
+t = document.createElement('div');
+t.id = 'cc-toast';
+t.style.cssText = 'position:fixed;left:50%;bottom:8%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:9px 18px;border-radius:18px;font-size:13px;z-index:100000;pointer-events:none;';
+document.body.appendChild(t);
+}
 t.textContent = msg;
-t.className = 'cc-toast'; void t.offsetWidth; t.className = 'cc-toast show';
-clearTimeout(t._timer);
-t._timer = setTimeout(() => { t.className = 'cc-toast'; }, 2000);
+t.style.opacity = '1';
+clearTimeout(t._tm);
+t._tm = setTimeout(function () { t.style.opacity = '0'; }, 2000);
 }
-function partnerName() { try { const s = window.activeStore(); return s.get('cs-lbl-partner') || s.get('lbl-partner') || 'TA'; } catch (e) { return 'TA'; } }
-function fmtDT(ts) {
-const d = new Date(ts);
-const p = (n) => (n < 10 ? '0' + n : '' + n);
-return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + p(d.getHours()) + ':' + p(d.getMinutes());
+/* 发送结果到 mochi 聊天（以 TA 回话样式出现） */
+function sendToChat(text) {
+try {
+if (window.chatAddIn) window.chatAddIn(text, { enter: true, silent: true });
+else toast('发送失败：聊天未就绪');
+} catch (e) { toast('发送失败，请重试'); }
 }
-let histReady = false;
-let histPending = null;
-function loadHistory() { try { const v = JSON.parse(store.get(HISTORY_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
-function saveHistory(h) {
-if (!histReady) {
-try { histPending = Array.isArray(h) ? h.slice() : []; } catch (e) {}
-return;
+/* ===== 抽签 ===== */
+function initPicker() {
+renderPickerOptions();
+renderPickerCards();
+var result = document.getElementById('wheel-result');
+var sendBtn = document.getElementById('send-wheel-result');
+var spinBtn = document.getElementById('spin-wheel-btn');
+if (result) { result.textContent = ''; result.classList.remove('show'); }
+if (sendBtn) sendBtn.style.display = 'none';
+if (spinBtn) spinBtn.disabled = false;
+wheelResultText = '';
 }
-store.set(HISTORY_KEY, JSON.stringify(h));
-}
-function flushPendingHist() {
-if (!histPending) return;
-const pending = histPending;
-histPending = null;
-if (!pending.length) return;
-const finish = (base) => {
-try { store.set(HISTORY_KEY, JSON.stringify(base)); } catch (e) {}
-try { renderHistory(); } catch (e) {}
-};
-const merge = (base) => {
-const have = {};
-base.forEach(x => { if (x && x.ts !== undefined) have[x.ts] = true; });
-pending.forEach(x => { if (x && x.ts !== undefined && !have[x.ts]) { base.push(x); have[x.ts] = true; } });
-finish(base);
-};
-if (window.idbGet) {
-window.idbGet('xy-home-v2:' + HISTORY_KEY).then(v => {
-let base = [];
-try { const p = typeof v === 'string' ? JSON.parse(v) : v; if (Array.isArray(p)) base = p; } catch (e) {}
-loadHistory().forEach(x => {
-if (x && x.ts !== undefined && !base.some(b => b && b.ts === x.ts)) base.push(x);
+function renderPickerOptions() {
+var list = document.getElementById('wheel-options-list');
+if (!list) return;
+list.innerHTML = '';
+var colors = ['#FFD93D','#FF6B6B','#6BCB77','#4D96FF','#E0C3FC','#FF9A8B','#A8D8EA','#C44569'];
+wheelOptions.forEach(function (opt, index) {
+var item = document.createElement('div');
+item.className = 'picker-option-item';
+var dot = document.createElement('span');
+dot.className = 'picker-option-color-dot';
+dot.style.background = colors[index % colors.length];
+var input = document.createElement('input');
+input.type = 'text';
+input.className = 'picker-option-input';
+input.value = opt;
+input.placeholder = '输入选项...';
+var remove = document.createElement('span');
+remove.className = 'picker-option-remove';
+remove.innerHTML = '<i class="fas fa-times"></i>';
+input.addEventListener('input', function (e) {
+wheelOptions[index] = e.target.value;
+renderPickerCards();
 });
-merge(base);
-}).catch(() => merge(loadHistory()));
+remove.addEventListener('click', function () {
+if (wheelOptions.length <= 2) { toast('至少保留两个选项'); return; }
+wheelOptions.splice(index, 1);
+renderPickerOptions();
+renderPickerCards();
+});
+item.appendChild(dot);
+item.appendChild(input);
+item.appendChild(remove);
+list.appendChild(item);
+});
+}
+function renderPickerCards(selectedIndex) {
+if (selectedIndex === undefined) selectedIndex = -1;
+var row = document.getElementById('picker-cards-row');
+if (!row) return;
+var colors = ['#FFD93D','#FF6B6B','#6BCB77','#4D96FF','#E0C3FC','#FF9A8B','#A8D8EA','#C44569'];
+row.innerHTML = '';
+wheelOptions.forEach(function (opt, i) {
+var card = document.createElement('div');
+card.className = 'picker-card';
+if (selectedIndex >= 0) {
+if (i === selectedIndex) card.classList.add('selected');
+else card.classList.add('unselected');
+}
+if (selectedIndex >= 0 && i === selectedIndex) {
+card.style.background = 'linear-gradient(135deg,' + colors[i % colors.length] + ',' + colors[(i + 2) % colors.length] + ')';
+card.style.borderColor = 'transparent';
+card.style.color = '#fff';
 } else {
-merge(loadHistory());
+card.style.borderTop = '3px solid ' + colors[i % colors.length];
+}
+card.style.animationDelay = (i * 0.06) + 's';
+var label = opt || ('选项' + (i + 1));
+card.textContent = label.length > 6 ? label.slice(0, 5) + '…' : label;
+row.appendChild(card);
+});
+}
+function doPick() {
+if (wheelOptions.length < 2) { toast('请至少添加两个选项'); return; }
+var spinBtn = document.getElementById('spin-wheel-btn');
+var resultDisplay = document.getElementById('wheel-result');
+var sendBtn = document.getElementById('send-wheel-result');
+spinBtn.disabled = true;
+sendBtn.style.display = 'none';
+resultDisplay.classList.remove('show');
+resultDisplay.textContent = '';
+var flashCount = 0;
+var totalFlashes = 16 + Math.floor(Math.random() * 8);
+var finalIndex = Math.floor(Math.random() * wheelOptions.length);
+function flash() {
+var row = document.getElementById('picker-cards-row');
+if (!row) return;
+var cards = row.querySelectorAll('.picker-card');
+var showIdx;
+if (flashCount < totalFlashes - 3) {
+showIdx = Math.floor(Math.random() * wheelOptions.length);
+} else {
+showIdx = finalIndex;
+}
+cards.forEach(function (c, i) {
+if (i === showIdx) {
+c.style.transform = 'translateY(-4px) scale(1.06)';
+c.style.background = 'linear-gradient(135deg, var(--milk-accent), rgba(var(--milk-accent-rgb),0.7))';
+c.style.borderTopColor = 'transparent';
+c.style.color = '#fff';
+} else {
+c.style.transform = '';
+c.style.background = '';
+c.style.borderTopColor = '';
+c.style.color = '';
+}
+});
+flashCount++;
+var delay = flashCount < 8 ? 80 : flashCount < 14 ? 130 : 250;
+if (flashCount < totalFlashes) {
+setTimeout(flash, delay);
+} else {
+setTimeout(function () {
+renderPickerCards(finalIndex);
+wheelResultText = wheelOptions[finalIndex];
+resultDisplay.innerHTML = '<i class="fas fa-star" style="font-size:14px;margin-right:6px;"></i>';
+resultDisplay.appendChild(document.createTextNode(wheelResultText));
+resultDisplay.classList.add('show');
+spinBtn.disabled = false;
+sendBtn.style.display = 'inline-block';
+}, 300);
 }
 }
-function readJsonLs(lsKey) {
-try { const v = localStorage.getItem(lsKey); const p = v == null ? null : JSON.parse(v); return p && typeof p === 'object' ? p : null; } catch (e) { return null; }
+flash();
 }
-function migrateGlobalData() {
+/* ===== 抛硬币 ===== */
+function startCoinFlipAnimation() {
+if (!coin || !overlay) return;
+overlay.classList.remove('finished');
+if (coinResultText) coinResultText.textContent = '';
+if (coinSendBtn) coinSendBtn.style.display = 'none';
+if (coinRetryBtn) coinRetryBtn.style.display = 'none';
+var isHeads = Math.random() < 0.5;
+lastCoinResult = isHeads ? '正面 ☀️' : '反面 🌙';
+coin.classList.remove('flipping-heads', 'flipping-tails');
+void coin.offsetWidth;
+coin.classList.add(isHeads ? 'flipping-heads' : 'flipping-tails');
+setTimeout(function () {
+coin.classList.remove('flipping-heads', 'flipping-tails');
+coin.style.transform = isHeads ? 'rotateY(0deg)' : 'rotateY(180deg)';
+if (coinResultText) coinResultText.textContent = lastCoinResult;
+overlay.classList.add('finished');
+if (coinSendBtn) coinSendBtn.style.display = '';
+if (coinRetryBtn) coinRetryBtn.style.display = '';
+}, 3050);
+}
+/* ---------- 5. 按钮绑定 ---------- */
+document.getElementById('open-coin-toss').addEventListener('click', showCoin);
+document.getElementById('open-wheel').addEventListener('click', function () {
+hideModal(menu); hideCoin();
+initPicker();
+showModal(wheel);
+});
+document.getElementById('close-decision-menu').addEventListener('click', function () { hideModal(menu); });
+document.getElementById('close-wheel').addEventListener('click', function () { hideModal(wheel); });
+document.getElementById('add-wheel-option').addEventListener('click', function () {
+wheelOptions.push('选项 ' + (wheelOptions.length + 1));
+renderPickerOptions();
+renderPickerCards();
+});
+document.getElementById('spin-wheel-btn').addEventListener('click', doPick);
+document.getElementById('send-wheel-result').addEventListener('click', function () {
+if (wheelResultText) {
+sendToChat('✨ 随机抽签结果：' + wheelResultText);
+hideModal(wheel);
+wheelResultText = '';
+var sendBtn = document.getElementById('send-wheel-result');
+if (sendBtn) sendBtn.style.display = 'none';
+var spinBtn = document.getElementById('spin-wheel-btn');
+if (spinBtn) spinBtn.disabled = false;
+var resultEl = document.getElementById('wheel-result');
+if (resultEl) { resultEl.textContent = ''; resultEl.classList.remove('show'); }
+}
+});
+if (coinCancelBtn) coinCancelBtn.addEventListener('click', hideCoin);
+if (coinRetryBtn) coinRetryBtn.addEventListener('click', startCoinFlipAnimation);
+if (coinSendBtn) coinSendBtn.addEventListener('click', function () {
+if (lastCoinResult) {
+sendToChat('🎲 抛硬币结果：' + lastCoinResult);
+hideCoin();
+}
+});
+/* ---------- 6. 对外入口：让 mochi 的「帮我决定」按钮点开就是这个 ---------- */
+window.openDecision = function () {
+hideCoin();
+hideModal(wheel);
+showModal(menu);
+};
+window.openMilkDecision = window.openDecision;
+})();
+/* 把「＋」菜单里「帮我决定」按钮文字改为「抉择」（运行期替换，build 后依然生效） */
+(function () {
+function rename() {
 try {
-if (store.get(MIGRATE_KEY)) return Promise.resolve();
-const HIST_RE = /^xy-home-v2:[^:]+:decision-history$/;
-const SET_RE = /^xy-home-v2:[^:]+:decision-settings$/;
-const histArrs = [], setCands = [];
-try {
-for (let i = 0; i < localStorage.length; i++) {
-const k = localStorage.key(i);
-if (!k || k === 'xy-home-v2:' + HISTORY_KEY || k === 'xy-home-v2:' + SETTINGS_KEY) continue;
-if (HIST_RE.test(k)) { const v = readJsonLs(k); if (Array.isArray(v)) histArrs.push({ key: k, arr: v }); }
-else if (SET_RE.test(k)) { const v = readJsonLs(k); if (v && !Array.isArray(v)) setCands.push({ key: k, val: v }); }
+var b = document.getElementById('more-decide');
+if (!b) return;
+var walk = document.createTreeWalker(b, NodeFilter.SHOW_TEXT, null);
+var n;
+while (walk.nextNode()) {
+n = walk.currentNode;
+if (n.nodeValue && n.nodeValue.indexOf('帮我决定') !== -1) {
+n.nodeValue = n.nodeValue.split('帮我决定').join('抉择');
+}
 }
 } catch (e) {}
-let scan = Promise.resolve();
-if (window.idbGetAllKeys && window.idbGet) {
-scan = window.idbGetAllKeys().then(function (keys) {
-const want = (keys || []).filter(function (k) { return typeof k === 'string' && k !== 'xy-home-v2:' + HISTORY_KEY && k !== 'xy-home-v2:' + SETTINGS_KEY && (HIST_RE.test(k) || SET_RE.test(k)); });
-return want.reduce(function (p, k) {
-return p.then(function () {
-return Promise.resolve(window.idbGet(k)).then(function (v) {
-let parsed = null;
-try { parsed = typeof v === 'string' ? JSON.parse(v) : v; } catch (e) {}
-if (!parsed) return;
-if (HIST_RE.test(k) && Array.isArray(parsed)) histArrs.push({ key: k, arr: parsed });
-else if (SET_RE.test(k) && typeof parsed === 'object') setCands.push({ key: k, val: parsed });
-}).catch(function () {});
-});
-}, Promise.resolve());
-}).catch(function () {});
 }
-return scan.then(function () {
-const merged = {};
-loadHistory().forEach(x => { if (x && x.ts !== undefined) merged[x.ts] = x; });
-histArrs.forEach(h => h.arr.forEach(x => { if (x && x.ts !== undefined && !merged[x.ts]) merged[x.ts] = x; }));
-const out = Object.keys(merged).map(k => merged[k]);
-out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-if (out.length) store.set(HISTORY_KEY, JSON.stringify(out.slice(0, 1000)));
-if (readJsonLs('xy-home-v2:' + SETTINGS_KEY) === null) {
-setCands.sort(function (a, b) {
-return (a.key.indexOf(':default:') >= 0 ? 0 : 1) - (b.key.indexOf(':default:') >= 0 ? 0 : 1);
-});
-if (setCands[0]) store.set(SETTINGS_KEY, JSON.stringify(setCands[0].val));
-}
-histArrs.concat(setCands.map(s => ({ key: s.key }))).forEach(h => {
-try { localStorage.removeItem(h.key); } catch (e) {}
-try { if (window.idbDelete) window.idbDelete(h.key); } catch (e) {}
-});
-store.set(MIGRATE_KEY, '1');
-});
-} catch (e) { return Promise.resolve(); }
-}
-try {
-document.addEventListener('mochi-restore-done', function () {
-Promise.resolve(migrateGlobalData()).catch(function () {}).then(function () {
-histReady = true;
-flushPendingHist();
-});
-});
-} catch (e) {}
-document.addEventListener('contact-switched', function () {
-try { histReady = true; histPending = null; } catch (e) {}
-try { if (decideTimer) { clearTimeout(decideTimer); decideTimer = null; } } catch (e) {}
-try { if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; } } catch (e) {}
-});
-function loadSettings() {
-const d = { replyToChat: true, thinkA: 3, thinkB: 3, maxB: 1 };
-try { return Object.assign(d, JSON.parse(store.get(SETTINGS_KEY) || '{}')); } catch (e) { return d; }
-}
-function saveSettings(s) { store.set(SETTINGS_KEY, JSON.stringify(s)); }
-function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-let activeTab = 'typea';
-let countdownTimer = null;
-let decideTimer = null; // v3.6.x：结果 setTimeout 句柄——防连点导致历史/聊天消息重复
-const panel = document.getElementById('chat-decision-panel');
-const body = document.getElementById('chat-decision-body');
-function ensureBuilt() {
-if (!body || body.dataset.built) return;
-body.innerHTML = panelHtml();
-bindEvents();
-body.dataset.built = '1';
-}
-function openPanel() {
-if (!body || !panel) return;
-ensureBuilt();
-activeTab = 'typea';
-document.querySelectorAll('#chat-decision-body .dc-tab').forEach(tb => tb.classList.toggle('sel', tb.dataset.dtab === 'typea'));
-document.querySelectorAll('#chat-decision-body .dc-panel').forEach(p => { p.hidden = p.dataset.dpanel !== 'typea'; });
-applySettings();
-panel.hidden = false;
-}
-function closePanel() {
-if (panel) panel.hidden = true;
-}
-function panelHtml() {
-return '' +
-'<div class="dc-tabs"><button class="dc-tab sel" data-dtab="typea">是/否/半对</button>' +
-'<button class="dc-tab" data-dtab="typeb">自定义选项</button>' +
-'<button class="dc-tab" data-dtab="history">历史记录</button></div>' +
-'<div class="dc-panel" data-dpanel="typea">' +
-'<div class="sm-fld"><label>输入你的纠结</label><div class="dec-inp-wrap"><textarea class="tc-input" id="dec-q-a" rows="3" placeholder="例如：我今晚该吃火锅吗？"></textarea><button class="dec-inp-clear" data-clear="dec-q-a" aria-label="清空" title="清空">✕</button></div></div>' +
-'<div class="gs-row"><span>思考时间（秒）</span><div class="stepper" id="dec-think-a" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="dec-think-a-val" readonly><button class="stp-max">+</button></div></div>' +
-'<button class="ta-add-btn" style="width:100%;margin-top:10px" id="dec-go-a">让对方决定</button>' +
-'<div class="dc-result" id="dec-result-a" hidden></div></div>' +
-'<div class="dc-panel" data-dpanel="typeb" hidden>' +
-'<div class="sm-fld"><label>输入你的纠结</label><div class="dec-inp-wrap"><textarea class="tc-input" id="dec-q-b" rows="2" placeholder="例如：我今晚该吃什么？"></textarea><button class="dec-inp-clear" data-clear="dec-q-b" aria-label="清空" title="清空">✕</button></div></div>' +
-'<div class="sm-fld"><label>输入选项（每行一个）</label><div class="dec-inp-wrap"><textarea class="tc-input" id="dec-opts" rows="4" placeholder="吃火锅&#10;吃烧烤&#10;吃日料"></textarea><button class="dec-inp-clear" data-clear="dec-opts" aria-label="清空" title="清空">✕</button></div></div>' +
-'<div class="gs-row"><span>思考时间（秒）</span><div class="stepper" id="dec-think-b" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="dec-think-b-val" readonly><button class="stp-max">+</button></div></div>' +
-'<div class="gs-row"><span>最多选几个</span><div class="stepper" id="dec-max-b" data-min="1" data-max="5" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="dec-max-b-val" readonly><button class="stp-max">+</button></div></div>' +
-'<button class="ta-add-btn" style="width:100%;margin-top:10px" id="dec-go-b">让对方决定</button>' +
-'<div class="dc-result" id="dec-result-b" hidden></div></div>' +
-'<div class="dc-panel" data-dpanel="history" hidden>' +
-'<div class="sm-set-row"><span>结果发送到聊天</span><label class="toggle"><input type="checkbox" id="dec-reply-chat"><span class="tk"></span></label></div>' +
-'<div id="dec-history"></div></div>' +
-'<div class="dc-credit">帮我决定功能参考：小红书@FelixFelicis（9416318007）</div>';
-}
-function applySettings() {
-const s = loadSettings();
-const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = String(v); };
-setVal('dec-think-a-val', s.thinkA);
-setVal('dec-think-b-val', s.thinkB);
-setVal('dec-max-b-val', s.maxB);
-const rc = document.getElementById('dec-reply-chat');
-if (rc) rc.checked = !!s.replyToChat;
-}
-function bindEvents() {
-const scope = '#chat-decision-body';
-document.querySelectorAll(scope + ' .dc-tab').forEach(tb => {
-tb.addEventListener('click', () => {
-activeTab = tb.dataset.dtab;
-document.querySelectorAll(scope + ' .dc-tab').forEach(x => x.classList.toggle('sel', x === tb));
-document.querySelectorAll(scope + ' .dc-panel').forEach(p => { p.hidden = p.dataset.dpanel !== activeTab; });
-if (activeTab === 'history') renderHistory();
-});
-});
-const sMap = { 'dec-think-a': 'thinkA', 'dec-think-b': 'thinkB', 'dec-max-b': 'maxB' };
-Object.keys(sMap).forEach(id => {
-const st = document.getElementById(id);
-if (!st) return;
-const val = st.querySelector('.stp-val');
-const min = parseInt(st.dataset.min, 10), max = parseInt(st.dataset.max, 10);
-const save = (v) => { const s = loadSettings(); s[sMap[id]] = v; saveSettings(s); };
-st.querySelector('.stp-min').addEventListener('click', () => {
-const nv = Math.max(min, parseInt(val.value, 10) - 1);
-val.value = nv; save(nv);
-});
-st.querySelector('.stp-max').addEventListener('click', () => {
-const nv = Math.min(max, parseInt(val.value, 10) + 1);
-val.value = nv; save(nv);
-});
-});
-const goA = document.getElementById('dec-go-a');
-if (goA) goA.addEventListener('click', () => makeDecision('typea'));
-const goB = document.getElementById('dec-go-b');
-if (goB) goB.addEventListener('click', () => makeDecision('typeb'));
-document.querySelectorAll(scope + ' .dec-inp-clear').forEach(btn => {
-btn.addEventListener('click', () => {
-const id = btn.dataset.clear;
-const ta = document.getElementById(id);
-if (!ta) return;
-const box = ta.__ceBox;
-if (box) box.textContent = '';
-else ta.value = '';
-ta.focus();
-toast('已清空');
-});
-});
-const rc = document.getElementById('dec-reply-chat');
-if (rc) { rc.addEventListener('change', () => { const s = loadSettings(); s.replyToChat = rc.checked; saveSettings(s); }); }
-}
-function makeDecision(type) {
-if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-if (decideTimer) { clearTimeout(decideTimer); decideTimer = null; }
-let question, thinkTime, maxSelect;
-if (type === 'typea') {
-question = (document.getElementById('dec-q-a').value || '').trim();
-thinkTime = parseInt(document.getElementById('dec-think-a-val').value, 10) || 3;
-maxSelect = 1; // 是/否/半对：固定单选，最多选几个只用于自定义选项
-} else {
-question = (document.getElementById('dec-q-b').value || '').trim();
-thinkTime = parseInt(document.getElementById('dec-think-b-val').value, 10) || 3;
-maxSelect = parseInt(document.getElementById('dec-max-b-val').value, 10) || 1;
-}
-if (!question) { toast('请输入你的问题'); return; }
-let options = null;
-if (type === 'typeb') {
-const optsText = (document.getElementById('dec-opts').value || '').trim();
-if (!optsText) { toast('请输入选项'); return; }
-options = optsText.split('\n').map(o => o.trim()).filter(Boolean);
-if (options.length < 2) { toast('至少需要 2 个选项'); return; }
-}
-const resultEl = document.getElementById(type === 'typea' ? 'dec-result-a' : 'dec-result-b');
-resultEl.hidden = false;
-resultEl.classList.remove('done');
-resultEl.textContent = '对方正在思考中… ' + thinkTime + ' 秒';
-let count = thinkTime;
-countdownTimer = setInterval(() => {
-count--;
-if (count > 0) resultEl.textContent = '对方正在思考中… ' + count + ' 秒';
-}, 1000);
-const myCid = window.__activeCid || 'default';
-decideTimer = setTimeout(() => {
-decideTimer = null;
-if ((window.__activeCid || 'default') !== myCid) return;
-if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-let result;
-if (type === 'typea') {
-const pool = ['是', '否', '半对', '这个我不选', '正在忙，暂未回复'];
-const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-const n = Math.floor(Math.random() * maxSelect) + 1;
-result = shuffled.slice(0, Math.min(n, shuffled.length)).join('、');
-} else {
-const pool = options.slice().concat(['这个我不选', '正在忙，暂未回复']);
-const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-const n = Math.floor(Math.random() * maxSelect) + 1;
-result = shuffled.slice(0, Math.min(n, shuffled.length)).join('、');
-}
-resultEl.textContent = result;
-resultEl.classList.add('done');
-const h = loadHistory();
-h.unshift({ id: 'd_' + Date.now(), type: type, question: question, result: result, options: options, ts: Date.now() });
-if (h.length > 1000) h.splice(1000);
-saveHistory(h);
-if (loadSettings().replyToChat) {
-const replyText = type === 'typeb' && options
-? '【帮我决定】' + question + '\n选项：\n' + options.map((o, i) => (i + 1) + '. ' + o).join('\n') + '\n→ ' + result
-: '【帮我决定】' + question + ' → ' + result;
-if (window.chatAddIn) window.chatAddIn(replyText, { enter: true, silent: true });
-}
-toast('帮我决定已完成');
-}, thinkTime * 1000);
-}
-function renderHistory() {
-const el = document.getElementById('dec-history');
-if (!el) return;
-const h = loadHistory();
-el.innerHTML = h.length
-? h.map(r =>
-'<div class="tc-listitem">' +
-'<div class="tc-li-q">' + esc(r.question) + '</div>' +
-(r.options && r.options.length ? '<div class="dc-h-options">选项：' + r.options.map((o, i) => (i + 1) + '. ' + esc(o)).join('，') + '</div>' : '') +
-'<div class="dc-h-result">→ ' + esc(r.result) + '</div>' +
-'<div class="dc-h-time">' + fmtDT(r.ts) + '</div></div>'
-).join('')
-: '<div class="ta-empty">暂无帮我决定记录</div>';
-}
-window.openDecision = openPanel;
+if (document.body) rename(); else document.addEventListener('DOMContentLoaded', rename);
 })();
 } catch (__e) { try { console.error("[JS] decision.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
 (function () { try {

@@ -1,356 +1,604 @@
-// ===== 功能：帮我决定（仿星言简约版【帮我决定】完整版） =====
-// 类型A：是/否/半对 随机决定；类型B：自定义选项随机决定
-// 思考时间倒计时、最多选几个（可多选）、决定结果、历史记录
-// 结果可发送到聊天（联系人回复样式）
-// 功能参考：小红书@FelixFelicis（9416318007）
+/* =========================================================
+   milk「抉择助手」原样移植（抛硬币 + 随机抽签）
+   替换 mochi 原来的「帮我决定」。
+   视觉/动画保持 milk 原版，仅结果发送接到 mochi 聊天。
+   ========================================================= */
 (function () {
-  const uid = window.activePrefix(); // 历史遗留声明（未使用），保留兼容
-  // v3.14.x：数据/历史改全局共享——store 走根命名空间 xy-home-v2，所有桌面互通一份，
-  // 不再随联系人隔离（同 period/表情包/存钱罐的全局键先例）；昵称展示仍按当前桌面动态读
-  const store = window.xyStore('xy-home-v2');
-  const HISTORY_KEY = 'decision-history';
-  const SETTINGS_KEY = 'decision-settings';
-  const MIGRATE_KEY = 'dec-global-migrated';
+  'use strict';
 
+  /* ---------- 0. 引入 Font Awesome（milk 原版图标依赖它） ---------- */
+  if (!document.getElementById('milk-fa')) {
+    var fa = document.createElement('link');
+    fa.id = 'milk-fa';
+    fa.rel = 'stylesheet';
+    fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';
+    document.head.appendChild(fa);
+  }
+
+  /* ---------- 1. 主题色（想改成你 milk 里的主色，改这一组即可） ----------
+     如果你想要和你 milk 网站一模一样的颜色，把下面这 7 行的
+     颜色值换成你 milk 主题里 :root 的 --accent-color 等数值即可。 */
+  var PALETTE = {
+    accent: '#ff6b81',        // 主色
+    accentRGB: '255,107,129', // 主色的 RGB（逗号分隔）
+    bg1: '#ffffff',           // 弹窗卡片底色
+    bg2: '#ffffff',           // 渐变第二底色
+    line: '#eee8f0',          // 边框色
+    ink: '#2e2a38',           // 主文字
+    sub: '#948d9e',           // 次级文字
+    soft: '#f6f2f8'           // 浅色按钮/输入底色
+  };
+
+  /* ---------- 2. 样式（milk 原版 CSS，仅把变量名换成上面这组） ---------- */
+  var cssText = `
+  #milk-decision-root {
+    --milk-accent: ${PALETTE.accent};
+    --milk-accent-rgb: ${PALETTE.accentRGB};
+    --milk-bg1: ${PALETTE.bg1};
+    --milk-bg2: ${PALETTE.bg2};
+    --milk-line: ${PALETTE.line};
+    --milk-ink: ${PALETTE.ink};
+    --milk-sub: ${PALETTE.sub};
+    --milk-soft: ${PALETTE.soft};
+    --milk-font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+
+  /* ===== 弹窗外壳（milk 风格：居中卡片 + 半透明毛玻璃底） ===== */
+  #milk-decision-root .modal {
+    position: fixed; inset: 0; z-index: 9999;
+    display: none;
+    align-items: center; justify-content: center;
+    background: rgba(20,20,20,0.5);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  #milk-decision-root .modal.show { display: flex; }
+  #milk-decision-root .modal-content {
+    width: min(92vw, 400px);
+    max-height: 90vh; overflow-y: auto;
+    background: var(--milk-bg2);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    padding: 22px 20px 16px;
+    font-family: var(--milk-font);
+    color: var(--milk-ink);
+    animation: milkIn .28s cubic-bezier(0.34,1.3,0.64,1);
+  }
+  @keyframes milkIn { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  #milk-decision-root .modal-content::-webkit-scrollbar { display: none; }
+  #milk-decision-root .modal-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 17px; font-weight: 700; color: var(--milk-ink);
+    margin-bottom: 4px;
+  }
+  #milk-decision-root .modal-title i { color: var(--milk-accent); font-size: 16px; }
+  #milk-decision-root .modal-buttons {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-top: 16px; flex-wrap: wrap;
+  }
+  #milk-decision-root .modal-btn {
+    padding: 10px 20px; border: none; border-radius: 12px;
+    font-size: 13px; cursor: pointer; font-family: var(--milk-font);
+    transition: all 0.2s ease; font-weight: 600;
+  }
+  #milk-decision-root .modal-btn:active { transform: scale(0.96); }
+  #milk-decision-root .modal-btn-primary { background: var(--milk-accent); color: #fff; }
+  #milk-decision-root .modal-btn-primary:hover { filter: brightness(1.08); }
+  #milk-decision-root .modal-btn-secondary { background: var(--milk-soft); color: var(--milk-ink); }
+  #milk-decision-root .modal-btn-secondary:hover { background: rgba(0,0,0,0.06); }
+  #milk-decision-root .modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ===== 抉择助手菜单（两张卡片） ===== */
+  #milk-decision-root .decision-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 14px 0; }
+  #milk-decision-root .decision-option-card {
+    background: var(--milk-bg1);
+    border: 1px solid var(--milk-line);
+    border-radius: 16px; padding: 26px 12px; text-align: center;
+    cursor: pointer; transition: all 0.25s ease;
+  }
+  #milk-decision-root .decision-option-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--milk-accent);
+    box-shadow: 0 6px 16px rgba(var(--milk-accent-rgb),0.2);
+  }
+  #milk-decision-root .decision-option-card i { font-size: 34px; margin-bottom: 10px; color: var(--milk-accent); display:block; }
+  #milk-decision-root .decision-option-card h3 { font-size: 16px; margin: 0 0 4px; color: var(--milk-ink); }
+  #milk-decision-root .decision-option-card p { font-size: 12px; margin: 0; color: var(--milk-sub); }
+
+  /* ===== 随机抽签 ===== */
+  #milk-decision-root .picker-box-stage {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    margin: 8px 0;
+  }
+  #milk-decision-root .picker-cards-row {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    min-height: 90px; align-items: center; width: 100%;
+  }
+  #milk-decision-root .picker-card {
+    width: 70px; height: 92px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--milk-bg2) 0%, var(--milk-bg1) 100%);
+    border: 1.5px solid var(--milk-line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--milk-sub);
+    cursor: default; transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    text-align: center; padding: 6px; word-break: break-all; position: relative; overflow: hidden;
+    animation: milkCardEnter 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes milkCardEnter { from { opacity: 0; transform: translateY(12px) scale(0.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  #milk-decision-root .picker-card.selected {
+    background: linear-gradient(135deg, var(--milk-accent) 0%, rgba(var(--milk-accent-rgb),0.75) 100%);
+    color: #fff; border-color: transparent;
+    transform: translateY(-6px) scale(1.08);
+    box-shadow: 0 10px 28px rgba(var(--milk-accent-rgb),0.4);
+    animation: milkCardWin 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes milkCardWin {
+    0% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-10px) scale(1.12) rotate(-2deg); }
+    70% { transform: translateY(-5px) scale(1.1) rotate(1deg); }
+    100% { transform: translateY(-6px) scale(1.08) rotate(0deg); }
+  }
+  #milk-decision-root .picker-card.unselected { opacity: 0.4; transform: scale(0.94); }
+  #milk-decision-root .picker-result-text {
+    font-size: 18px; font-weight: 700; color: var(--milk-accent); text-align: center;
+    min-height: 28px; padding: 8px 16px; border-radius: 10px;
+    background: rgba(var(--milk-accent-rgb),0.08);
+    border: 1px solid rgba(var(--milk-accent-rgb),0.2);
+    opacity: 0; transition: opacity 0.4s ease; width: 100%;
+  }
+  #milk-decision-root .picker-result-text.show { opacity: 1; }
+  #milk-decision-root .picker-controls { width: 100%; }
+  #milk-decision-root .picker-options-label {
+    font-size: 12px; font-weight: 600; color: var(--milk-sub);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  #milk-decision-root .picker-options-list {
+    max-height: 150px; overflow-y: auto;
+    border: 1.5px solid var(--milk-line); border-radius: 12px;
+    padding: 6px; margin-bottom: 10px; background: var(--milk-bg1);
+  }
+  #milk-decision-root .picker-options-list::-webkit-scrollbar { display: none; }
+  #milk-decision-root .picker-option-item { display: flex; gap: 8px; padding: 7px 8px; align-items: center; border-radius: 8px; }
+  #milk-decision-root .picker-option-item:hover { background: var(--milk-soft); }
+  #milk-decision-root .picker-option-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  #milk-decision-root .picker-option-input {
+    flex: 1; border: none; background: transparent;
+    border-bottom: 1px solid var(--milk-line); padding: 3px 4px;
+    font-size: 14px; outline: none; font-family: var(--milk-font); color: var(--milk-ink);
+  }
+  #milk-decision-root .picker-option-remove { color: var(--milk-sub); cursor: pointer; padding: 4px 6px; border-radius: 6px; font-size: 12px; }
+  #milk-decision-root .picker-option-remove:hover { color: #ff4757; background: rgba(255,71,87,0.1); }
+  #milk-decision-root .picker-add-btn {
+    width: 100%; margin-bottom: 0;
+    font-size: 13px; border-style: dashed !important;
+    opacity: 0.75; background: var(--milk-soft);
+  }
+  #milk-decision-root .picker-add-btn:hover { opacity: 1 !important; }
+
+  /* ===== 抛硬币全屏浮层（milk 原版：深色毛玻璃 + 3D 翻币） ===== */
+  #milk-decision-root .coin-toss-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(20,20,20,0.72);
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    z-index: 9999; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.4s ease;
+    font-family: var(--milk-font);
+  }
+  #milk-decision-root .coin-toss-overlay.visible { display: flex; opacity: 1; }
+  #milk-decision-root .coin-container { perspective: 1200px; margin-bottom: 20px; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.25)); }
+  #milk-decision-root .coin { width: 170px; height: 170px; position: relative; transform-style: preserve-3d; border-radius: 50%; }
+  #milk-decision-root .coin.flipping-heads { animation: milkFlipHeads 3s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+  #milk-decision-root .coin.flipping-tails { animation: milkFlipTails 3s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+  #milk-decision-root .coin-face {
+    position: absolute; width: 100%; height: 100%;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    border: 8px solid rgba(255,255,255,0.18);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.08);
+  }
+  #milk-decision-root .coin-front { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); color: #333; transform: rotateY(0deg); }
+  #milk-decision-root .coin-front::after {
+    content: ""; position: absolute; top: 9px; left: 9px; right: 9px; bottom: 9px;
+    border: 1px dashed #bdc3c7; border-radius: 50%;
+  }
+  #milk-decision-root .coin-back { background: linear-gradient(135deg, #2c3e50 0%, #000000 100%); color: #fdfbfb; transform: rotateY(180deg); }
+  #milk-decision-root .coin-back::after {
+    content: ""; position: absolute; top: 9px; left: 9px; right: 9px; bottom: 9px;
+    border: 1px dashed #7f8c8d; border-radius: 50%;
+  }
+  #milk-decision-root .coin-text-main { font-size: 46px; font-weight: 400; letter-spacing: 4px; margin-bottom: 4px; }
+  #milk-decision-root .coin-text-sub { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; opacity: 0.75; font-family: sans-serif; }
+  #milk-decision-root .coin-result-container { min-height: 50px; display: flex; justify-content: center; }
+  #milk-decision-root .coin-result-text {
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    font-size: 15px; color: #fff; font-weight: 300; opacity: 0.8;
+    letter-spacing: 3px; transition: all 0.5s cubic-bezier(0.2,0.8,0.2,1);
+    margin-top: 16px; text-align: center;
+  }
+  #milk-decision-root .coin-toss-overlay.finished .coin-result-text {
+    font-size: 28px; opacity: 1; font-weight: 500; letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.5); transform: scale(1.1);
+  }
+  #milk-decision-root .coin-confirm-buttons {
+    display: flex; gap: 14px; margin-top: 26px; justify-content: center;
+    opacity: 0; transform: translateY(20px); pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  #milk-decision-root .coin-toss-overlay.finished .coin-confirm-buttons {
+    opacity: 1; transform: translateY(0); pointer-events: auto; transition-delay: 0.3s;
+  }
+  #milk-decision-root .coin-btn-action {
+    padding: 10px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85);
+    font-size: 13px; cursor: pointer; transition: all 0.2s ease;
+    font-family: var(--milk-font); backdrop-filter: blur(5px);
+  }
+  #milk-decision-root .coin-btn-action:hover { background: rgba(255,255,255,0.2); color: #fff; transform: translateY(-2px); }
+  #milk-decision-root .coin-btn-primary { background: #fff; color: #000; border-color: #fff; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+  #milk-decision-root .coin-btn-primary:hover { background: #f0f0f0; box-shadow: 0 6px 20px rgba(255,255,255,0.3); transform: translateY(-2px) scale(1.02); }
+  @keyframes milkFlipHeads {
+    0% { transform: rotateY(0deg) scale(1); animation-timing-function: ease-in; }
+    35% { transform: rotateY(900deg) scale(1.35); animation-timing-function: ease-out; }
+    75% { transform: rotateY(1800deg) scale(1.1); }
+    100% { transform: rotateY(2160deg) scale(1); }
+  }
+  @keyframes milkFlipTails {
+    0% { transform: rotateY(0deg) scale(1); animation-timing-function: ease-in; }
+    35% { transform: rotateY(900deg) scale(1.35); animation-timing-function: ease-out; }
+    75% { transform: rotateY(1980deg) scale(1.1); }
+    100% { transform: rotateY(2340deg) scale(1); }
+  }
+  `;
+
+  var style = document.createElement('style');
+  style.textContent = cssText;
+  document.head.appendChild(style);
+
+  /* ---------- 3. 界面结构（milk 原版 HTML） ---------- */
+  var root = document.createElement('div');
+  root.id = 'milk-decision-root';
+  document.body.appendChild(root);
+  root.innerHTML = `
+    <div class="modal" id="decision-menu-modal">
+      <div class="modal-content">
+        <div class="modal-title">
+          <i class="fas fa-balance-scale"></i><span>抉择助手</span>
+        </div>
+        <div class="decision-menu-grid">
+          <div class="decision-option-card" id="open-coin-toss">
+            <i class="fas fa-coins"></i>
+            <h3>抛硬币</h3>
+            <p>是 / 否 二元选择</p>
+          </div>
+          <div class="decision-option-card" id="open-wheel">
+            <i class="fas fa-magic"></i>
+            <h3>随机抽签</h3>
+            <p>自定义选项随机抽取</p>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-secondary" id="close-decision-menu">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="wheel-modal">
+      <div class="modal-content">
+        <div class="modal-title">
+          <i class="fas fa-magic"></i><span>随机抽签</span>
+        </div>
+        <div class="picker-box-stage">
+          <div class="picker-cards-row" id="picker-cards-row"></div>
+          <div class="picker-result-text" id="wheel-result"></div>
+        </div>
+        <div class="picker-controls">
+          <div class="picker-options-label">选项列表（至少 2 项）</div>
+          <div class="picker-options-list" id="wheel-options-list"></div>
+          <button class="modal-btn modal-btn-secondary picker-add-btn" id="add-wheel-option">
+            <i class="fas fa-plus"></i> 添加选项
+          </button>
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-secondary" id="close-wheel">关闭</button>
+          <button class="modal-btn modal-btn-primary" id="spin-wheel-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 12a10 10 0 0 1 18.8-3.6M22 12a10 10 0 0 1-18.8 3.6"/></svg> 开始抽签</button>
+          <button class="modal-btn modal-btn-primary" id="send-wheel-result" style="display:none;">发送结果</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="coin-toss-overlay" id="coin-toss-overlay">
+      <div class="coin-container">
+        <div class="coin" id="animated-coin">
+          <div class="coin-face coin-front">
+            <div class="coin-text-main">是</div>
+            <div class="coin-text-sub">YES</div>
+          </div>
+          <div class="coin-face coin-back">
+            <div class="coin-text-main">否</div>
+            <div class="coin-text-sub">NO</div>
+          </div>
+        </div>
+      </div>
+      <div class="coin-result-container">
+        <div class="coin-result-text" id="coin-result-text"></div>
+      </div>
+      <div class="coin-confirm-buttons" id="coin-action-area">
+        <button class="coin-btn-action" id="cancel-coin-result">取消</button>
+        <button class="coin-btn-action" id="retry-coin-toss"><i class="fas fa-redo-alt"></i> 再来一次</button>
+        <button class="coin-btn-action coin-btn-primary" id="send-coin-result">发送结果</button>
+      </div>
+    </div>
+  `;
+
+  /* ---------- 4. 逻辑（milk 原版，发送结果改为接 mochi 聊天） ---------- */
+  var menu = document.getElementById('decision-menu-modal');
+  var wheel = document.getElementById('wheel-modal');
+  var overlay = document.getElementById('coin-toss-overlay');
+  var coin = document.getElementById('animated-coin');
+  var coinResultText = document.getElementById('coin-result-text');
+  var coinSendBtn = document.getElementById('send-coin-result');
+  var coinRetryBtn = document.getElementById('retry-coin-toss');
+  var coinCancelBtn = document.getElementById('cancel-coin-result');
+
+  var wheelOptions = ['是', '否', '再想一想', '听你的'];
+  var wheelResultText = '';
+  var lastCoinResult = null;
+
+  function showModal(m) { if (m) m.classList.add('show'); }
+  function hideModal(m) { if (m) m.classList.remove('show'); }
+  function hideCoin() {
+    if (overlay) { overlay.classList.remove('visible', 'finished'); }
+    lastCoinResult = null;
+  }
+  function showCoin() {
+    hideModal(menu); hideModal(wheel);
+    if (overlay) { overlay.classList.remove('finished'); overlay.classList.add('visible'); }
+    if (coin) coin.style.transform = '';
+    startCoinFlipAnimation();
+  }
+
+  /* 轻提示（复用 mochi 的黑字 toast；没有就自己做一个） */
   function toast(msg) {
-    let t = document.getElementById('cc-toast');
-    if (!t) { t = document.createElement('div'); t.id = 'cc-toast'; document.body.appendChild(t); }
+    var t = document.getElementById('cc-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'cc-toast';
+      t.style.cssText = 'position:fixed;left:50%;bottom:8%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:9px 18px;border-radius:18px;font-size:13px;z-index:100000;pointer-events:none;';
+      document.body.appendChild(t);
+    }
     t.textContent = msg;
-    t.className = 'cc-toast'; void t.offsetWidth; t.className = 'cc-toast show';
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => { t.className = 'cc-toast'; }, 2000);
+    t.style.opacity = '1';
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function () { t.style.opacity = '0'; }, 2000);
   }
-  // v3.9.x：帮我决定从聊天页进入（聊天域）——优先读聊天专用昵称，未设置回退桌面昵称
-  function partnerName() { try { const s = window.activeStore(); return s.get('cs-lbl-partner') || s.get('lbl-partner') || 'TA'; } catch (e) { return 'TA'; } }
-  function fmtDT(ts) {
-    const d = new Date(ts);
-    const p = (n) => (n < 10 ? '0' + n : '' + n);
-    return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + p(d.getHours()) + ':' + p(d.getMinutes());
-  }
-  // v3.6.x：恢复窗口保护——IDB 权威恢复完成前不落盘，防止用空数组覆盖
-  // IndexedDB 里的全部历史（历史超 200KB 只存 IDB，恢复完成前 store.get 读到
-  // 空数组，直接写会丢历史）。暂存待写，恢复完成后与 IDB 合并去重再写入。
-  let histReady = false;
-  let histPending = null;
-  // v3.6.x：历史数据损坏（非数组）时返回空数组，避免 unshift/map 抛错中断
-  function loadHistory() { try { const v = JSON.parse(store.get(HISTORY_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
-  function saveHistory(h) {
-    if (!histReady) {
-      try { histPending = Array.isArray(h) ? h.slice() : []; } catch (e) {}
-      return;
-    }
-    store.set(HISTORY_KEY, JSON.stringify(h));
-  }
-  function flushPendingHist() {
-    if (!histPending) return;
-    const pending = histPending;
-    histPending = null;
-    if (!pending.length) return;
-    const finish = (base) => {
-      try { store.set(HISTORY_KEY, JSON.stringify(base)); } catch (e) {}
-      try { renderHistory(); } catch (e) {}
-    };
-    const merge = (base) => {
-      const have = {};
-      base.forEach(x => { if (x && x.ts !== undefined) have[x.ts] = true; });
-      pending.forEach(x => { if (x && x.ts !== undefined && !have[x.ts]) { base.push(x); have[x.ts] = true; } });
-      finish(base);
-    };
-    if (window.idbGet) {
-      window.idbGet('xy-home-v2:' + HISTORY_KEY).then(v => {
-        let base = [];
-        try { const p = typeof v === 'string' ? JSON.parse(v) : v; if (Array.isArray(p)) base = p; } catch (e) {}
-        // 迁移刚写完根键时 idbSet 可能尚未落库，idbGet 或读到旧值——
-        // 并入当前 LS 值兜底（按 ts 去重，只增不丢），防止合并结果被冲掉
-        loadHistory().forEach(x => {
-          if (x && x.ts !== undefined && !base.some(b => b && b.ts === x.ts)) base.push(x);
-        });
-        merge(base);
-      }).catch(() => merge(loadHistory()));
-    } else {
-      merge(loadHistory());
-    }
-  }
-  // v3.14.x：存量迁移——升级前历史/设置散在各桌面命名空间（xy-home-v2:<cid>:decision-*），
-  // 改全局共享后一次性收编进根键（打 MIGRATE_KEY 标记，幂等）：
-  // 历史按 ts 去重合并（LS + IDB 双源扫描——超 200KB 大键只存 IDB，也要捞回），
-  // 设置优先级 根 > default 桌面 > 任一桌面第一份；完成后删除旧命名空间副本防残留。
-  function readJsonLs(lsKey) {
-    try { const v = localStorage.getItem(lsKey); const p = v == null ? null : JSON.parse(v); return p && typeof p === 'object' ? p : null; } catch (e) { return null; }
-  }
-  function migrateGlobalData() {
+
+  /* 发送结果到 mochi 聊天（以 TA 回话样式出现） */
+  function sendToChat(text) {
     try {
-      if (store.get(MIGRATE_KEY)) return Promise.resolve();
-      const HIST_RE = /^xy-home-v2:[^:]+:decision-history$/;
-      const SET_RE = /^xy-home-v2:[^:]+:decision-settings$/;
-      const histArrs = [], setCands = [];
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (!k || k === 'xy-home-v2:' + HISTORY_KEY || k === 'xy-home-v2:' + SETTINGS_KEY) continue;
-          if (HIST_RE.test(k)) { const v = readJsonLs(k); if (Array.isArray(v)) histArrs.push({ key: k, arr: v }); }
-          else if (SET_RE.test(k)) { const v = readJsonLs(k); if (v && !Array.isArray(v)) setCands.push({ key: k, val: v }); }
-        }
-      } catch (e) {}
-      let scan = Promise.resolve();
-      if (window.idbGetAllKeys && window.idbGet) {
-        scan = window.idbGetAllKeys().then(function (keys) {
-          const want = (keys || []).filter(function (k) { return typeof k === 'string' && k !== 'xy-home-v2:' + HISTORY_KEY && k !== 'xy-home-v2:' + SETTINGS_KEY && (HIST_RE.test(k) || SET_RE.test(k)); });
-          return want.reduce(function (p, k) {
-            return p.then(function () {
-              return Promise.resolve(window.idbGet(k)).then(function (v) {
-                let parsed = null;
-                try { parsed = typeof v === 'string' ? JSON.parse(v) : v; } catch (e) {}
-                if (!parsed) return;
-                if (HIST_RE.test(k) && Array.isArray(parsed)) histArrs.push({ key: k, arr: parsed });
-                else if (SET_RE.test(k) && typeof parsed === 'object') setCands.push({ key: k, val: parsed });
-              }).catch(function () {});
-            });
-          }, Promise.resolve());
-        }).catch(function () {});
+      if (window.chatAddIn) window.chatAddIn(text, { enter: true, silent: true });
+      else toast('发送失败：聊天未就绪');
+    } catch (e) { toast('发送失败，请重试'); }
+  }
+
+  /* ===== 抽签 ===== */
+  function initPicker() {
+    renderPickerOptions();
+    renderPickerCards();
+    var result = document.getElementById('wheel-result');
+    var sendBtn = document.getElementById('send-wheel-result');
+    var spinBtn = document.getElementById('spin-wheel-btn');
+    if (result) { result.textContent = ''; result.classList.remove('show'); }
+    if (sendBtn) sendBtn.style.display = 'none';
+    if (spinBtn) spinBtn.disabled = false;
+    wheelResultText = '';
+  }
+
+  function renderPickerOptions() {
+    var list = document.getElementById('wheel-options-list');
+    if (!list) return;
+    list.innerHTML = '';
+    var colors = ['#FFD93D','#FF6B6B','#6BCB77','#4D96FF','#E0C3FC','#FF9A8B','#A8D8EA','#C44569'];
+    wheelOptions.forEach(function (opt, index) {
+      var item = document.createElement('div');
+      item.className = 'picker-option-item';
+      var dot = document.createElement('span');
+      dot.className = 'picker-option-color-dot';
+      dot.style.background = colors[index % colors.length];
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'picker-option-input';
+      input.value = opt;
+      input.placeholder = '输入选项...';
+      var remove = document.createElement('span');
+      remove.className = 'picker-option-remove';
+      remove.innerHTML = '<i class="fas fa-times"></i>';
+      input.addEventListener('input', function (e) {
+        wheelOptions[index] = e.target.value;
+        renderPickerCards();
+      });
+      remove.addEventListener('click', function () {
+        if (wheelOptions.length <= 2) { toast('至少保留两个选项'); return; }
+        wheelOptions.splice(index, 1);
+        renderPickerOptions();
+        renderPickerCards();
+      });
+      item.appendChild(dot);
+      item.appendChild(input);
+      item.appendChild(remove);
+      list.appendChild(item);
+    });
+  }
+
+  function renderPickerCards(selectedIndex) {
+    if (selectedIndex === undefined) selectedIndex = -1;
+    var row = document.getElementById('picker-cards-row');
+    if (!row) return;
+    var colors = ['#FFD93D','#FF6B6B','#6BCB77','#4D96FF','#E0C3FC','#FF9A8B','#A8D8EA','#C44569'];
+    row.innerHTML = '';
+    wheelOptions.forEach(function (opt, i) {
+      var card = document.createElement('div');
+      card.className = 'picker-card';
+      if (selectedIndex >= 0) {
+        if (i === selectedIndex) card.classList.add('selected');
+        else card.classList.add('unselected');
       }
-      return scan.then(function () {
-        const merged = {};
-        loadHistory().forEach(x => { if (x && x.ts !== undefined) merged[x.ts] = x; });
-        histArrs.forEach(h => h.arr.forEach(x => { if (x && x.ts !== undefined && !merged[x.ts]) merged[x.ts] = x; }));
-        const out = Object.keys(merged).map(k => merged[k]);
-        out.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-        if (out.length) store.set(HISTORY_KEY, JSON.stringify(out.slice(0, 1000)));
-        if (readJsonLs('xy-home-v2:' + SETTINGS_KEY) === null) {
-          setCands.sort(function (a, b) {
-            return (a.key.indexOf(':default:') >= 0 ? 0 : 1) - (b.key.indexOf(':default:') >= 0 ? 0 : 1);
-          });
-          if (setCands[0]) store.set(SETTINGS_KEY, JSON.stringify(setCands[0].val));
-        }
-        histArrs.concat(setCands.map(s => ({ key: s.key }))).forEach(h => {
-          try { localStorage.removeItem(h.key); } catch (e) {}
-          try { if (window.idbDelete) window.idbDelete(h.key); } catch (e) {}
-        });
-        store.set(MIGRATE_KEY, '1');
-      });
-    } catch (e) { return Promise.resolve(); }
-  }
-  try {
-    document.addEventListener('mochi-restore-done', function () {
-      // 先把存量各桌面旧数据合并进全局根键，完成前不放开写保护（防止半路写覆盖）
-      Promise.resolve(migrateGlobalData()).catch(function () {}).then(function () {
-        histReady = true;
-        flushPendingHist();
-      });
-    });
-  } catch (e) {}
-  // v3.6.x：多桌面——切换联系人后重置历史权威状态（防止旧桌面的 histPending 串入新桌面）
-  document.addEventListener('contact-switched', function () {
-    try { histReady = true; histPending = null; } catch (e) {}
-    // v3.7.x：清掉挂起的决定定时器——否则切到 B 后回调执行，A 的决定历史/聊天结果写到 B
-    try { if (decideTimer) { clearTimeout(decideTimer); decideTimer = null; } } catch (e) {}
-    try { if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; } } catch (e) {}
-  });
-  // v3.6.x：思考时间 / 最多选几个 也持久化——之前每次打开面板都重置回默认值
-  // （关掉面板再打开，「帮我决定时间」又得重新设置）
-  function loadSettings() {
-    const d = { replyToChat: true, thinkA: 3, thinkB: 3, maxB: 1 };
-    try { return Object.assign(d, JSON.parse(store.get(SETTINGS_KEY) || '{}')); } catch (e) { return d; }
-  }
-  function saveSettings(s) { store.set(SETTINGS_KEY, JSON.stringify(s)); }
-  // v3.6.x：完整 HTML 转义（只转 < 可被 `&lt;…&gt;` 实体绕过注入）
-  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-
-  let activeTab = 'typea';
-  let countdownTimer = null;
-  let decideTimer = null; // v3.6.x：结果 setTimeout 句柄——防连点导致历史/聊天消息重复
-
-  // ---- 聊天页底部半框（v3.5.53 露出聊天消息，星言式）----
-  const panel = document.getElementById('chat-decision-panel');
-  const body = document.getElementById('chat-decision-body');
-  // v3.6.x：面板 DOM 只构建一次（不再每次打开都 innerHTML 重建），
-  // 打开时仅恢复设置 + 切回默认 tab——避免反复重建导致的闪烁/焦点丢失
-  function ensureBuilt() {
-    if (!body || body.dataset.built) return;
-    body.innerHTML = panelHtml();
-    bindEvents();
-    body.dataset.built = '1';
-  }
-  function openPanel() {
-    if (!body || !panel) return;
-    ensureBuilt();
-    activeTab = 'typea';
-    document.querySelectorAll('#chat-decision-body .dc-tab').forEach(tb => tb.classList.toggle('sel', tb.dataset.dtab === 'typea'));
-    document.querySelectorAll('#chat-decision-body .dc-panel').forEach(p => { p.hidden = p.dataset.dpanel !== 'typea'; });
-    applySettings();
-    panel.hidden = false;
-  }
-  function closePanel() {
-    if (panel) panel.hidden = true;
-  }
-  function panelHtml() {
-    return '' +
-      '<div class="dc-tabs"><button class="dc-tab sel" data-dtab="typea">是/否/半对</button>' +
-      '<button class="dc-tab" data-dtab="typeb">自定义选项</button>' +
-      '<button class="dc-tab" data-dtab="history">历史记录</button></div>' +
-      '<div class="dc-panel" data-dpanel="typea">' +
-      '<div class="sm-fld"><label>输入你的纠结</label><div class="dec-inp-wrap"><textarea class="tc-input" id="dec-q-a" rows="3" placeholder="例如：我今晚该吃火锅吗？"></textarea><button class="dec-inp-clear" data-clear="dec-q-a" aria-label="清空" title="清空">✕</button></div></div>' +
-      '<div class="gs-row"><span>思考时间（秒）</span><div class="stepper" id="dec-think-a" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="dec-think-a-val" readonly><button class="stp-max">+</button></div></div>' +
-      '<button class="ta-add-btn" style="width:100%;margin-top:10px" id="dec-go-a">让对方决定</button>' +
-      '<div class="dc-result" id="dec-result-a" hidden></div></div>' +
-      '<div class="dc-panel" data-dpanel="typeb" hidden>' +
-      '<div class="sm-fld"><label>输入你的纠结</label><div class="dec-inp-wrap"><textarea class="tc-input" id="dec-q-b" rows="2" placeholder="例如：我今晚该吃什么？"></textarea><button class="dec-inp-clear" data-clear="dec-q-b" aria-label="清空" title="清空">✕</button></div></div>' +
-      '<div class="sm-fld"><label>输入选项（每行一个）</label><div class="dec-inp-wrap"><textarea class="tc-input" id="dec-opts" rows="4" placeholder="吃火锅&#10;吃烧烤&#10;吃日料"></textarea><button class="dec-inp-clear" data-clear="dec-opts" aria-label="清空" title="清空">✕</button></div></div>' +
-      '<div class="gs-row"><span>思考时间（秒）</span><div class="stepper" id="dec-think-b" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="dec-think-b-val" readonly><button class="stp-max">+</button></div></div>' +
-      '<div class="gs-row"><span>最多选几个</span><div class="stepper" id="dec-max-b" data-min="1" data-max="5" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="dec-max-b-val" readonly><button class="stp-max">+</button></div></div>' +
-      '<button class="ta-add-btn" style="width:100%;margin-top:10px" id="dec-go-b">让对方决定</button>' +
-      '<div class="dc-result" id="dec-result-b" hidden></div></div>' +
-      '<div class="dc-panel" data-dpanel="history" hidden>' +
-      '<div class="sm-set-row"><span>结果发送到聊天</span><label class="toggle"><input type="checkbox" id="dec-reply-chat"><span class="tk"></span></label></div>' +
-      '<div id="dec-history"></div></div>' +
-      '<div class="dc-credit">帮我决定功能参考：小红书@FelixFelicis（9416318007）</div>';
-  }
-  // 恢复设置：思考时间 / 最多选几个 / 结果发送到聊天
-  function applySettings() {
-    const s = loadSettings();
-    const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = String(v); };
-    setVal('dec-think-a-val', s.thinkA);
-    setVal('dec-think-b-val', s.thinkB);
-    setVal('dec-max-b-val', s.maxB);
-    const rc = document.getElementById('dec-reply-chat');
-    if (rc) rc.checked = !!s.replyToChat;
-  }
-  function bindEvents() {
-    const scope = '#chat-decision-body';
-    // tab 切换
-    document.querySelectorAll(scope + ' .dc-tab').forEach(tb => {
-      tb.addEventListener('click', () => {
-        activeTab = tb.dataset.dtab;
-        document.querySelectorAll(scope + ' .dc-tab').forEach(x => x.classList.toggle('sel', x === tb));
-        document.querySelectorAll(scope + ' .dc-panel').forEach(p => { p.hidden = p.dataset.dpanel !== activeTab; });
-        if (activeTab === 'history') renderHistory();
-      });
-    });
-    // 思考时间 / 最多选几个 stepper（点击即持久化，关掉面板再打开不重置）
-    const sMap = { 'dec-think-a': 'thinkA', 'dec-think-b': 'thinkB', 'dec-max-b': 'maxB' };
-    Object.keys(sMap).forEach(id => {
-      const st = document.getElementById(id);
-      if (!st) return;
-      const val = st.querySelector('.stp-val');
-      const min = parseInt(st.dataset.min, 10), max = parseInt(st.dataset.max, 10);
-      const save = (v) => { const s = loadSettings(); s[sMap[id]] = v; saveSettings(s); };
-      st.querySelector('.stp-min').addEventListener('click', () => {
-        const nv = Math.max(min, parseInt(val.value, 10) - 1);
-        val.value = nv; save(nv);
-      });
-      st.querySelector('.stp-max').addEventListener('click', () => {
-        const nv = Math.min(max, parseInt(val.value, 10) + 1);
-        val.value = nv; save(nv);
-      });
-    });
-    // 决定按钮
-    const goA = document.getElementById('dec-go-a');
-    if (goA) goA.addEventListener('click', () => makeDecision('typea'));
-    const goB = document.getElementById('dec-go-b');
-    if (goB) goB.addEventListener('click', () => makeDecision('typeb'));
-    // v3.6.x：输入框一键清空按钮——直接清空对应输入框（contenteditable 转换的 ghost
-    // input 的 value 已代理到 box，读 value 再置空即可；box 用 textContent 清空）
-    document.querySelectorAll(scope + ' .dec-inp-clear').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.dataset.clear;
-        const ta = document.getElementById(id);
-        if (!ta) return;
-        // 手机端 contenteditable 转换器下，原 textarea 已退场为 ghost，value 代理到 box
-        const box = ta.__ceBox;
-        if (box) box.textContent = '';
-        else ta.value = '';
-        ta.focus();
-        toast('已清空');
-      });
-    });
-    // 回复到聊天开关
-    const rc = document.getElementById('dec-reply-chat');
-    if (rc) { rc.addEventListener('change', () => { const s = loadSettings(); s.replyToChat = rc.checked; saveSettings(s); }); }
-  }
-
-  function makeDecision(type) {
-    // v3.6.x：防连点/中途再点——先取消上一轮的倒计时与结果定时器，避免
-    // 「帮我决定」历史与聊天消息重复（旧 setTimeout 仍会执行导致重复写入）
-    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-    if (decideTimer) { clearTimeout(decideTimer); decideTimer = null; }
-    let question, thinkTime, maxSelect;
-    if (type === 'typea') {
-      question = (document.getElementById('dec-q-a').value || '').trim();
-      thinkTime = parseInt(document.getElementById('dec-think-a-val').value, 10) || 3;
-      maxSelect = 1; // 是/否/半对：固定单选，最多选几个只用于自定义选项
-    } else {
-      question = (document.getElementById('dec-q-b').value || '').trim();
-      thinkTime = parseInt(document.getElementById('dec-think-b-val').value, 10) || 3;
-      maxSelect = parseInt(document.getElementById('dec-max-b-val').value, 10) || 1;
-    }
-    if (!question) { toast('请输入你的问题'); return; }
-    let options = null;
-    if (type === 'typeb') {
-      const optsText = (document.getElementById('dec-opts').value || '').trim();
-      if (!optsText) { toast('请输入选项'); return; }
-      options = optsText.split('\n').map(o => o.trim()).filter(Boolean);
-      if (options.length < 2) { toast('至少需要 2 个选项'); return; }
-    }
-    const resultEl = document.getElementById(type === 'typea' ? 'dec-result-a' : 'dec-result-b');
-    resultEl.hidden = false;
-    resultEl.classList.remove('done');
-    resultEl.textContent = '对方正在思考中… ' + thinkTime + ' 秒';
-    let count = thinkTime;
-    countdownTimer = setInterval(() => {
-      count--;
-      if (count > 0) resultEl.textContent = '对方正在思考中… ' + count + ' 秒';
-    }, 1000);
-    // v3.6.x：结果定时器存入 decideTimer（倒计时结束自动清；重复点击先取消旧轮）
-    const myCid = window.__activeCid || 'default';
-    decideTimer = setTimeout(() => {
-      decideTimer = null;
-      if ((window.__activeCid || 'default') !== myCid) return;
-      if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
-      let result;
-      if (type === 'typea') {
-        const pool = ['是', '否', '半对', '这个我不选', '正在忙，暂未回复'];
-        const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-        const n = Math.floor(Math.random() * maxSelect) + 1;
-        result = shuffled.slice(0, Math.min(n, shuffled.length)).join('、');
+      if (selectedIndex >= 0 && i === selectedIndex) {
+        card.style.background = 'linear-gradient(135deg,' + colors[i % colors.length] + ',' + colors[(i + 2) % colors.length] + ')';
+        card.style.borderColor = 'transparent';
+        card.style.color = '#fff';
       } else {
-        const pool = options.slice().concat(['这个我不选', '正在忙，暂未回复']);
-        const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-        const n = Math.floor(Math.random() * maxSelect) + 1;
-        result = shuffled.slice(0, Math.min(n, shuffled.length)).join('、');
+        card.style.borderTop = '3px solid ' + colors[i % colors.length];
       }
-      resultEl.textContent = result;
-      resultEl.classList.add('done');
-      // 历史记录（全部保存）
-      const h = loadHistory();
-      h.unshift({ id: 'd_' + Date.now(), type: type, question: question, result: result, options: options, ts: Date.now() });
-      if (h.length > 1000) h.splice(1000);
-      saveHistory(h);
-      // 发送到聊天（联系人回复样式）
-      if (loadSettings().replyToChat) {
-        const replyText = type === 'typeb' && options
-          ? '【帮我决定】' + question + '\n选项：\n' + options.map((o, i) => (i + 1) + '. ' + o).join('\n') + '\n→ ' + result
-          : '【帮我决定】' + question + ' → ' + result;
-        if (window.chatAddIn) window.chatAddIn(replyText, { enter: true, silent: true });
-      }
-      toast('帮我决定已完成');
-    }, thinkTime * 1000);
+      card.style.animationDelay = (i * 0.06) + 's';
+      var label = opt || ('选项' + (i + 1));
+      card.textContent = label.length > 6 ? label.slice(0, 5) + '…' : label;
+      row.appendChild(card);
+    });
   }
 
-  function renderHistory() {
-    const el = document.getElementById('dec-history');
-    if (!el) return;
-    const h = loadHistory();
-    el.innerHTML = h.length
-      ? h.map(r =>
-          '<div class="tc-listitem">' +
-          '<div class="tc-li-q">' + esc(r.question) + '</div>' +
-          (r.options && r.options.length ? '<div class="dc-h-options">选项：' + r.options.map((o, i) => (i + 1) + '. ' + esc(o)).join('，') + '</div>' : '') +
-          '<div class="dc-h-result">→ ' + esc(r.result) + '</div>' +
-          '<div class="dc-h-time">' + fmtDT(r.ts) + '</div></div>'
-        ).join('')
-      : '<div class="ta-empty">暂无帮我决定记录</div>';
+  function doPick() {
+    if (wheelOptions.length < 2) { toast('请至少添加两个选项'); return; }
+    var spinBtn = document.getElementById('spin-wheel-btn');
+    var resultDisplay = document.getElementById('wheel-result');
+    var sendBtn = document.getElementById('send-wheel-result');
+    spinBtn.disabled = true;
+    sendBtn.style.display = 'none';
+    resultDisplay.classList.remove('show');
+    resultDisplay.textContent = '';
+
+    var flashCount = 0;
+    var totalFlashes = 16 + Math.floor(Math.random() * 8);
+    var finalIndex = Math.floor(Math.random() * wheelOptions.length);
+
+    function flash() {
+      var row = document.getElementById('picker-cards-row');
+      if (!row) return;
+      var cards = row.querySelectorAll('.picker-card');
+      var showIdx;
+      if (flashCount < totalFlashes - 3) {
+        showIdx = Math.floor(Math.random() * wheelOptions.length);
+      } else {
+        showIdx = finalIndex;
+      }
+      cards.forEach(function (c, i) {
+        if (i === showIdx) {
+          c.style.transform = 'translateY(-4px) scale(1.06)';
+          c.style.background = 'linear-gradient(135deg, var(--milk-accent), rgba(var(--milk-accent-rgb),0.7))';
+          c.style.borderTopColor = 'transparent';
+          c.style.color = '#fff';
+        } else {
+          c.style.transform = '';
+          c.style.background = '';
+          c.style.borderTopColor = '';
+          c.style.color = '';
+        }
+      });
+      flashCount++;
+      var delay = flashCount < 8 ? 80 : flashCount < 14 ? 130 : 250;
+      if (flashCount < totalFlashes) {
+        setTimeout(flash, delay);
+      } else {
+        setTimeout(function () {
+          renderPickerCards(finalIndex);
+          wheelResultText = wheelOptions[finalIndex];
+          resultDisplay.innerHTML = '<i class="fas fa-star" style="font-size:14px;margin-right:6px;"></i>';
+          resultDisplay.appendChild(document.createTextNode(wheelResultText));
+          resultDisplay.classList.add('show');
+          spinBtn.disabled = false;
+          sendBtn.style.display = 'inline-block';
+        }, 300);
+      }
+    }
+    flash();
   }
 
-  // 入口：聊天更多功能 → 帮我决定（chat.js 里 more-decide 调用）
-  window.openDecision = openPanel;
+  /* ===== 抛硬币 ===== */
+  function startCoinFlipAnimation() {
+    if (!coin || !overlay) return;
+    overlay.classList.remove('finished');
+    if (coinResultText) coinResultText.textContent = '';
+    if (coinSendBtn) coinSendBtn.style.display = 'none';
+    if (coinRetryBtn) coinRetryBtn.style.display = 'none';
+
+    var isHeads = Math.random() < 0.5;
+    lastCoinResult = isHeads ? '正面 ☀️' : '反面 🌙';
+
+    coin.classList.remove('flipping-heads', 'flipping-tails');
+    void coin.offsetWidth;
+    coin.classList.add(isHeads ? 'flipping-heads' : 'flipping-tails');
+    setTimeout(function () {
+      coin.classList.remove('flipping-heads', 'flipping-tails');
+      coin.style.transform = isHeads ? 'rotateY(0deg)' : 'rotateY(180deg)';
+      if (coinResultText) coinResultText.textContent = lastCoinResult;
+      overlay.classList.add('finished');
+      if (coinSendBtn) coinSendBtn.style.display = '';
+      if (coinRetryBtn) coinRetryBtn.style.display = '';
+    }, 3050);
+  }
+
+  /* ---------- 5. 按钮绑定 ---------- */
+  document.getElementById('open-coin-toss').addEventListener('click', showCoin);
+  document.getElementById('open-wheel').addEventListener('click', function () {
+    hideModal(menu); hideCoin();
+    initPicker();
+    showModal(wheel);
+  });
+  document.getElementById('close-decision-menu').addEventListener('click', function () { hideModal(menu); });
+  document.getElementById('close-wheel').addEventListener('click', function () { hideModal(wheel); });
+  document.getElementById('add-wheel-option').addEventListener('click', function () {
+    wheelOptions.push('选项 ' + (wheelOptions.length + 1));
+    renderPickerOptions();
+    renderPickerCards();
+  });
+  document.getElementById('spin-wheel-btn').addEventListener('click', doPick);
+  document.getElementById('send-wheel-result').addEventListener('click', function () {
+    if (wheelResultText) {
+      sendToChat('✨ 随机抽签结果：' + wheelResultText);
+      hideModal(wheel);
+      wheelResultText = '';
+      var sendBtn = document.getElementById('send-wheel-result');
+      if (sendBtn) sendBtn.style.display = 'none';
+      var spinBtn = document.getElementById('spin-wheel-btn');
+      if (spinBtn) spinBtn.disabled = false;
+      var resultEl = document.getElementById('wheel-result');
+      if (resultEl) { resultEl.textContent = ''; resultEl.classList.remove('show'); }
+    }
+  });
+  if (coinCancelBtn) coinCancelBtn.addEventListener('click', hideCoin);
+  if (coinRetryBtn) coinRetryBtn.addEventListener('click', startCoinFlipAnimation);
+  if (coinSendBtn) coinSendBtn.addEventListener('click', function () {
+    if (lastCoinResult) {
+      sendToChat('🎲 抛硬币结果：' + lastCoinResult);
+      hideCoin();
+    }
+  });
+
+  /* ---------- 6. 对外入口：让 mochi 的「帮我决定」按钮点开就是这个 ---------- */
+  window.openDecision = function () {
+    hideCoin();
+    hideModal(wheel);
+    showModal(menu);
+  };
+  window.openMilkDecision = window.openDecision;
+})();
+/* 把「＋」菜单里「帮我决定」按钮文字改为「抉择」（运行期替换，build 后依然生效） */
+(function () {
+  function rename() {
+    try {
+      var b = document.getElementById('more-decide');
+      if (!b) return;
+      var walk = document.createTreeWalker(b, NodeFilter.SHOW_TEXT, null);
+      var n;
+      while (walk.nextNode()) {
+        n = walk.currentNode;
+        if (n.nodeValue && n.nodeValue.indexOf('帮我决定') !== -1) {
+          n.nodeValue = n.nodeValue.split('帮我决定').join('抉择');
+        }
+      }
+    } catch (e) {}
+  }
+  if (document.body) rename(); else document.addEventListener('DOMContentLoaded', rename);
 })();

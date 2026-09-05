@@ -506,6 +506,7 @@
         }
       };
     } else if (rec.type === 'sticker' || rec.type === 'image') {
+      b.classList.add('msg-media');
       b.style.padding = '6px';
       b.style.background = '';
       b.style.border = '';

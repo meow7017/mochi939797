@@ -2024,6 +2024,7 @@ b.dataset.orig = rec.orig || rec.text;
 b.innerHTML = '<span style="opacity:.6;font-size:12px;cursor:pointer">' + (rec.side === 'out' ? '我' : '对方') + '撤回了一条消息</span>';
 bindToggle(b, rec.side);
 } else if (rec.type === 'sticker' || rec.type === 'image') {
+b.classList.add('msg-media');
 b.style.padding = '6px';
 b.style.background = '';
 b.style.border = '';
@@ -5818,6 +5819,7 @@ if (isVoice) {
 b.style.padding = '8px 10px';
 fillVoiceBubble(b, f.text);
 } else if (isImg) {
+b.classList.add('msg-media');
 b.style.padding = '6px';
 b.innerHTML = '<img class="msg-img" src="' + attrEsc(f.text) + '" alt="表情">';
 } else {

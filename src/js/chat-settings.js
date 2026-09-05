@@ -35,7 +35,7 @@
     { label: '大圆角', value: '18px' },
     { label: '特圆', value: '28px' }
   ];
-  const BUBBLE_RADIUS_DEFAULT = '18px';
+  const BUBBLE_RADIUS_DEFAULT = '4px';
   // v3.9.x：时间轴样式（默认头像下方，与原实现一致）
   // under-av=头像下方  under-bubble=气泡下方  bubble=时间气泡  float=气泡外侧悬浮
   // center=消息上方居中  divider=时间分隔线（微信式，消息间隔大时插居中胶囊）  hidden=隐藏
@@ -104,7 +104,7 @@
     const outBg = store.get('cs-out-bg') || DEF.outBg;
     const outInk = store.get('cs-out-ink') || DEF.outInk;
     const fs = store.get('cs-font-size') || '14px';
-    const pad = store.get('cs-bubble-size') || '11px 14px';
+    const pad = store.get('cs-bubble-size') || '9px 12px';
     root.style.setProperty('--msg-in-bg', inBg);
     root.style.setProperty('--msg-in-ink', inInk);
     root.style.setProperty('--msg-out-bg', outBg);
@@ -139,7 +139,7 @@
     set('cs-in-ink-val', inInk === DEF.inInk ? '默认 ' + DEF.inInk : inInk);
     // 聊天头像形状（circle 圆形 / square 方形）
     const avShape = store.get('cs-av-shape') || 'circle';
-    root.style.setProperty('--msg-av-radius', avShape === 'square' ? '10px' : '50%');
+    root.style.setProperty('--msg-av-radius', avShape === 'square' ? '4px' : '50%');
     set('cs-av-shape-val', avShape === 'square' ? '方形' : '圆形');
     // 时间轴样式：body 上挂 cs-time-* 类（CSS 控制布局，消息结构不变），
     // 移除旧类后挂新类——覆盖收藏页（#page-fav 是 body 后代），收藏项无需改动
@@ -427,7 +427,9 @@
     { color: '#d8f5e0', label: '薄荷绿' },
     { color: '#fff3d6', label: '奶油黄' },
     { color: '#e8dcff', label: '淡紫' },
-    { color: '#ffdcc0', label: '暖橘' }
+    { color: '#ffdcc0', label: '暖橘' },
+    { color: '#95ec69', label: '微信绿' },
+    { color: '#1a6630', label: '深色模式绿' }
   ];
   const BUBBLE_INK_COLORS = [
     { color: '#111111', label: '默认黑' },
