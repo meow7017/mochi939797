@@ -181,7 +181,7 @@
       }
     });
     // 开关
-    ['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'ckq-en', 'call-resume'].forEach(k => {
+    ['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'gc-as-en', 'ckq-en', 'call-resume'].forEach(k => {
       const el = document.getElementById(k);
       if (el) el.checked = cfg[k] === 1;
     });
@@ -268,7 +268,7 @@
     });
   });
   // 开关交互
-  ['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'ckq-en', 'call-resume'].forEach(k => {
+  ['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'gc-as-en', 'ckq-en', 'call-resume'].forEach(k => {
     const el = document.getElementById(k);
     if (el) {
       el.addEventListener('change', () => {
@@ -311,7 +311,7 @@
           window.saveReplyCfg(k, v);
         }
       });
-      ['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'ckq-en', 'call-resume'].forEach(k => {
+      ['py-en', 'as-en', 'as-badge', 'ml-kaomoji-en', 'ml-emoji-en', 'ml-sticker-en', 'cs-normal', 'cs-trigger-name', 'cs-trigger-bar', 'gc-py-en', 'gc-as-en', 'ckq-en', 'call-resume'].forEach(k => {
         const el = document.getElementById(k);
         if (el) window.saveReplyCfg(k, el.checked ? 1 : 0);
       });
