@@ -7727,9 +7727,9 @@ transition-duration: .01ms !important;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788618791473">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.2</b></span>
-        <span class="sv-deploy">部署于 2026-09-05 22:33<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1788619852036">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.3</b></span>
+        <span class="sv-deploy">部署于 2026-09-05 22:50<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8472,7 +8472,7 @@ transition-duration: .01ms !important;
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.2</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.3</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8693,7 +8693,7 @@ transition-duration: .01ms !important;
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.2</span>
+              <span class="lic-ver">v3.26.3</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -49400,6 +49400,52 @@ n.nodeValue = n.nodeValue.split('帮我决定').join('抉择');
 } catch (e) {}
 }
 if (document.body) rename(); else document.addEventListener('DOMContentLoaded', rename);
+})();
+/* ===== 修复：弹窗居中 + 全屏 + 去掉毛玻璃（覆盖 mochi 同名 .modal 的干扰） ===== */
+(function () {
+var s = document.createElement('style');
+s.textContent = [
+/* 抉择菜单 / 随机抽签 两个弹窗的遮罩：mochi 的 .modal 把宽度钉成 272px，
+这里强制拉回「铺满整屏 + 内容居中」 */
+'#milk-decision-root .modal {',
+'  position: fixed !important;',
+'  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;',
+'  width: auto !important; height: auto !important;',
+'  min-width: 100vw !important; min-height: 100vh !important; min-height: 100dvh !important;',
+'  max-width: none !important; max-height: none !important;',
+'  margin: 0 !important; padding: 0 !important;',
+'  display: none !important;',
+'  align-items: center !important; justify-content: center !important;',
+'  background: rgba(0,0,0,0.42) !important;',
+'  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;',
+'  border-radius: 0 !important; box-shadow: none !important;',
+'}',
+'#milk-decision-root .modal.show { display: flex !important; }',
+/* 弹窗里那张白色卡片 */
+'#milk-decision-root .modal-content {',
+'  width: min(92vw, 400px) !important;',
+'  max-width: none !important;',
+'  max-height: 88vh !important; overflow-y: auto !important;',
+'  margin: 0 !important;',
+'  background: var(--milk-bg2, #ffffff) !important;',
+'  border-radius: 18px !important;',
+'  padding: 20px 18px 14px !important;',
+'  box-sizing: border-box !important;',
+'}',
+/* 抛硬币全屏浮层：铺满整屏 + 去掉毛玻璃 */
+'#milk-decision-root .coin-toss-overlay {',
+'  position: fixed !important;',
+'  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;',
+'  width: auto !important; height: auto !important;',
+'  margin: 0 !important;',
+'  background: rgba(15,15,15,0.78) !important;',
+'  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;',
+'  border-radius: 0 !important;',
+'}',
+/* 按钮：别被 mochi 的 .modal-btn{flex:1} 撑成等宽大按钮 */
+'#milk-decision-root .modal-btn { flex: 0 0 auto !important; width: auto !important; }'
+].join('\n');
+document.head.appendChild(s);
 })();
 } catch (__e) { try { console.error("[JS] decision.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
 (function () { try {

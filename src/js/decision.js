@@ -602,3 +602,50 @@
   }
   if (document.body) rename(); else document.addEventListener('DOMContentLoaded', rename);
 })();
+
+/* ===== 修复：弹窗居中 + 全屏 + 去掉毛玻璃（覆盖 mochi 同名 .modal 的干扰） ===== */
+(function () {
+  var s = document.createElement('style');
+  s.textContent = [
+    /* 抉择菜单 / 随机抽签 两个弹窗的遮罩：mochi 的 .modal 把宽度钉成 272px，
+       这里强制拉回「铺满整屏 + 内容居中」 */
+    '#milk-decision-root .modal {',
+    '  position: fixed !important;',
+    '  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;',
+    '  width: auto !important; height: auto !important;',
+    '  min-width: 100vw !important; min-height: 100vh !important; min-height: 100dvh !important;',
+    '  max-width: none !important; max-height: none !important;',
+    '  margin: 0 !important; padding: 0 !important;',
+    '  display: none !important;',
+    '  align-items: center !important; justify-content: center !important;',
+    '  background: rgba(0,0,0,0.42) !important;',
+    '  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;',
+    '  border-radius: 0 !important; box-shadow: none !important;',
+    '}',
+    '#milk-decision-root .modal.show { display: flex !important; }',
+    /* 弹窗里那张白色卡片 */
+    '#milk-decision-root .modal-content {',
+    '  width: min(92vw, 400px) !important;',
+    '  max-width: none !important;',
+    '  max-height: 88vh !important; overflow-y: auto !important;',
+    '  margin: 0 !important;',
+    '  background: var(--milk-bg2, #ffffff) !important;',
+    '  border-radius: 18px !important;',
+    '  padding: 20px 18px 14px !important;',
+    '  box-sizing: border-box !important;',
+    '}',
+    /* 抛硬币全屏浮层：铺满整屏 + 去掉毛玻璃 */
+    '#milk-decision-root .coin-toss-overlay {',
+    '  position: fixed !important;',
+    '  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;',
+    '  width: auto !important; height: auto !important;',
+    '  margin: 0 !important;',
+    '  background: rgba(15,15,15,0.78) !important;',
+    '  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;',
+    '  border-radius: 0 !important;',
+    '}',
+    /* 按钮：别被 mochi 的 .modal-btn{flex:1} 撑成等宽大按钮 */
+    '#milk-decision-root .modal-btn { flex: 0 0 auto !important; width: auto !important; }'
+  ].join('\n');
+  document.head.appendChild(s);
+})();
