@@ -6395,6 +6395,15 @@ display: flex; align-items: center; justify-content: center; overflow: hidden; f
 .gc-at-av img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .gc-at-av svg { width: 60%; height: 60%; }
 .gc-at-item span { font-size: 14px; }
+#page-group-chat {
+background-color: #ededed;
+}
+#page-group-chat .msg-bubble.gc-media::before {
+display: none !important;
+}
+#page-group-chat .msg-bubble.gc-media .msg-parts-imgs {
+margin-bottom: 0;
+}
 .set-title { font-size:22px; font-weight:700; padding:4px 2px 16px; letter-spacing:1px; }
 .set-group { border-radius:20px; overflow:hidden; margin-bottom:12px; }
 .cg-title { display:flex; align-items:center; gap:7px; margin:16px 6px 7px; font-size:11.5px; font-weight:600; color:var(--muted,#999); letter-spacing:.6px; }
@@ -7727,9 +7736,9 @@ transition-duration: .01ms !important;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788619852036">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.3</b></span>
-        <span class="sv-deploy">部署于 2026-09-05 22:50<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1788622108886">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.4</b></span>
+        <span class="sv-deploy">部署于 2026-09-05 23:28<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8472,7 +8481,7 @@ transition-duration: .01ms !important;
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.3</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.4</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8693,7 +8702,7 @@ transition-duration: .01ms !important;
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.3</span>
+              <span class="lic-ver">v3.26.4</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -26579,6 +26588,15 @@ function gcProfileSave() {
 try { gcProfileStore().set('gc-profiles', JSON.stringify(gcProfiles)); } catch (e) {}
 }
 function gcProfileGet(key) { return gcProfiles[key] || {}; }
+function gcGroupNameGet() {
+try { return (gcProfileStore().get('gc-group-name') || '').trim(); } catch (e) { return ''; }
+}
+function gcGroupNameSet(name) {
+try {
+if (name) gcProfileStore().set('gc-group-name', name);
+else gcProfileStore().remove('gc-group-name');
+} catch (e) {}
+}
 function gcProfileSet(key, name, avatar) {
 const p = gcProfiles[key] || (gcProfiles[key] = {});
 if (name === undefined) delete p.name; else if (name) p.name = name; else delete p.name;
@@ -26598,7 +26616,7 @@ gcProfileLoad();
 const GC_BEAUTY_DEFAULTS = {
 'out-bg': '#111111', 'out-ink': '#ffffff', 'in-bg': '#ffffff', 'in-ink': '#111111',
 'send-bg': '#111111', 'send-ink': '#ffffff', 'send-show': 'show',
-'font-size': '14px', 'bubble-size': '11px 14px',
+'font-size': '14px', 'bubble-size': '9px 12px',
 'av-shape': 'circle', 'time-style': 'under-av',
 'bg': '', 'font': '', 'css': '',
 'show-name': 'off'
@@ -26625,7 +26643,8 @@ const GC_BUBBLE_SIZES = [
 const GC_BUBBLE_BG = [
 { color: '#111111', label: '默认黑' }, { color: '#ffffff', label: '白色' }, { color: '#3a3a3a', label: '炭灰' },
 { color: '#ffd6e0', label: '樱花粉' }, { color: '#d6e4ff', label: '雾霭蓝' }, { color: '#d8f5e0', label: '薄荷绿' },
-{ color: '#fff3d6', label: '奶油黄' }, { color: '#e8dcff', label: '淡紫' }, { color: '#ffdcc0', label: '暖橘' }
+{ color: '#fff3d6', label: '奶油黄' }, { color: '#e8dcff', label: '淡紫' }, { color: '#ffdcc0', label: '暖橘' },
+{ color: '#95ec69', label: '微信绿' }, { color: '#28b561', label: '深色绿' },
 ];
 const GC_INK_COLORS = [
 { color: '#111111', label: '默认黑' }, { color: '#ffffff', label: '白色' }, { color: '#444444', label: '深灰' },
@@ -26683,10 +26702,7 @@ const hi = Math.max(la, lb), lo = Math.min(la, lb);
 return (hi + 0.05) / (lo + 0.05);
 }
 function gcColorPairBad(key) {
-const p = GC_COLOR_PAIRS[key];
-if (!p) return false;
-const ratio = gcContrast(gcBeautyGet(p[0]), gcBeautyGet(p[1]));
-return ratio !== null && ratio < GC_MIN_CONTRAST;
+return false;
 }
 function gcColorWarnText(key) {
 const names = { 'out-bg': '我的气泡', 'in-bg': '联系人气泡' };
@@ -26745,9 +26761,10 @@ page.style.setProperty('--msg-out-bg', g('out-bg'));
 page.style.setProperty('--msg-out-ink', g('out-ink'));
 page.style.setProperty('--chat-font-size', g('font-size'));
 page.style.setProperty('--chat-bubble-pad', g('bubble-size'));
+page.style.setProperty('--chat-bubble-radius', '4px');
 page.style.setProperty('--send-bg', g('send-bg'));
 page.style.setProperty('--send-ink', g('send-ink'));
-page.style.setProperty('--msg-av-radius', g('av-shape') === 'square' ? '10px' : '50%');
+page.style.setProperty('--msg-av-radius', g('av-shape') === 'square' ? '4px' : '50%');
 const sendBtn = document.getElementById('gc-send');
 if (sendBtn) sendBtn.style.display = g('send-show') === 'hide' ? 'none' : '';
 GC_BEAUTY_STYLES.forEach(s => page.classList.remove('cs-time-' + s.value));
@@ -26998,6 +27015,13 @@ gcPlayVoice(this, vsrc);
 } else if (rec.parts && rec.parts.length) {
 const imgs = rec.parts.filter(p => p.k === 'img');
 const textPart = rec.parts.filter(p => p.k === 'text').map(p => p.v).join(' ');
+if (imgs.length && !textPart) {
+b.classList.add('gc-media');
+b.style.padding = '0';
+b.style.background = 'transparent';
+b.style.border = 'none';
+b.style.boxShadow = 'none';
+}
 let inner = '';
 if (imgs.length) {
 inner += '<div class="msg-parts-imgs' + (imgs.length > 1 ? ' multi' : '') + '">' +
@@ -27410,8 +27434,9 @@ setTimeout(() => memberReply(cid, userText), i * (1200 + Math.random() * 1600));
 });
 }
 function updateGroupName() {
-const n = getMembers().length;
-if (nameEl) nameEl.textContent = '群聊(' + n + ')';
+const n = getMembers().length + 1;
+const nm = gcGroupNameGet() || '群聊';
+if (nameEl) nameEl.textContent = nm + '(' + n + ')';
 }
 function enterGroupChat() {
 const editing = Array.from(document.querySelectorAll('.app-grid')).some(g => g.classList.contains('editing'));
@@ -27583,6 +27608,26 @@ gcProfileSet(key, '', '');
 }
 return row;
 };
+const gNameRow = document.createElement('div');
+gNameRow.className = 'gc-set-item gc-set-link';
+gNameRow.innerHTML =
+'<div class="gc-set-av">' +
+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z"/></svg>' +
+'</div>' +
+'<div class="gc-set-info">' +
+'<div class="gc-set-name">群聊名称</div>' +
+'<div class="gc-set-desk">' + (gcGroupNameGet() || '群聊') + '</div>' +
+'</div>' +
+'<span class="gc-set-chev">›</span>';
+gNameRow.addEventListener('click', () => {
+if (!window.openModal) return;
+window.openModal('群聊名称', gcGroupNameGet(), (v) => {
+gcGroupNameSet((v || '').trim());
+renderSettingsPanel();
+updateGroupName();
+}, { maxlength: 30 });
+});
+settingsBody.appendChild(gNameRow);
 const t1 = document.createElement('div');
 t1.className = 'gc-set-title';
 t1.textContent = '我的群聊';
@@ -30991,7 +31036,7 @@ const BUBBLE_BG_COLORS = [
 { color: '#e8dcff', label: '淡紫' },
 { color: '#ffdcc0', label: '暖橘' },
 { color: '#95ec69', label: '微信绿' },
-{ color: '#1a6630', label: '深色模式绿' }
+{ color: '#28b561', label: '深色绿' }
 ];
 const BUBBLE_INK_COLORS = [
 { color: '#111111', label: '默认黑' },
@@ -48843,14 +48888,14 @@ document.head.appendChild(fa);
 如果你想要和你 milk 网站一模一样的颜色，把下面这 7 行的
 颜色值换成你 milk 主题里 :root 的 --accent-color 等数值即可。 */
 var PALETTE = {
-accent: '#ff6b81',        // 主色
-accentRGB: '255,107,129', // 主色的 RGB（逗号分隔）
-bg1: '#ffffff',           // 弹窗卡片底色
-bg2: '#ffffff',           // 渐变第二底色
-line: '#eee8f0',          // 边框色
-ink: '#2e2a38',           // 主文字
-sub: '#948d9e',           // 次级文字
-soft: '#f6f2f8'           // 浅色按钮/输入底色
+accent: '#111111',
+accentRGB: '17,17,17',
+bg1: '#ffffff',
+bg2: '#ffffff',
+line: '#e0e0e0',
+ink: '#111111',
+sub: '#777777',
+soft: '#f2f2f2'
 };
 /* ---------- 2. 样式（milk 原版 CSS，仅把变量名换成上面这组） ---------- */
 var cssText = `

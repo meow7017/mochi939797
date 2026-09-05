@@ -60,6 +60,16 @@
     try { gcProfileStore().set('gc-profiles', JSON.stringify(gcProfiles)); } catch (e) {}
   }
   function gcProfileGet(key) { return gcProfiles[key] || {}; }
+  // 群聊名称（可自定义；留空 = 默认「群聊」；存全局，不随桌面切换）
+  function gcGroupNameGet() {
+    try { return (gcProfileStore().get('gc-group-name') || '').trim(); } catch (e) { return ''; }
+  }
+  function gcGroupNameSet(name) {
+    try {
+      if (name) gcProfileStore().set('gc-group-name', name);
+      else gcProfileStore().remove('gc-group-name');
+    } catch (e) {}
+  }
   // name/avatar 传空串或 undefined = 清除该字段；两个都空则删除整条记录
   function gcProfileSet(key, name, avatar) {
     const p = gcProfiles[key] || (gcProfiles[key] = {});
@@ -86,7 +96,7 @@
   const GC_BEAUTY_DEFAULTS = {
     'out-bg': '#111111', 'out-ink': '#ffffff', 'in-bg': '#ffffff', 'in-ink': '#111111',
     'send-bg': '#111111', 'send-ink': '#ffffff', 'send-show': 'show',
-    'font-size': '14px', 'bubble-size': '11px 14px',
+    'font-size': '14px', 'bubble-size': '9px 12px',
     'av-shape': 'circle', 'time-style': 'under-av',
     'bg': '', 'font': '', 'css': '',
     // v3.16.x：成员群聊昵称显示开关（on = 成员消息头像上方显示昵称，默认不显示）
@@ -115,7 +125,8 @@
   const GC_BUBBLE_BG = [
     { color: '#111111', label: '默认黑' }, { color: '#ffffff', label: '白色' }, { color: '#3a3a3a', label: '炭灰' },
     { color: '#ffd6e0', label: '樱花粉' }, { color: '#d6e4ff', label: '雾霭蓝' }, { color: '#d8f5e0', label: '薄荷绿' },
-    { color: '#fff3d6', label: '奶油黄' }, { color: '#e8dcff', label: '淡紫' }, { color: '#ffdcc0', label: '暖橘' }
+    { color: '#fff3d6', label: '奶油黄' }, { color: '#e8dcff', label: '淡紫' }, { color: '#ffdcc0', label: '暖橘' },
+    { color: '#95ec69', label: '微信绿' }, { color: '#28b561', label: '深色绿' },
   ];
   const GC_INK_COLORS = [
     { color: '#111111', label: '默认黑' }, { color: '#ffffff', label: '白色' }, { color: '#444444', label: '深灰' },
@@ -182,11 +193,8 @@
   }
   // key（四个颜色键之一）当前组合对比度是否过低的布尔
   function gcColorPairBad(key) {
-    const p = GC_COLOR_PAIRS[key];
-    if (!p) return false;
-    const ratio = gcContrast(gcBeautyGet(p[0]), gcBeautyGet(p[1]));
-    return ratio !== null && ratio < GC_MIN_CONTRAST;
-  }
+  return false;
+}
   // 设置面板里警告行文案（供 renderBeautyView 用）
   function gcColorWarnText(key) {
     const names = { 'out-bg': '我的气泡', 'in-bg': '联系人气泡' };
@@ -248,9 +256,10 @@
     page.style.setProperty('--msg-out-ink', g('out-ink'));
     page.style.setProperty('--chat-font-size', g('font-size'));
     page.style.setProperty('--chat-bubble-pad', g('bubble-size'));
+    page.style.setProperty('--chat-bubble-radius', '4px');
     page.style.setProperty('--send-bg', g('send-bg'));
     page.style.setProperty('--send-ink', g('send-ink'));
-    page.style.setProperty('--msg-av-radius', g('av-shape') === 'square' ? '10px' : '50%');
+    page.style.setProperty('--msg-av-radius', g('av-shape') === 'square' ? '4px' : '50%');
     const sendBtn = document.getElementById('gc-send');
     if (sendBtn) sendBtn.style.display = g('send-show') === 'hide' ? 'none' : '';
     // 时间轴样式：page 级类（始终挂类，含默认 under-av 的还原规则，隔离聊天页 body 级类）
@@ -538,6 +547,14 @@
     } else if (rec.parts && rec.parts.length) {
       const imgs = rec.parts.filter(p => p.k === 'img');
       const textPart = rec.parts.filter(p => p.k === 'text').map(p => p.v).join(' ');
+      // 纯图片消息：去掉气泡色块/尖角（与表情包一致）；带文字的图片消息保留气泡
+      if (imgs.length && !textPart) {
+        b.classList.add('gc-media');
+        b.style.padding = '0';
+        b.style.background = 'transparent';
+        b.style.border = 'none';
+        b.style.boxShadow = 'none';
+      }
       let inner = '';
       if (imgs.length) {
         inner += '<div class="msg-parts-imgs' + (imgs.length > 1 ? ' multi' : '') + '">' +
@@ -1007,8 +1024,10 @@
 
   // ---- 进入/退出 ----
   function updateGroupName() {
-    const n = getMembers().length;
-    if (nameEl) nameEl.textContent = '群聊(' + n + ')';
+    // 人数 = 联系人个数 + 1（把自己算进去）
+    const n = getMembers().length + 1;
+    const nm = gcGroupNameGet() || '群聊';
+    if (nameEl) nameEl.textContent = nm + '(' + n + ')';
   }
   function enterGroupChat() {
     const editing = Array.from(document.querySelectorAll('.app-grid')).some(g => g.classList.contains('editing'));
@@ -1196,6 +1215,27 @@
       }
       return row;
     };
+    // —— 群聊名称（可自定义，显示在标题 + 人数前） ——
+    const gNameRow = document.createElement('div');
+    gNameRow.className = 'gc-set-item gc-set-link';
+    gNameRow.innerHTML =
+      '<div class="gc-set-av">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z"/></svg>' +
+      '</div>' +
+      '<div class="gc-set-info">' +
+        '<div class="gc-set-name">群聊名称</div>' +
+        '<div class="gc-set-desk">' + (gcGroupNameGet() || '群聊') + '</div>' +
+      '</div>' +
+      '<span class="gc-set-chev">›</span>';
+    gNameRow.addEventListener('click', () => {
+      if (!window.openModal) return;
+      window.openModal('群聊名称', gcGroupNameGet(), (v) => {
+        gcGroupNameSet((v || '').trim());
+        renderSettingsPanel();
+        updateGroupName();
+      }, { maxlength: 30 });
+    });
+    settingsBody.appendChild(gNameRow);
     // —— 我的群聊 ——
     const t1 = document.createElement('div');
     t1.className = 'gc-set-title';

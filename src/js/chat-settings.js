@@ -429,7 +429,7 @@
     { color: '#e8dcff', label: '淡紫' },
     { color: '#ffdcc0', label: '暖橘' },
     { color: '#95ec69', label: '微信绿' },
-    { color: '#1a6630', label: '深色模式绿' }
+    { color: '#28b561', label: '深色绿' }
   ];
   const BUBBLE_INK_COLORS = [
     { color: '#111111', label: '默认黑' },

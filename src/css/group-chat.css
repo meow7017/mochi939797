@@ -216,3 +216,16 @@
 .gc-at-av img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .gc-at-av svg { width: 60%; height: 60%; }
 .gc-at-item span { font-size: 14px; }
+
+/* 群聊默认背景（未设壁纸时）：浅灰 #ededed，替代纯白 */
+#page-group-chat {
+  background-color: #ededed;
+}
+
+/* 纯图片消息不显示气泡尖角 */
+#page-group-chat .msg-bubble.gc-media::before {
+  display: none !important;
+}
+#page-group-chat .msg-bubble.gc-media .msg-parts-imgs {
+  margin-bottom: 0;
+}

@@ -18,15 +18,15 @@
   /* ---------- 1. 主题色（想改成你 milk 里的主色，改这一组即可） ----------
      如果你想要和你 milk 网站一模一样的颜色，把下面这 7 行的
      颜色值换成你 milk 主题里 :root 的 --accent-color 等数值即可。 */
-  var PALETTE = {
-    accent: '#ff6b81',        // 主色
-    accentRGB: '255,107,129', // 主色的 RGB（逗号分隔）
-    bg1: '#ffffff',           // 弹窗卡片底色
-    bg2: '#ffffff',           // 渐变第二底色
-    line: '#eee8f0',          // 边框色
-    ink: '#2e2a38',           // 主文字
-    sub: '#948d9e',           // 次级文字
-    soft: '#f6f2f8'           // 浅色按钮/输入底色
+    var PALETTE = {
+    accent: '#111111',
+    accentRGB: '17,17,17',
+    bg1: '#ffffff',
+    bg2: '#ffffff',
+    line: '#e0e0e0',
+    ink: '#111111',
+    sub: '#777777',
+    soft: '#f2f2f2'
   };
 
   /* ---------- 2. 样式（milk 原版 CSS，仅把变量名换成上面这组） ---------- */
