@@ -1860,7 +1860,7 @@
     try {
       const c = gcAsCfg();
       if (c.en !== '1') return;
-      if (document.hidden) return;
+      // （原：if (document.hidden) return;）后台也允许触发，回前台统一补发
       if (Math.random() * 100 >= c.prob) return;
       const members = getMembers();
       if (!members.length) return;
@@ -1889,4 +1889,18 @@
   }
   document.addEventListener('mochi-restore-done', gcBootAutoSend);
   setTimeout(gcBootAutoSend, 3000);
+  
+  // 回前台立即补一次主动发送（等同单聊 mochi-fg-resume 机制）：后台被冻结/节流错过的到点
+  // 触发，切回前台马上补上；1 秒窗口去重避免 visibilitychange+focus+pageshow 连续触发连发
+  let _gcFgAt = 0;
+  function _gcOnFg() {
+    const now = Date.now();
+    if (now - _gcFgAt < 1000) return;
+    _gcFgAt = now;
+    gcTryAutoSend();
+    gcScheduleAutoSend(); // 顺带按当前设置重排下一轮（改过设置立即生效，不用等旧定时器到点）
+  }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') _gcOnFg(); });
+  document.addEventListener('focus', function () { if (document.visibilityState === 'visible') _gcOnFg(); });
+  window.addEventListener('pageshow', function () { if (document.visibilityState === 'visible') _gcOnFg(); });
 })();
