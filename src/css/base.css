@@ -954,3 +954,4 @@ input.ce-ghost, textarea.ce-ghost {
 .sfx-preset.on { background:var(--ink); color:#fff; border-color:var(--ink); }
 /* 卡片底部操作行：无自定义只显示上传，有自定义显示试听/清除 */
 .sfx-tools { display:flex; gap:8px; flex-wrap:wrap; padding:0 16px 14px; }
+

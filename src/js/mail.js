@@ -862,6 +862,7 @@
   // 数据源：该联系人桌面命名空间的 fish-day-add / work-day-add（每日新增记录，与日历同源）。
   // 以 TA 口吻寄一封「本周摸鱼小结」进信箱；标记键 fish-week-report:<M-D>（周日日期）防重发。
   function fishWeekReportFor(cid) {
+    return; // 已停用：不再生成/发送每周摸鱼小结（含聊天与桌面提醒）
     // 当前桌面权威加载（mailDbReady）完成前不写——同 maybeIncomingLetterFor 守卫，
     // 防止把剥图快照当全量列表写回覆盖 IDB 带图信件
     if (cid === (window.__activeCid || 'default') && !mailDbReady) return;

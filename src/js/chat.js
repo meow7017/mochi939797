@@ -4207,6 +4207,7 @@ store.set(k, String((Number(store.get(k)) || 0) + 1));
 // 概率门读取存钱罐右上角设置的申请概率（默认 4%，不沿用红包七夕加成），无次数上限；
 // 入 TA 的 systemBalance，聊天留 askcoin 卡片
 function trySystemAskMochi() {
+return; // 已停用：TA 不再自动向 Mochi 申请心意币（聊天不再出现申请提醒）
 let baseRate = 0.04;
 try { const p = JSON.parse((window.xyStore('xy-home-v2')).get('piggy-coin-prob') || 'null'); if (p && typeof p.ask === 'number') baseRate = p.ask; } catch (e) {}
 if (Math.random() >= baseRate) return;

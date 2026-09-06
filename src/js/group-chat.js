@@ -1834,7 +1834,7 @@
   function gcAsCfg() {
     const s = gcProfileStore();
     const get = function (k, d) {
-      try { const v = s.get('gc-as-' + k); if (v !== null && v !== undefined && v !== '') return v; } catch (e) {}
+      try { const v = s.get('reply-gc-as-' + k); if (v !== null && v !== undefined && v !== '') return v; } catch (e) {}
       return d;
     };
     return {
