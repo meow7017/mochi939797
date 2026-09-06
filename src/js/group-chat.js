@@ -1828,8 +1828,8 @@
     try { return JSON.parse(JSON.stringify(gcPool(cid))); } catch (e) { return null; }
   };
 
-  // ===== v3.x：群聊主动发送（成员主动来找你聊天，等同聊天页的「主动发送」） =====
-  // 设置读 xy-home-v2:gc-as-* 全局键（回复设置 → 群聊 → 主动发送 段）：
+    // ===== v3.x：群聊主动发送（成员主动来找你聊天，等同聊天页的「主动发送」） =====
+  // 设置读 xy-home-v2:reply-gc-as-* 全局键（回复设置 → 群聊 → 主动发送 段）：
   //   en=总开关(1/0) · prob=命中概率% · min/max=发送间隔分钟 · count-min/count-max=发送条数
   function gcAsCfg() {
     const s = gcProfileStore();
@@ -1846,6 +1846,7 @@
       countMax: Number(get('count-max', 2))
     };
   }
+  // 发送一条成员消息（+ 后台系统通知，等同私聊）
   function gcAsSendOne(cid) {
     const name = memberName(cid);
     const rep = gcGenReply(cid, gcCfg());
@@ -1855,41 +1856,75 @@
     renderMsg(rec, msgs.length - 1);
     followGcBottom();
     if (window.playSfx) window.playSfx('in');
+    // ===== 后台提醒（等同私聊：页面在后台时发系统通知） =====
+    try {
+      if (window.bgNotifyCheck && document.visibilityState === 'hidden') {
+        let body = '';
+        try {
+          if (rep.parts && rep.parts.length) {
+            const txts = rep.parts.filter(function (p) { return p && p.k === 'text'; });
+            const imgs = rep.parts.filter(function (p) { return p && p.k === 'img'; });
+            if (txts.length) body = txts.map(function (p) { return p.v; }).join(' ');
+            else if (imgs.length) body = (imgs[0].sub === 'sticker') ? '[表情包]' : '[图片]';
+          }
+          if (!body && rep.type === 'voice') body = '[语音]';
+          if (!body && rep.type === 'sticker') body = '[表情包]';
+          if (!body && rep.type === 'image') body = '[图片]';
+          if (!body && typeof rep.text === 'string') {
+            if (rep.text.indexOf('data:') === 0 || /^https?:/i.test(rep.text)) body = '[图片]';
+            else if (rep.text.indexOf('|||') >= 0) body = '[语音]';
+            else body = rep.text;
+          }
+        } catch (e) { body = ''; }
+        if (!body) body = '给你发了一条消息';
+        if (body.length > 80) body = body.slice(0, 80) + '…';
+        window.bgNotifyCheck(body, Date.now(), { name: name });
+      }
+    } catch (e) {}
+  }
+  // 下次允许尝试的时间戳；null = 尚未排首次
+  let gcNextAt = null;
+  function gcAsDelay() {
+    const c = gcAsCfg();
+    const min = Math.max(1, c.min);
+    const max = Math.max(min, c.max);
+    return (min + Math.random() * Math.max(1, max - min)) * 60000;
   }
   function gcTryAutoSend() {
     try {
       const c = gcAsCfg();
-      if (c.en !== '1') return;
-      // （原：if (document.hidden) return;）后台也允许触发，回前台统一补发
-      if (Math.random() * 100 >= c.prob) return;
+      if (c.en !== '1') { gcNextAt = null; return; } // 总开关关着：随时可开，恢复后自动重新计时
+      const now = Date.now();
+      if (gcNextAt === null) { gcNextAt = now + gcAsDelay(); return; } // 首次：等一个间隔再试
+      if (now < gcNextAt) return; // 还没到点，等待下一次 tick
+      // —— 到点：掷概率 ——
+      if (Math.random() * 100 >= c.prob) { gcNextAt = now + gcAsDelay(); return; } // 没命中：按间隔等下一轮
       const members = getMembers();
-      if (!members.length) return;
-      const count = randInt(Math.max(1, c.countMin), Math.max(c.countMin, c.countMax));
-      const pool = members.slice();
-      for (let i = 0; i < count && pool.length; i++) {
-        const pickIdx = Math.floor(Math.random() * pool.length);
-        const m = pool.splice(pickIdx, 1)[0];
-        setTimeout(function () { gcAsSendOne(m.id); }, i * (1500 + Math.random() * 2500));
+      if (members.length) {
+        const count = randInt(Math.max(1, c.countMin), Math.max(c.countMin, c.countMax));
+        const pool = members.slice();
+        for (let i = 0; i < count && pool.length; i++) {
+          const pickIdx = Math.floor(Math.random() * pool.length);
+          const m = pool.splice(pickIdx, 1)[0];
+          setTimeout(function () { try { gcAsSendOne(m.id); } catch (e) {} }, i * (1500 + Math.random() * 2500));
+        }
       }
+      // 命中后按设置间隔排下一次
+      gcNextAt = now + gcAsDelay();
     } catch (e) {}
   }
-  function gcScheduleAutoSend() {
-    const c = gcAsCfg();
-    const min = Math.max(1, c.min);
-    const max = Math.max(min, c.max);
-    const delay = (min + Math.random() * Math.max(1, max - min)) * 60000;
-    setTimeout(function () {
-      gcTryAutoSend();
-      gcScheduleAutoSend();
-    }, delay);
-  }
-  function gcBootAutoSend() {
-    if (!window.__mochiDataReady) { setTimeout(gcBootAutoSend, 500); return; }
-    gcScheduleAutoSend();
-  }
-  document.addEventListener('mochi-restore-done', gcBootAutoSend);
-  setTimeout(gcBootAutoSend, 3000);
-  
+  // ===== 固定每 30 秒轮询一次 =====
+  // 不依赖递归 setTimeout 链：链断/后台冻结都不会让它“自己停”，回前台也会自动恢复
+  setInterval(gcTryAutoSend, 30000);
+  // 启动 / 数据就绪 / 回前台时立即补一次（不必干等 30 秒）
+  function gcKick() { try { gcTryAutoSend(); } catch (e) {} }
+  if (window.__mochiDataReady) { setTimeout(gcKick, 3000); }
+  else { document.addEventListener('mochi-restore-done', function () { setTimeout(gcKick, 3000); }); }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') gcKick(); });
+  document.addEventListener('focus', gcKick);
+  window.addEventListener('pageshow', function () { if (document.visibilityState === 'visible') gcKick(); });
+})();
+
   // 回前台立即补一次主动发送（等同单聊 mochi-fg-resume 机制）：后台被冻结/节流错过的到点
   // 触发，切回前台马上补上；1 秒窗口去重避免 visibilitychange+focus+pageshow 连续触发连发
   let _gcFgAt = 0;
