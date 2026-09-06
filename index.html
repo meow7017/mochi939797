@@ -7736,9 +7736,9 @@ transition-duration: .01ms !important;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788713149918">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.7</b></span>
-        <span class="sv-deploy">部署于 2026-09-07 00:45<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1788714060258">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.8</b></span>
+        <span class="sv-deploy">部署于 2026-09-07 01:01<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8481,7 +8481,7 @@ transition-duration: .01ms !important;
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.7</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.8</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8702,7 +8702,7 @@ transition-duration: .01ms !important;
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.7</span>
+              <span class="lic-ver">v3.26.8</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -28153,6 +28153,8 @@ window.groupChatBeautySet = function (k, v) { gcBeautySet(k, v); };
 window.groupChatPoolFor = function (cid) {
 try { return JSON.parse(JSON.stringify(gcPool(cid))); } catch (e) { return null; }
 };
+let gcAsTimer = null;    // 全局唯一排期闹钟
+let gcAsBooted = false;  // 是否已启动（防 restore 与 3s 兜底双触发叠加成两条链）
 function gcAsCfg() {
 const s = gcProfileStore();
 const get = function (k, d) {
@@ -28202,49 +28204,51 @@ window.bgNotifyCheck(body, Date.now(), { name: name });
 }
 } catch (e) {}
 }
-let gcNextAt = null;
-function gcAsDelay() {
-const c = gcAsCfg();
-const min = Math.max(1, c.min);
-const max = Math.max(min, c.max);
-return (min + Math.random() * Math.max(1, max - min)) * 60000;
-}
 function gcTryAutoSend() {
 try {
 const c = gcAsCfg();
-if (c.en !== '1') { gcNextAt = null; return; } // 总开关关着：随时可开，恢复后自动重新计时
-const now = Date.now();
-if (gcNextAt === null) { gcNextAt = now + gcAsDelay(); return; } // 首次：等一个间隔再试
-if (now < gcNextAt) return; // 还没到点，等待下一次 tick
-if (Math.random() * 100 >= c.prob) { gcNextAt = now + gcAsDelay(); return; } // 没命中：按间隔等下一轮
+if (c.en !== '1') return;
+if (Math.random() * 100 >= c.prob) return;
 const members = getMembers();
-if (members.length) {
+if (!members.length) return;
 const count = randInt(Math.max(1, c.countMin), Math.max(c.countMin, c.countMax));
 const pool = members.slice();
 for (let i = 0; i < count && pool.length; i++) {
 const pickIdx = Math.floor(Math.random() * pool.length);
 const m = pool.splice(pickIdx, 1)[0];
-setTimeout(function () { try { gcAsSendOne(m.id); } catch (e) {} }, i * (1500 + Math.random() * 2500));
+setTimeout(function () { gcAsSendOne(m.id); }, i * (1500 + Math.random() * 2500));
 }
-}
-gcNextAt = now + gcAsDelay();
 } catch (e) {}
 }
-setInterval(gcTryAutoSend, 30000);
-function gcKick() { try { gcTryAutoSend(); } catch (e) {} }
-if (window.__mochiDataReady) { setTimeout(gcKick, 3000); }
-else { document.addEventListener('mochi-restore-done', function () { setTimeout(gcKick, 3000); }); }
-document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') gcKick(); });
-document.addEventListener('focus', gcKick);
-window.addEventListener('pageshow', function () { if (document.visibilityState === 'visible') gcKick(); });
-})();
+function gcScheduleAutoSend() {
+clearTimeout(gcAsTimer);
+const c = gcAsCfg();
+if (c.en !== '1') {
+gcAsTimer = setTimeout(gcScheduleAutoSend, 30000);
+return;
+}
+const min = Math.min(600, Math.max(1, c.min || 20));
+const max = Math.max(min, Math.min(600, c.max || 60));
+const delay = (min + Math.random() * Math.max(1, max - min)) * 60000;
+gcAsTimer = setTimeout(function () {
+gcTryAutoSend();            // 本次没命中也没关系
+gcScheduleAutoSend();       // 无论如何都排下一轮 → 永不间断
+}, delay);
+}
+function gcBootAutoSend() {
+if (gcAsBooted) return;       // 只真正启动一次
+gcAsBooted = true;
+gcScheduleAutoSend();
+}
+document.addEventListener('mochi-restore-done', gcBootAutoSend);
+setTimeout(gcBootAutoSend, 3000);
 let _gcFgAt = 0;
 function _gcOnFg() {
 const now = Date.now();
 if (now - _gcFgAt < 1000) return;
 _gcFgAt = now;
 gcTryAutoSend();
-gcScheduleAutoSend(); // 顺带按当前设置重排下一轮（改过设置立即生效，不用等旧定时器到点）
+gcScheduleAutoSend(); // 统一走唯一调度入口（内部先清旧再排），不会叠加
 }
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') _gcOnFg(); });
 document.addEventListener('focus', function () { if (document.visibilityState === 'visible') _gcOnFg(); });
