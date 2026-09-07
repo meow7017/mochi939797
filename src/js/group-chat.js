@@ -373,6 +373,12 @@
     if (run) { try { run(); gLastPersistAt = performance.now(); } catch (e) {} }
   }
   function gcWriteMsgs() {
+if (msgs.length === 0) {          // ← 新增：历史没加载就禁止用空数组覆盖
+    try {
+      const v = localStorage.getItem(MSG_KEY);
+      if (v) { const a = JSON.parse(v); if (Array.isArray(a) && a.length) msgs = a.slice(); }
+    } catch (e) {}
+  }
     const data = JSON.stringify(msgs);
     try { localStorage.setItem(MSG_KEY, data); } catch (e) {}
     try { if (window.idbSet) window.idbSet(MSG_KEY, data); } catch (e) {}
@@ -1035,7 +1041,7 @@
     document.querySelectorAll('.page').forEach(p => p.hidden = true);
     if (page) page.hidden = false;
     updateGroupName();
-    loadMsgs();
+    loadMsgs();          // ← 新增：写盘前先把存储里的历史读进内存，绝不在空数组上覆盖
     renderAll();
     syncGcInputBtns(); // 进入群聊时按当前桌面设置刷新语音/继续说/批量按钮显隐
   }
@@ -1851,6 +1857,7 @@ function gcAsCfg() {
   };
 }
 function gcAsSendOne(cid) {
+  loadMsgs();
   const name = memberName(cid);
   const rep = gcGenReply(cid, gcCfg());
   const rec = { side: 'in', cid: cid, name: name, text: rep.text, type: rep.type, parts: rep.parts, ts: Date.now() };
