@@ -7355,213 +7355,6 @@ radial-gradient(circle at calc(100% - 5px) calc(100% - 5px), rgba(255,255,255,.1
 [data-theme="dark"] .narc-btab.on {
 color: var(--card-bg, #1e1e1e);
 }
-#page-drift { overflow: hidden; }
-.drift-scroll {
-flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-display: flex; flex-direction: column; gap: 10px;
-padding: 10px 14px calc(16px + var(--mochi-safe-bottom,env(safe-area-inset-bottom,0px)));
-min-height: 0;
-}
-.drift-sea {
-position: relative; flex: none;
-height: clamp(180px, 46vw, 250px);
-border-radius: 16px; overflow: hidden;
-background: linear-gradient(#bfe3f7 0%, #d9f0fa 52%, #eaf7fc 100%);
-box-shadow: 0 10px 28px rgba(40,80,110,.14), 0 2px 6px rgba(0,0,0,.06);
-}
-.drift-sea.night { background: linear-gradient(#1c2748 0%, #24335c 48%, #31507a 100%); }
-.ds-moon {
-position: absolute; top: 12%; right: 12%;
-font-size: 26px; line-height: 1;
-filter: drop-shadow(0 0 8px rgba(255,240,190,.85));
-animation: dsGlow 3.6s ease-in-out infinite alternate;
-opacity: 0; transition: opacity .8s ease;
-}
-.drift-sea.night .ds-moon { opacity: 1; }
-.ds-sun {
-position: absolute; top: 12%; right: 13%;
-font-size: 22px; line-height: 1;
-opacity: .9; transition: opacity .8s ease;
-}
-.drift-sea.night .ds-sun { opacity: 0; }
-@keyframes dsGlow { from { transform: translateY(0); } to { transform: translateY(-3px); } }
-.ds-cloud {
-position: absolute; font-size: 17px; opacity: .75;
-animation: dsCloud 26s linear infinite;
-}
-.drift-sea.night .ds-cloud { opacity: .28; }
-.ds-cloud.c1 { top: 16%; left: -30px; animation-duration: 30s; }
-.ds-cloud.c2 { top: 34%; left: 55%; animation-duration: 38s; animation-delay: -14s; }
-@keyframes dsCloud { from { transform: translateX(0); } to { transform: translateX(120px); } }
-.ds-wave {
-position: absolute; left: 0; right: 0; bottom: 0; pointer-events: none;
-}
-.ds-wave.w1 {
-height: 42%;
-background:
-radial-gradient(22px 11px at 11px 3px, rgba(255,255,255,.55) 46%, transparent 52%) repeat-x,
-linear-gradient(rgba(96,168,214,.92), rgba(64,132,188,.96));
-background-size: 44px 14px, auto;
-border-radius: 10px 10px 0 0;
-animation: dsWave1 6.5s linear infinite;
-}
-.ds-wave.w2 {
-height: 32%;
-background:
-radial-gradient(18px 9px at 9px 2px, rgba(255,255,255,.4) 46%, transparent 52%) repeat-x,
-linear-gradient(rgba(58,128,182,.95), rgba(38,102,156,1));
-background-size: 36px 11px, auto;
-animation: dsWave2 9.5s linear infinite reverse;
-}
-.drift-sea.night .ds-wave.w1 { background-image: radial-gradient(22px 11px at 11px 3px, rgba(210,228,255,.28) 46%, transparent 52%), linear-gradient(rgba(43,74,122,.95), rgba(30,56,100,1)); background-size: 44px 14px, auto; }
-.drift-sea.night .ds-wave.w2 { background-image: radial-gradient(18px 9px at 9px 2px, rgba(200,220,255,.18) 46%, transparent 52%), linear-gradient(rgba(26,46,84,1), rgba(18,32,62,1)); background-size: 36px 11px, auto; }
-@keyframes dsWave1 { to { background-position: 88px 3px, 0 0; } }
-@keyframes dsWave2 { to { background-position: -72px 2px, 0 0; } }
-.ds-bob {
-position: absolute; z-index: 5;
-left: 50%; bottom: 26%;
-font-size: 30px; line-height: 1;
-filter: drop-shadow(0 4px 3px rgba(20,50,80,.3));
-animation: dsBob 3.2s ease-in-out infinite;
-transition: none;
-pointer-events: none;
-}
-@keyframes dsBob {
-0%, 100% { transform: translate(-50%, 0) rotate(-7deg); }
-50% { transform: translate(-50%, -7px) rotate(6deg); }
-}
-.ds-bob.d-arrive { animation: dsArrive 1.7s ease-in-out; }
-@keyframes dsArrive {
-0% { left: 8%; bottom: 20%; transform: rotate(-14deg); }
-55% { left: 58%; bottom: 30%; transform: rotate(4deg); }
-100% { left: 50%; bottom: 26%; transform: rotate(-7deg); }
-}
-.ds-cap {
-position: absolute; z-index: 6; left: 0; right: 0; bottom: 7px;
-text-align: center; font-size: 11px; letter-spacing: .12em;
-color: rgba(255,255,255,.85); text-shadow: 0 1px 2px rgba(20,60,90,.45);
-pointer-events: none;
-}
-.d-actions { display: flex; gap: 10px; flex: none; }
-.d-pick {
-flex: 1.6; border: 0; border-radius: 999px;
-padding: 13px 0; font-size: 15px; font-weight: 700; letter-spacing: .08em;
-color: #fff; cursor: pointer;
-background: linear-gradient(135deg, #5aa7dd, #3f7fc0);
-box-shadow: 0 6px 16px rgba(63,127,192,.35);
-}
-.d-pick:active { transform: translateY(1px); }
-.d-pick:disabled { opacity: .55; box-shadow: none; cursor: default; }
-.d-put {
-flex: 1; border: 1px solid rgba(0,0,0,.08); border-radius: 999px;
-padding: 13px 0; font-size: 13.5px; font-weight: 600;
-color: var(--ink); cursor: pointer;
-background: var(--glass-bg, rgba(255,255,255,.66));
-box-shadow: 0 2px 8px rgba(0,0,0,.06);
-}
-.d-put:active { transform: translateY(1px); }
-.d-open { flex: none; padding: 14px 14px 12px; }
-.d-open.pop { animation: dOpenPop .34s cubic-bezier(.2,1.4,.4,1); }
-@keyframes dOpenPop { from { transform: scale(.92) translateY(8px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-.do-head { font-size: 13px; font-weight: 700; color: var(--ink); opacity: .85; margin-bottom: 10px; }
-.do-paper {
-background:
-repeating-linear-gradient(0deg, transparent 0 25px, rgba(120,160,200,.16) 25px 26px),
-linear-gradient(#fffdf6, #fbf6ea);
-border: 1px solid rgba(150,130,90,.22);
-border-radius: 10px;
-padding: 13px 14px 11px;
-box-shadow: inset 0 1px 3px rgba(120,90,40,.08);
-}
-.do-txt {
-font-size: 14.5px; line-height: 27px; color: #4a4237;
-word-break: break-word; white-space: pre-wrap;
-}
-.do-sig { margin-top: 6px; text-align: right; font-size: 12px; color: #9a8b70; }
-.do-extra { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.do-gift, .do-coin {
-font-size: 11.5px; padding: 3px 10px; border-radius: 999px;
-background: var(--glass-bg, rgba(255,255,255,.6));
-border: 1px solid rgba(0,0,0,.06); color: var(--ink); opacity: .9;
-}
-.do-coin { color: #b07a12; border-color: rgba(176,122,18,.3); }
-.do-btns { display: flex; gap: 8px; margin-top: 12px; }
-.do-btns button {
-flex: 1; border: 0; border-radius: 12px; padding: 10px 0;
-font-size: 13px; font-weight: 600; cursor: pointer;
-}
-.do-fav {
-background: var(--glass-bg, rgba(255,255,255,.66));
-color: #c0566b; border: 1px solid rgba(192,86,107,.25);
-}
-.do-ok { background: linear-gradient(135deg, #5aa7dd, #3f7fc0); color: #fff; }
-.do-theirs {
-margin-top: 10px;
-border: 1px dashed rgba(90,167,221,.5);
-border-radius: 10px;
-padding: 10px 12px 9px;
-background: rgba(90,167,221,.08);
-}
-.do-theirs-head { font-size: 12.5px; font-weight: 700; color: var(--ink); opacity: .85; margin-bottom: 6px; }
-.do-theirs-txt { font-size: 13.5px; line-height: 1.6; color: #4a4237; word-break: break-word; white-space: pre-wrap; }
-.do-theirs-sig { margin-top: 5px; text-align: right; font-size: 11.5px; color: #8a9db0; }
-[data-theme="dark"] .do-theirs { background: rgba(90,150,200,.14); border-color: rgba(120,180,230,.45); }
-[data-theme="dark"] .do-theirs-txt { color: #e8e2d6; }
-[data-theme="dark"] .do-theirs-sig { color: #9db2c8; }
-.d-stats {
-flex: none; text-align: center; font-size: 11.5px; color: var(--ink); opacity: .68;
-min-height: 16px;
-}
-.d-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-.d-tab {
-border: 1px solid rgba(0,0,0,.08); border-radius: 999px;
-padding: 6px 14px; font-size: 12.5px; cursor: pointer;
-background: var(--glass-bg, rgba(255,255,255,.55));
-color: var(--ink); opacity: .78;
-}
-.d-tab.sel { opacity: 1; font-weight: 700; background: rgba(90,167,221,.22); border-color: rgba(90,167,221,.5); }
-.d-list { display: flex; flex-direction: column; gap: 8px; min-height: 60px; flex: none; }
-.dl-empty {
-text-align: center; font-size: 12px; color: var(--ink); opacity: .55;
-padding: 22px 10px;
-background: var(--glass-bg, rgba(255,255,255,.4));
-border: 1px dashed rgba(0,0,0,.1); border-radius: 12px;
-}
-.dl-row {
-display: flex; align-items: flex-start; gap: 10px;
-padding: 10px 12px; border-radius: 12px;
-border: 1px solid rgba(0,0,0,.05);
-}
-.dl-ico { font-size: 17px; line-height: 1.3; flex: none; }
-.dl-main { flex: 1; min-width: 0; }
-.dl-txt { font-size: 13px; line-height: 1.55; color: var(--ink); word-break: break-word; white-space: pre-wrap; }
-.dl-sub { margin-top: 3px; font-size: 11px; color: var(--ink); opacity: .55; }
-.dl-fav {
-flex: none; border: 0; background: transparent; cursor: pointer;
-font-size: 15px; color: #c0566b; padding: 2px 4px; line-height: 1.4;
-}
-[data-theme="dark"] .drift-sea { box-shadow: 0 10px 28px rgba(0,0,0,.4); }
-[data-theme="dark"] .do-paper { background: linear-gradient(#efe8da, #e7dfcd); }
-[data-theme="dark"] .do-txt { color: #3d3730; }
-[data-theme="dark"] .do-sig { color: #7a6d55; }
-[data-theme="dark"] .d-pick { background: linear-gradient(135deg, #3d6f9d, #2d5479); }
-[data-theme="dark"] .d-tab,
-[data-theme="dark"] .d-put,
-[data-theme="dark"] .do-gift,
-[data-theme="dark"] .do-fav { color: #eee; background: rgba(40,40,48,.66); border-color: rgba(255,255,255,.09); }
-[data-theme="dark"] .d-tab.sel { background: rgba(90,150,200,.3); }
-[data-theme="dark"] .dl-row { border-color: rgba(255,255,255,.07); background: rgba(40,40,48,.5); }
-[data-theme="dark"] .dl-empty { border-color: rgba(255,255,255,.14); background: rgba(40,40,48,.4); }
-[data-theme="dark"] .do-coin { color: #d9a83e; border-color: rgba(217,168,62,.35); }
-@media (prefers-reduced-motion: reduce) {
-#page-drift *,
-#page-drift *::before,
-#page-drift *::after {
-animation-duration: .01ms !important;
-animation-iteration-count: 1 !important;
-transition-duration: .01ms !important;
-}
-}
 </style>
 </head>
 <body>
@@ -7736,9 +7529,9 @@ transition-duration: .01ms !important;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788774406503">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.11</b></span>
-        <span class="sv-deploy">部署于 2026-09-07 17:46<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1788775079775">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.12</b></span>
+        <span class="sv-deploy">部署于 2026-09-07 17:57<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8481,7 +8274,7 @@ transition-duration: .01ms !important;
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.11</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.12</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8702,7 +8495,7 @@ transition-duration: .01ms !important;
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.11</span>
+              <span class="lic-ver">v3.26.12</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -10964,42 +10757,6 @@ transition-duration: .01ms !important;
     <!-- 房间：双人小屋（桌面第三页「房间」/ 聊天更多功能进入） -->
 
     <!-- 漂流瓶：两个世界之间的海（聊天更多功能【互动】进入；src/js/drift-bottle.js） -->
-    <div class="page" id="page-drift" hidden>
-      <div class="chat-head">
-        <span class="ch-back" id="drift-back">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </span>
-        <span class="ch-name">漂流瓶</span>
-        <span class="ch-settings" id="drift-info-btn" title="关于漂流瓶">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
-        </span>
-      </div>
-      <div class="drift-scroll">
-        <div class="drift-sea" id="drift-sea">
-          <span class="ds-moon">🌙</span>
-          <span class="ds-sun">☀️</span>
-          <span class="ds-cloud c1">☁️</span>
-          <span class="ds-cloud c2">☁️</span>
-          <div class="ds-wave w1"></div>
-          <div class="ds-wave w2"></div>
-          <div class="ds-bob" id="drift-bob">🫙</div>
-          <div class="ds-cap" id="drift-sea-cap">两个世界之间的海</div>
-        </div>
-        <div class="d-actions">
-          <button class="d-pick" id="drift-pick" type="button">捡一个</button>
-          <button class="d-put" id="d-put" type="button">🌊 我也放一个</button>
-        </div>
-        <div class="d-open glass" id="d-open" hidden></div>
-        <div class="d-stats" id="d-stats"></div>
-        <div class="d-tabs">
-          <button class="d-tab sel" data-t="mine" type="button">我的瓶子</button>
-          <button class="d-tab" data-t="got" type="button">捡到的</button>
-          <button class="d-tab" data-t="theirs" id="d-tab-theirs" type="button"></button>
-          <button class="d-tab" data-t="fav" type="button">收藏</button>
-        </div>
-        <div class="d-list" id="d-list"></div>
-      </div>
-    </div>
 
     <!-- 梦角档案：每个梦角一份，记录「我后来才慢慢了解到的TA」（桌面第三页「梦角档案」进入） -->
 
@@ -14396,7 +14153,7 @@ pages.forEach(p => p.hidden = true);
 document.getElementById(tab.dataset.page).hidden = false;
 });
 });
-const FULL_PAGES = ['page-chat', 'page-group-chat', 'page-chat-settings', 'page-custom-cards', 'page-default-cards', 'page-fun-cards', 'page-mood-cards', 'page-reply-cards', 'page-theme', 'page-fav', 'page-fav-settings', 'page-memory', 'page-calendar', 'page-period', 'page-accounting', 'page-garden', 'page-divine', 'page-music', 'page-stats', 'page-interact', 'page-checkin', 'page-ta-ask', 'page-ta-choose', 'page-ta-curious', 'page-ta-roast', 'page-ta-checkin', 'page-ta-invite', 'page-checkin-cards', 'page-quote-cards', 'page-home', 'page-mail', 'page-mail-write', 'page-mail-reply', 'page-feed', 'page-feed-all', 'page-feed-friends', 'page-license', 'page-about', 'page-reply-settings', 'page-call-settings', 'page-sfx-settings', 'page-room', 'page-drift'];
+const FULL_PAGES = ['page-chat', 'page-group-chat', 'page-chat-settings', 'page-custom-cards', 'page-default-cards', 'page-fun-cards', 'page-mood-cards', 'page-reply-cards', 'page-theme', 'page-fav', 'page-fav-settings', 'page-memory', 'page-calendar', 'page-period', 'page-accounting', 'page-garden', 'page-divine', 'page-music', 'page-stats', 'page-interact', 'page-checkin', 'page-ta-ask', 'page-ta-choose', 'page-ta-curious', 'page-ta-roast', 'page-ta-checkin', 'page-ta-invite', 'page-checkin-cards', 'page-quote-cards', 'page-home', 'page-mail', 'page-mail-write', 'page-mail-reply', 'page-feed', 'page-feed-all', 'page-feed-friends', 'page-license', 'page-about', 'page-reply-settings', 'page-call-settings', 'page-sfx-settings'];
 function syncChrome() {
 const phone = document.querySelector('.phone');
 const tabbar = document.querySelector('.tabbar');
