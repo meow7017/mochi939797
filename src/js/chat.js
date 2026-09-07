@@ -3418,7 +3418,7 @@ const MORE_CATS = ['chat', 'tool', 'ask'];
 // v3.26.x：群聊打开共享面板时进入「群聊模式」——只保留【工具】分类，且只留 帮我决定/多人决定/搜索记录/占卜；
 // 禁止在群聊里使用【小游戏】【TA的提问】【互动】功能。聊天页打开时关闭该模式、恢复全部分类。
 let moreGroupMode = false;
-const GROUP_MORE_ITEM_IDS = new Set(['more-decide', 'more-gdecide', 'more-search', 'more-divine']);
+const GROUP_MORE_ITEM_IDS = new Set(['more-decide', 'more-search', 'more-divine']);
 function applyMoreCat(cat, group) {
 if (group === true || group === false) moreGroupMode = group;
 if (moreGroupMode) cat = 'tool'; // 群聊模式强制锁定「工具」分类
