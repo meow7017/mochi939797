@@ -7736,9 +7736,9 @@ transition-duration: .01ms !important;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788715572824">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.9</b></span>
-        <span class="sv-deploy">部署于 2026-09-07 01:26<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1788770539595">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.11</b></span>
+        <span class="sv-deploy">部署于 2026-09-07 16:42<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8481,7 +8481,7 @@ transition-duration: .01ms !important;
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.9</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.11</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8702,7 +8702,7 @@ transition-duration: .01ms !important;
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.9</span>
+              <span class="lic-ver">v3.26.11</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -19314,7 +19314,7 @@ el.textContent = p(d.getHours()) + ':' + p(d.getMinutes());
 dateEl.textContent = '星期' + week[d.getDay()] + ' · ' + (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日';
 };
 update();
-deskClockTimer = setInterval(update, 5000);
+deskClockTimer = setInterval(update, 60000);
 }
 function renderDeskCalendar() {
 const grid = document.getElementById('dcal-grid');
@@ -19375,6 +19375,17 @@ try { if (navigator.vibrate) navigator.vibrate(200); } catch (e) {}
 }
 }
 };
+function dtTick() {
+if (dtTimer) { clearTimeout(dtTimer); dtTimer = null; } // 这一跳已执行完
+if (!dtState.running) return;        // 没在计时 → 不再排下一次
+if (document.hidden) return;         // 页面不可见 → 停；回前台由下面监听补一次
+render();                            // 刷新一次显示
+if (!dtState.running) return;        // 倒计时正好结束（render 已处理）→ 停
+dtTimer = setTimeout(dtTick, 100);   // 前台继续 0.1 秒一跳
+}
+document.addEventListener('visibilitychange', function () {
+if (!document.hidden && dtState.running && !dtTimer) dtTick();
+});
 startBtn.addEventListener('click', () => {
 if (dtState.mode === 'down' && !dtState.running && dtState.target <= 0) {
 if (!window.openModal) return;
@@ -19387,7 +19398,7 @@ dtState.startTs = Date.now();
 dtState.running = true;
 startBtn.textContent = '暂停';
 if (dtTimer) clearInterval(dtTimer);
-dtTimer = setInterval(render, 100);
+dtTimer = setTimeout(dtTick, 100);
 render();
 });
 return;
@@ -19401,7 +19412,7 @@ startBtn.textContent = '继续';
 dtState.startTs = Date.now();
 dtState.running = true;
 if (dtTimer) clearInterval(dtTimer);
-dtTimer = setInterval(render, 100);
+dtTimer = setTimeout(dtTick, 100);
 startBtn.textContent = '暂停';
 }
 render();
@@ -36295,6 +36306,7 @@ startPlayback(m);
 function startProgress() {
 if (progressTimer) clearInterval(progressTimer);
 progressTimer = setInterval(() => {
+if (document.hidden || audio.paused) return;
 if (!audio) return;
 checkAutoEnd();
 if (!audio.duration) return;
@@ -37497,7 +37509,7 @@ audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
 }
 if (fill && curEl && durEl && knob) {
 const iv = setInterval(() => {
-if (!audio || !audio.duration) return;
+if (document.hidden || !audio || audio.paused || !audio.duration) return;
 const pct = audio.currentTime / audio.duration * 100;
 fill.style.width = pct + '%';
 knob.style.left = pct + '%';
@@ -48769,6 +48781,7 @@ if (ckPanel) ckPanel.hidden = true;
 (function () {
 let lastDay = dayStr(new Date());
 setInterval(function () {
+if (document.hidden) return;
 try {
 const now = dayStr(new Date());
 if (now === lastDay) return;

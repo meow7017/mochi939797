@@ -2582,6 +2582,7 @@
   function startProgress() {
     if (progressTimer) clearInterval(progressTimer);
     progressTimer = setInterval(() => {
+      if (document.hidden || audio.paused) return;
       if (!audio) return;
       checkAutoEnd();
       if (!audio.duration) return;
@@ -3926,7 +3927,7 @@
     }
     if (fill && curEl && durEl && knob) {
       const iv = setInterval(() => {
-        if (!audio || !audio.duration) return;
+        if (document.hidden || !audio || audio.paused || !audio.duration) return;
         const pct = audio.currentTime / audio.duration * 100;
         fill.style.width = pct + '%';
         knob.style.left = pct + '%';

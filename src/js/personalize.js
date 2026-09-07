@@ -5556,7 +5556,7 @@ try {
       dateEl.textContent = '星期' + week[d.getDay()] + ' · ' + (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日';
     };
     update();
-    deskClockTimer = setInterval(update, 5000);
+    deskClockTimer = setInterval(update, 60000);
   }
   // 月历：当月网格，高亮今天，标注有留言的日子，点击跳日历页
   function renderDeskCalendar() {
@@ -5619,6 +5619,22 @@ try {
         }
       }
     };
+
+    // ===== 优化：计时只在“前台且计时中”才刷新 =====
+    // 原来每 0.1 秒固定刷一次（setInterval），切到后台也照刷 = 10Hz 空转费电；
+    // 改成每次自己排下一次：暂停 / 切后台 / 倒计时结束都会自动停止，回前台立刻补一次。
+    function dtTick() {
+      if (dtTimer) { clearTimeout(dtTimer); dtTimer = null; } // 这一跳已执行完
+      if (!dtState.running) return;        // 没在计时 → 不再排下一次
+      if (document.hidden) return;         // 页面不可见 → 停；回前台由下面监听补一次
+      render();                            // 刷新一次显示
+      if (!dtState.running) return;        // 倒计时正好结束（render 已处理）→ 停
+      dtTimer = setTimeout(dtTick, 100);   // 前台继续 0.1 秒一跳
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && dtState.running && !dtTimer) dtTick();
+    });
+
     startBtn.addEventListener('click', () => {
       if (dtState.mode === 'down' && !dtState.running && dtState.target <= 0) {
         if (!window.openModal) return;
@@ -5631,7 +5647,7 @@ try {
           dtState.running = true;
           startBtn.textContent = '暂停';
           if (dtTimer) clearInterval(dtTimer);
-          dtTimer = setInterval(render, 100);
+          dtTimer = setTimeout(dtTick, 100);
           render();
         });
         return;
@@ -5645,7 +5661,7 @@ try {
         dtState.startTs = Date.now();
         dtState.running = true;
         if (dtTimer) clearInterval(dtTimer);
-        dtTimer = setInterval(render, 100);
+        dtTimer = setTimeout(dtTick, 100);
         startBtn.textContent = '暂停';
       }
       render();

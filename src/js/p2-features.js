@@ -1331,6 +1331,7 @@ if (ckRefresh) {
   (function () {
     let lastDay = dayStr(new Date());
     setInterval(function () {
+      if (document.hidden) return;
       try {
         const now = dayStr(new Date());
         if (now === lastDay) return;
