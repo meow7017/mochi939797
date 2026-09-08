@@ -21,6 +21,8 @@
     // 不是旧顶层业务键。此前漏排除导致每次刷新 migrateLegacy 把群聊记录搬进 default:
     // 并删根键，群聊页读根键为空 → 历史看似清空（数据滞留 default: 副本）+ 迁移循环空转。
     'group-chat-msgs',
+    // v3.x：群聊未读计数——全局根键，绝不能迁移进 default 桌面（否则未读数刷新就丢）
+    'gc-unread',
     // v3.9.x：全局系统键——后台保活/通知（bg-*）、群聊回复设置（reply-gc-*）、
     // 备份/引导内部标记（__*）。这些键本就存 xy-home-v2 根命名空间（bg-keep.js
     // gSet 用 xyStore(GNS)、reply-settings.js gcWrite 用 xyStore('xy-home-v2')），

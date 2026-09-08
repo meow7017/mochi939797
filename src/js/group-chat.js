@@ -405,6 +405,54 @@ if (msgs.length === 0) {          // ← 新增：历史没加载就禁止用空
     } catch (e) {}
   }
 
+// ===== 群聊未读角标（v3.x：桌面「群聊」图标右上角数字，与聊天图标一致） =====
+// 未读数是全局的（群聊消息全局共用），存根键 xy-home-v2:gc-unread，
+// 不随桌面切换。contacts.js EXCLUDE 已登记该键，防启动迁移误清。
+function gcUnread() {
+  try { return parseInt(gcProfileStore().get('gc-unread'), 10) || 0; } catch (e) { return 0; }
+}
+function gcPageOpen() {
+  try { return page ? !page.hidden : false; } catch (e) { return false; }
+}
+// 收到成员消息时调用：若当前正开着群聊页（正在看）就不计数，否则 +1
+function gcNoteIncoming() {
+  try {
+    if (gcPageOpen()) return;
+    gcProfileStore().set('gc-unread', String(gcUnread() + 1));
+    gcRenderBadge();
+  } catch (e) {}
+}
+// 进入群聊页 / 清空群聊时清零
+function gcClearUnread() {
+  try { gcProfileStore().set('gc-unread', '0'); } catch (e) {}
+  gcRenderBadge();
+}
+// 把未读数画到桌面「群聊」图标右上角；setDeskBadge 存在就用，不存在自己建
+function gcRenderBadge() {
+  try {
+    const n = gcUnread();
+    if (window.setDeskBadge) { window.setDeskBadge('group-chat', n); return; }
+    const app = document.querySelector('.app[data-app="group-chat"]');
+    if (!app) return;
+    let box = app.querySelector('.app-badge-box');
+    if (!box) {
+      const ico = app.querySelector('.app-ico');
+      if (!ico) return;
+      box = document.createElement('div'); box.className = 'app-badge-box';
+      ico.parentNode.insertBefore(box, ico); box.appendChild(ico);
+    }
+    let badge = box.querySelector('.app-badge');
+    if (!badge) {
+      badge = document.createElement('span'); badge.className = 'app-badge';
+      box.appendChild(badge);
+    }
+    if (n > 0) { badge.textContent = n > 99 ? '99+' : String(n); badge.hidden = false; }
+    else badge.hidden = true;
+  } catch (e) {}
+}
+window.groupChatUnread = gcUnread;   // 只读探针（测试/诊断用）
+window.groupChatClearUnread = gcClearUnread;
+
   // ---- 渲染 ----
   function fmtTime(ts) {
     const d = new Date(ts);
@@ -927,6 +975,7 @@ if (msgs.length === 0) {          // ← 新增：历史没加载就禁止用空
         const rec = { side: 'in', cid: cid, name: name, text: gcPokeText(cid), special: 'poke', ts: Date.now() };
         msgs.push(rec);
         saveMsgs();
+        gcNoteIncoming();
         renderMsg(rec, msgs.length - 1);
         followGcBottom();
         if (window.playSfx) window.playSfx('in');
@@ -963,6 +1012,7 @@ if (msgs.length === 0) {          // ← 新增：历史没加载就禁止用空
           }
           msgs.push(rec);
           saveMsgs();
+          gcNoteIncoming();
           renderMsg(rec, msgs.length - 1);
           followGcBottom();
           if (window.playSfx) window.playSfx('in');
@@ -991,6 +1041,7 @@ if (msgs.length === 0) {          // ← 新增：历史没加载就禁止用空
                   }
                   msgs.push(rec2);
                   saveMsgs();
+                  gcNoteIncoming();
                   renderMsg(rec2, msgs.length - 1);
                   followGcBottom();
                   if (window.playSfx) window.playSfx('in');
@@ -1040,6 +1091,7 @@ if (msgs.length === 0) {          // ← 新增：历史没加载就禁止用空
     if (editing) return;
     document.querySelectorAll('.page').forEach(p => p.hidden = true);
     if (page) page.hidden = false;
+    gcClearUnread();
     updateGroupName();
     loadMsgs();          // ← 新增：写盘前先把存储里的历史读进内存，绝不在空数组上覆盖
     renderAll();
@@ -1863,6 +1915,7 @@ function gcAsSendOne(cid) {
   const rec = { side: 'in', cid: cid, name: name, text: rep.text, type: rep.type, parts: rep.parts, ts: Date.now() };
   msgs.push(rec);
   saveMsgs();
+  gcNoteIncoming();
   renderMsg(rec, msgs.length - 1);
   followGcBottom();
   if (window.playSfx) window.playSfx('in');
@@ -1932,7 +1985,9 @@ function gcBootAutoSend() {
 }
 document.addEventListener('mochi-restore-done', gcBootAutoSend);
 setTimeout(gcBootAutoSend, 3000);
-
+document.addEventListener('mochi-restore-done', gcRenderBadge);
+setTimeout(gcRenderBadge, 1500);
+gcRenderBadge();
 // 回前台立即补一次（等同单聊 mochi-fg-resume）：后台被冻结/节流错过的到点，切回前台马上补上
 let _gcFgAt = 0;
 function _gcOnFg() {

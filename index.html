@@ -7529,9 +7529,9 @@ color: var(--card-bg, #1e1e1e);
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788781941347">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.18</b></span>
-        <span class="sv-deploy">部署于 2026-09-07 19:52<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1788874916637">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.19</b></span>
+        <span class="sv-deploy">部署于 2026-09-08 21:41<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8274,7 +8274,7 @@ color: var(--card-bg, #1e1e1e);
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.18</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.19</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8495,7 +8495,7 @@ color: var(--card-bg, #1e1e1e);
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.18</span>
+              <span class="lic-ver">v3.26.19</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -13252,6 +13252,7 @@ const EXCLUDE = ['contacts', 'active-contact', 'feed-posts', 'migrated-v1', 'js-
 'fish-log', 'fish-log-global-migrated',
 'incoming-requests', 'desk-checkin-en', 'desk-call-en',
 'group-chat-msgs',
+'gc-unread',
 'bg-keepalive', 'bg-notify',
 'gift-wallet', 'wallet-global-migrated',
 'gc-profiles', 'gc-beauty', 'group-chat-enabled',
@@ -26566,6 +26567,47 @@ try { const a = JSON.parse(v); if (Array.isArray(a) && a.length >= msgs.length) 
 }
 } catch (e) {}
 }
+function gcUnread() {
+try { return parseInt(gcProfileStore().get('gc-unread'), 10) || 0; } catch (e) { return 0; }
+}
+function gcPageOpen() {
+try { return page ? !page.hidden : false; } catch (e) { return false; }
+}
+function gcNoteIncoming() {
+try {
+if (gcPageOpen()) return;
+gcProfileStore().set('gc-unread', String(gcUnread() + 1));
+gcRenderBadge();
+} catch (e) {}
+}
+function gcClearUnread() {
+try { gcProfileStore().set('gc-unread', '0'); } catch (e) {}
+gcRenderBadge();
+}
+function gcRenderBadge() {
+try {
+const n = gcUnread();
+if (window.setDeskBadge) { window.setDeskBadge('group-chat', n); return; }
+const app = document.querySelector('.app[data-app="group-chat"]');
+if (!app) return;
+let box = app.querySelector('.app-badge-box');
+if (!box) {
+const ico = app.querySelector('.app-ico');
+if (!ico) return;
+box = document.createElement('div'); box.className = 'app-badge-box';
+ico.parentNode.insertBefore(box, ico); box.appendChild(ico);
+}
+let badge = box.querySelector('.app-badge');
+if (!badge) {
+badge = document.createElement('span'); badge.className = 'app-badge';
+box.appendChild(badge);
+}
+if (n > 0) { badge.textContent = n > 99 ? '99+' : String(n); badge.hidden = false; }
+else badge.hidden = true;
+} catch (e) {}
+}
+window.groupChatUnread = gcUnread;   // 只读探针（测试/诊断用）
+window.groupChatClearUnread = gcClearUnread;
 function fmtTime(ts) {
 const d = new Date(ts);
 return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
@@ -27023,6 +27065,7 @@ if (hit(c['gc-touch-prob'])) {
 const rec = { side: 'in', cid: cid, name: name, text: gcPokeText(cid), special: 'poke', ts: Date.now() };
 msgs.push(rec);
 saveMsgs();
+gcNoteIncoming();
 renderMsg(rec, msgs.length - 1);
 followGcBottom();
 if (window.playSfx) window.playSfx('in');
@@ -27053,6 +27096,7 @@ if (window.addChatCount) window.addChatCount();
 }
 msgs.push(rec);
 saveMsgs();
+gcNoteIncoming();
 renderMsg(rec, msgs.length - 1);
 followGcBottom();
 if (window.playSfx) window.playSfx('in');
@@ -27080,6 +27124,7 @@ rec2.mood = chain2.map(it => ({ tag: typeName2[it.type] || '情绪', label: it.c
 }
 msgs.push(rec2);
 saveMsgs();
+gcNoteIncoming();
 renderMsg(rec2, msgs.length - 1);
 followGcBottom();
 if (window.playSfx) window.playSfx('in');
@@ -27123,6 +27168,7 @@ const editing = Array.from(document.querySelectorAll('.app-grid')).some(g => g.c
 if (editing) return;
 document.querySelectorAll('.page').forEach(p => p.hidden = true);
 if (page) page.hidden = false;
+gcClearUnread();
 updateGroupName();
 loadMsgs();          // ← 新增：写盘前先把存储里的历史读进内存，绝不在空数组上覆盖
 renderAll();
@@ -27856,6 +27902,7 @@ const rep = gcGenReply(cid, gcCfg());
 const rec = { side: 'in', cid: cid, name: name, text: rep.text, type: rep.type, parts: rep.parts, ts: Date.now() };
 msgs.push(rec);
 saveMsgs();
+gcNoteIncoming();
 renderMsg(rec, msgs.length - 1);
 followGcBottom();
 if (window.playSfx) window.playSfx('in');
@@ -27922,6 +27969,9 @@ gcScheduleAutoSend();
 }
 document.addEventListener('mochi-restore-done', gcBootAutoSend);
 setTimeout(gcBootAutoSend, 3000);
+document.addEventListener('mochi-restore-done', gcRenderBadge);
+setTimeout(gcRenderBadge, 1500);
+gcRenderBadge();
 let _gcFgAt = 0;
 function _gcOnFg() {
 const now = Date.now();
