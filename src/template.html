@@ -1635,7 +1635,11 @@
         <button class="fav-tab" data-rp="group">群聊</button>
         <button class="fav-tab" data-rp="mail">信箱</button>
         <button class="fav-tab" data-rp="feed">朋友圈</button>
+        <button class="fav-tab" data-rp="ck">查岗</button>
+        <button class="fav-tab" data-rp="other">其他</button>
       </div>
+      <!-- v3.27.x #218 互动频率引导：进页先讲清「这些都是随机概率、可自行调」，配合聊天页提示条 -->
+      <div class="gs-sub reply-guide-note">以下都是 TA 随机行为的触发概率（%）：嫌频繁就把数值调小，调到 0 = 不再触发；开关关掉 = 彻底关闭该行为。修改即时保存生效。</div>
       <div class="gs-scroll">
         <div class="gs-panel" data-rpanel="chat">
           <div class="gs-title">被动回复（联系人回你）</div>
@@ -1644,7 +1648,9 @@
             <div class="gs-row"><span>回复速度最长（秒）</span><div class="stepper" data-k="rs-max" data-min="2" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="rs-max-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>回复条数最少</span><div class="stepper" data-k="reply-min" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="reply-min-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>回复条数最多</span><div class="stepper" data-k="reply-max" data-min="1" data-max="20" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="reply-max-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-sub">回复条数只限制「每发一条消息触发的这批基础回复」，且每发一条各算一批（发 2 条最多可回 2 倍）；撤回补发、TA 的心情分享、红包/心意币/听歌邀请、TA 主动发送的消息都不计入上限，实际收到的消息可能比设置的条数多</div>
             <div class="gs-row"><span>已读不回概率</span><div class="stepper" data-k="rn-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="rn-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-sub">命中已读不回时，本次发送只显示回执、不再回复；但不会拦截之前发送已排入的回复</div>
             <div class="gs-row"><span>拍一拍概率</span><div class="stepper" data-k="touch-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="touch-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>表情包概率</span><div class="stepper" data-k="sticker-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="sticker-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>emoji 概率</span><div class="stepper" data-k="emoji-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="emoji-prob-val" readonly><button class="stp-max">+</button></div></div>
@@ -1652,15 +1658,10 @@
             <div class="gs-row"><span>语音概率</span><div class="stepper" data-k="voice-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="voice-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>颜文字附加概率</span><div class="stepper" data-k="kaomoji-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="kaomoji-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>引用概率</span><div class="stepper" data-k="quote-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="quote-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>撤回后补发消息</span><label class="toggle"><input type="checkbox" id="rc-en"><span class="tk"></span></label></div>
             <div class="gs-row"><span>撤回概率</span><div class="stepper" data-k="rc-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="rc-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>撤回补发概率</span><div class="stepper" data-k="rc-refix" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="rc-refix-val" readonly><button class="stp-max">+</button></div></div>
-          </div>
-          <div class="gs-title">每条消息使用多字卡回复</div>
-          <div class="set-group glass">
-            <div class="gs-row"><span>多字卡回复</span><label class="toggle"><input type="checkbox" id="py-en"><span class="tk"></span></label></div>
-            <div class="gs-row"><span>触发概率</span><div class="stepper" data-k="py-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="py-prob-val" readonly><button class="stp-max">+</button></div></div>
-            <div class="gs-row"><span>最少条数</span><div class="stepper" data-k="py-min" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="py-min-val" readonly><button class="stp-max">+</button></div></div>
-            <div class="gs-row"><span>最多条数</span><div class="stepper" data-k="py-max" data-min="2" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="py-max-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-sub">撤回后补发总开关（默认开）。效果举例：TA 发「今晚一起去吃火锅好不好」→ 撤回了一半 → 按「撤回补发概率」再发一条新的（如「明天去逛街吧」）。把本开关关闭＝TA 撤回后什么都不再发；开着＝TA 撤回后有「撤回补发概率」的机会补一条新消息（这条不计入「回复条数」上限）</div>
           </div>
           <div class="gs-title">主动发送（联系人找你）</div>
           <div class="set-group glass">
@@ -1679,8 +1680,60 @@
             <div class="gs-sub">（未开启设置时间的情况下是点击后联系人立即回复）</div>
             <div class="gs-row"><span>点顶部昵称触发</span><label class="toggle"><input type="checkbox" id="cs-trigger-name"><span class="tk"></span></label></div>
             <div class="gs-row"><span>底部聊天栏按钮触发</span><label class="toggle"><input type="checkbox" id="cs-trigger-bar"><span class="tk"></span></label></div>
+            <div class="gs-sub">点顶部昵称/底部按钮会触发新一轮回复，条数仍按上面设置抽取，会叠在正常回复之外</div>
           </div>
-        </div>
+          <!-- #370b：字卡·拼字 父分组——把「多字卡回复 / 词典拼字 / 梦角自由造句」三个拼字/造句类设置归拢到一个父标题下，避免它们夹在基础概率之间显得零散难找 -->
+          <div class="gs-sec">
+            <div class="gs-sec-head">字卡 · 拼字</div>
+            <div class="gs-sub" style="padding:0 14px 6px">以下三个是让 TA 的回复更生动的拼字/造句：多字卡回复、词典拼字、梦角自由造句。开启后按各自概率出现效果（气泡下带对应小标签）。</div>
+          <!-- #370c：回复内容「自定义字卡 vs 默认聊天字卡」相对占比——TA 的纯文字回复里，多大比例
+               保留你自己建的字卡、其余让系统预设「默认聊天字卡」覆盖；0=尽量用默认字卡，100=全用自定义 -->
+          <div class="gs-title">回复内容（自定义 vs 默认聊天字卡）</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>自定义字卡占比</span><div class="stepper" data-k="csp-cust" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="csp-cust-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-sub">TA 每条纯文字回复里，自定义字卡保留的比例（默认 50）：调高=大多数用你自己建的字卡，偶尔用预设默认聊天字卡；调低=更多用预设默认聊天字卡（见 字卡库→默认聊天字卡 页可逐张开关）；0=尽量用默认聊天字卡，100=全用自定义。默认的聊天字卡本身还受「默认聊天字卡」页的『聊天使用』概率控制。</div>
+          </div>
+          <div class="gs-title">每条消息使用多字卡回复</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>多字卡回复</span><label class="toggle"><input type="checkbox" id="py-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>触发概率</span><div class="stepper" data-k="py-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="py-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>最少条数</span><div class="stepper" data-k="py-min" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="py-min-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>最多条数</span><div class="stepper" data-k="py-max" data-min="2" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="py-max-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-sub">多条字卡回复总开关：关闭后每条消息只回一条、每条只用一张字卡；开启后回复拆成几条由上方「回复条数」控制、每条拼几张由下方「最少/最多条数」控制</div>
+          </div>
+          <div class="gs-title">词典拼字（语录字卡拼字）</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>词典拼字</span><label class="toggle"><input type="checkbox" id="qs-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>拼字概率</span><div class="stepper" data-k="qs-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="qs-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>混用自定义字卡</span><label class="toggle"><input type="checkbox" id="qs-cc"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>单气泡拼字</span><label class="toggle"><input type="checkbox" id="qs-one"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>多回复逐卡连发</span><label class="toggle"><input type="checkbox" id="qs-multi"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>逐卡连发不受条数限制</span><label class="toggle"><input type="checkbox" id="qs-noLimit"><span class="tk"></span></label></div>
+            <!-- #370：词典拼字链路自检——五道闸门（二级锁/词典分类/词典聊天使用/总开关/概率/抽卡池）
+                 任一被关都是零提示零 tag，这行把每道闸实时状态摆出来，任何机型一眼看到卡在哪 -->
+            <div class="gs-sub" id="qs-diag" style="color:var(--muted,#888)">链路自检中…</div>
+            <div class="gs-sub">开启后联系人回复按「拼字概率」随机变成拼字：从词典（系统预设字卡→词典，语录/词库/常用词全部分组都可抽，可逐张关闭）抽字卡整卡，效果举例：命中拼字时 TA 会连着发几条词典里的短句（如「想你了」「晚安哦」），像打字很快连着发消息一样。<br>发送形态：单气泡拼字为主，「多回复逐卡连发」开着时每次命中另按 20% 小概率变成逐条连发；「多回复逐卡连发」关＝不能连发（只发单气泡拼字）。<br>· 「单气泡拼字」＝几张字卡用空格拼成【一条】消息发在一个气泡里（如「今天也要好好爱自己 晚安」），气泡下 tag 是「词典」（全是长句时）或「词典拼字」（含短卡时）；<br>· 「多回复逐卡连发」＝每张字卡单独一条气泡一条一条发出来，每条气泡下 tag 是「词典逐卡连发」；连发条数跟随上方「每条消息使用多字卡回复」的最少/最多条数（默认 2~5 条）；<br>· 「逐卡连发不受条数限制」默认开＝连发条数不受「回复条数最多」约束（想连发 5 条就发 5 条）；关掉＝连发最多不超过「回复条数最多」（默认 2 条）。<br>两个形态都能在没开「多字卡回复」的情况下触发；两个形态开关都关时兜底发单气泡拼字。开启「混用自定义字卡」时你的字卡库文本也会进抽卡池（可能把你的普通字卡抽去拼字，默认开）。概率 0 = 不触发</div>
+          </div>
+          <div class="gs-title">梦角自由造句（截字重造句）</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>梦角自由造句</span><label class="toggle"><input type="checkbox" id="mjf-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>触发概率</span><div class="stepper" data-k="mjf-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="mjf-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <!-- #413 语料来源三选（默认全开=可用全部字卡）+ 各源权重：按权重归一化抽源 -->
+            <div class="gs-row"><span>语料·自定义字卡</span><label class="toggle"><input type="checkbox" id="mjf-src-cc"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>自定义字卡权重</span><div class="stepper" data-k="mjf-w-cc" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="mjf-w-cc-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>语料·默认聊天字卡</span><label class="toggle"><input type="checkbox" id="mjf-src-def"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>默认字卡权重</span><div class="stepper" data-k="mjf-w-def" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="mjf-w-def-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>语料·词典</span><label class="toggle"><input type="checkbox" id="mjf-src-dict"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>词典权重</span><div class="stepper" data-k="mjf-w-dict" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="mjf-w-dict-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>造句手法（0语气词/1撤回/2换字卡）</span><div class="stepper" data-k="mjf-style" data-min="0" data-max="2" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="mjf-style-val" readonly><button class="stp-max">+</button></div></div>
+            <!-- #414 混合模式：开启后每次造句三种手法随机掷一个，mjf-style 固定选择失效 -->
+            <div class="gs-row"><span>混合模式（三手法随机）</span><label class="toggle"><input type="checkbox" id="mjf-mix"><span class="tk"></span></label></div>
+            <!-- #364 存库概率：多桌面联系人时新句按此概率进公用库、其余进专属库；仅 1 个联系人固定进专属库 -->
+            <div class="gs-row"><span>存公用库概率（多联系人）</span><div class="stepper" data-k="mjf-pub" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="mjf-pub-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-sub">自由选择开关（默认关）：开启后梦角（联系人）说话按「触发概率」随机重造句，气泡下带「梦角自由造句」小标签。造句手法三选一（上方数字 0/1/2），效果举例（源句「今天也要好好爱自己，晚安哦」）：<br>· 0 语气词式：截掉一个词补个语气词 →「今天也要好好想你了」，或句尾加语气字 →「…晚安哦呀」，也可能词间加逗号/空格、删句尾字；<br>· 1 撤回式（默认）：像撤回消息一样把后半句撤回，留下的前缀就是新句子 →「今天也要好好爱自己」；<br>· 2 换字卡内容式：截掉一个词、从你别的字卡里挑一个词补上 →「今天也要好好看日落」。<br>「混合模式」（#414，默认关）：开启后每次造句先在三种手法里随机掷一个再出招，三种模式交替出现，上方「造句手法」的固定选择暂不生效；关闭即恢复单一手法。<br>造出的新句自动存进 字卡库→自定义聊天字卡→梦角自由造句 分类，可在那里查看/删除，也会作为语料被再次抽用。概率 0 = 不触发。<br>「语料来源」（#413，默认全开=可用全部字卡）：自定义聊天字卡 / 默认聊天字卡 / 词典三源可分别开关；下方三个「权重」= 抽语料时各源的中签占比（默认 50/25/25，按权重归一化，和不必凑 100），某源权重调 0 或开关关＝该源不参与；三源全关＝不触发造句。默认聊天字卡尊重 字卡库→默认聊天字卡 的逐张关闭；词典含语录/词库全部词条（过短的词自动过滤）。<br>「存公用库概率」：有多个桌面联系人时，造出的新句按该概率进公用字卡、其余进专属字卡；只有一个桌面联系人时固定进专属字卡</div>
+          </div>
+          </div>
+          </div>
         <div class="gs-panel" data-rpanel="group" hidden>
           <div class="gs-title">被动回复（群聊里每个联系人回你）</div>
           <div class="gs-sub">发送消息后每个联系人按概率回你；也可在群聊里 @ 指定成员（@ 的成员必定回复）</div>
@@ -1690,6 +1743,7 @@
             <div class="gs-row"><span>回复速度最长（秒）</span><div class="stepper" data-k="gc-rs-max" data-min="2" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-rs-max-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>回复条数最少</span><div class="stepper" data-k="gc-reply-min" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-reply-min-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>回复条数最多</span><div class="stepper" data-k="gc-reply-max" data-min="1" data-max="20" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-reply-max-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-sub">回复条数只限每位联系人「每发一条消息触发的基础回复」，撤回补发不计入上限，实际消息可能比设置的条数多</div>
             <div class="gs-row"><span>拍一拍概率</span><div class="stepper" data-k="gc-touch-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="gc-touch-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>表情包概率</span><div class="stepper" data-k="gc-sticker-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="gc-sticker-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>emoji 概率</span><div class="stepper" data-k="gc-emoji-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="gc-emoji-prob-val" readonly><button class="stp-max">+</button></div></div>
@@ -1703,20 +1757,12 @@
           <div class="gs-title">每条消息使用多字卡回复</div>
           <div class="set-group glass">
             <div class="gs-row"><span>多字卡回复</span><label class="toggle"><input type="checkbox" id="gc-py-en"><span class="tk"></span></label></div>
+            <div class="gs-sub">总开关：关闭后每个成员每条消息只回一条、只用一张字卡；开启后条数由上方「回复条数」与下方「最少/最多条数」控制</div>
             <div class="gs-row"><span>触发概率</span><div class="stepper" data-k="gc-py-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="gc-py-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>最少条数</span><div class="stepper" data-k="gc-py-min" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-py-min-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>最多条数</span><div class="stepper" data-k="gc-py-max" data-min="2" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-py-max-val" readonly><button class="stp-max">+</button></div></div>
           </div>
           <div class="gs-sub" style="padding:0 14px 14px">群聊设置全局生效（所有桌面/联系人共用），修改后直接生效</div>
-          <div class="gs-title">主动发送（成员主动找你）</div>
-          <div class="set-group glass">
-            <div class="gs-row"><span>成员主动发送</span><label class="toggle"><input type="checkbox" id="gc-as-en"><span class="tk"></span></label></div>
-            <div class="gs-row"><span>主动发送概率</span><div class="stepper" data-k="gc-as-prob" data-min="1" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="gc-as-prob-val" readonly><button class="stp-max">+</button></div></div>
-            <div class="gs-row"><span>发送间隔最短（分钟）</span><div class="stepper" data-k="gc-as-min" data-min="1" data-max="600" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-as-min-val" readonly><button class="stp-max">+</button></div></div>
-            <div class="gs-row"><span>发送间隔最长（分钟）</span><div class="stepper" data-k="gc-as-max" data-min="1" data-max="60" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-as-max-val" readonly><button class="stp-max">+</button></div></div>
-            <div class="gs-row"><span>发送条数最少</span><div class="stepper" data-k="gc-as-count-min" data-min="1" data-max="10" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-as-count-min-val" readonly><button class="stp-max">+</button></div></div>
-            <div class="gs-row"><span>发送条数最多</span><div class="stepper" data-k="gc-as-count-max" data-min="1" data-max="20" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="gc-as-count-max-val" readonly><button class="stp-max">+</button></div></div>
-          </div>
         </div>
         <div class="gs-panel" data-rpanel="mail" hidden>
           <div class="gs-title">信件内容</div>
@@ -1726,6 +1772,7 @@
           </div>
           <div class="gs-title">联系人主动写信</div>
           <div class="set-group glass">
+            <div class="gs-row"><span>联系人主动写信</span><label class="toggle"><input type="checkbox" id="ml-write-en"><span class="tk"></span></label></div>
             <div class="gs-row"><span>每天最多写信（封）</span><div class="stepper" data-k="ml-write-daily-max" data-min="1" data-max="50" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="ml-write-daily-max-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>主动写信概率</span><div class="stepper" data-k="ml-write-prob" data-min="1" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ml-write-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>最短写信时间（分钟）</span><div class="stepper" data-k="ml-write-min" data-min="1" data-max="1440" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="ml-write-min-val" readonly><button class="stp-max">+</button></div></div>
@@ -1766,6 +1813,7 @@
           </div>
           <div class="gs-title">TA 发朋友圈设置</div>
           <div class="set-group glass">
+            <div class="gs-row"><span>联系人主动发朋友圈</span><label class="toggle"><input type="checkbox" id="fd-post-en"><span class="tk"></span></label></div>
             <div class="gs-row"><span>主动发朋友圈概率</span><div class="stepper" data-k="fd-post-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="fd-post-prob-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>每天最多发布（条）</span><div class="stepper" data-k="fd-post-daily-max" data-min="1" data-max="20" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="fd-post-daily-max-val" readonly><button class="stp-max">+</button></div></div>
             <div class="gs-row"><span>发布后冷却（分钟）</span><div class="stepper" data-k="fd-post-cool" data-min="1" data-max="240" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="fd-post-cool-val" readonly><button class="stp-max">+</button></div></div>
@@ -1790,9 +1838,44 @@
           </div>
         </div>
         <!-- v3.9.x：查岗——TA 主动查你的岗：随主动发送按概率发查岗问题卡（聊天互动卡 + 概率弹窗，作答后 TA 回应） -->
-
+        <div class="gs-panel" data-rpanel="ck" hidden>
+          <div class="gs-title">TA 主动查岗</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>TA 主动查岗</span><label class="toggle"><input type="checkbox" id="ckq-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>查岗概率</span><div class="stepper" data-k="ckq-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ckq-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>自动弹窗概率</span><div class="stepper" data-k="ckq-popup-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ckq-popup-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>查岗冷却（分钟）</span><div class="stepper" data-k="ckq-cool" data-min="0" data-max="240" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ckq-cool-val" readonly><button class="stp-max">+</button></div></div>
+          </div>
+          <div class="gs-sub" style="padding:0 14px 14px">TA 主动找你时按概率来查你的岗：聊天里出现查岗问题卡（单选点击作答、文字题输入作答），作答后 TA 会回应；概率命中时直接弹出回答弹窗。冷却内不重复查岗，需开启「主动发送」，各联系人独立保存。查岗题库可在 字卡库 →「TA的查岗」里逐条开关或自定义添加</div>
+        </div>
         <!-- v3.9.x：其他——联系人主动邀请（猜拳/玩游戏），随 TA 主动找你的消息按概率触发 -->
-        
+        <div class="gs-panel" data-rpanel="other" hidden>
+          <div class="gs-title">联系人主动邀请</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>主动邀请猜拳</span><label class="toggle"><input type="checkbox" id="ai-rps-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>猜拳邀请概率</span><div class="stepper" data-k="ai-rps-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ai-rps-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>主动邀请玩游戏</span><label class="toggle"><input type="checkbox" id="ai-game-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>游戏邀请概率</span><div class="stepper" data-k="ai-game-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ai-game-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>主动邀请贴贴</span><label class="toggle"><input type="checkbox" id="ai-cuddle-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>贴贴邀请概率</span><div class="stepper" data-k="ai-cuddle-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ai-cuddle-prob-val" readonly><button class="stp-max">+</button></div></div>
+            <!-- v3.15.x：TA 主动分享你自建的字卡——从字卡库（含公用）抽一张纯文本卡当 TA 的话发出来 -->
+            <div class="gs-row"><span>主动分享你的字卡</span><label class="toggle"><input type="checkbox" id="ai-cc-en"><span class="tk"></span></label></div>
+            <div class="gs-row"><span>分享字卡概率</span><div class="stepper" data-k="ai-cc-prob" data-min="0" data-max="100" data-step="1"><button class="stp-min">−</button><input class="stp-val" id="ai-cc-prob-val" readonly><button class="stp-max">+</button></div></div>
+          </div>
+          <div class="gs-sub" style="padding:0 14px 14px">TA 主动找你的消息会按概率变成猜拳/游戏/贴贴邀请（游戏在 Pong、贪吃蛇中随机；贴贴同意后 TA 会回应一句），自动打开对应半框或回应，不想玩直接关掉即可；仅在你在聊天页时触发，需开启「主动发送」。邀请话术可在 字卡库 →「TA的邀请」里逐句开关或自定义添加；「分享你的字卡」从你在 字卡库 自建的纯文本卡（含公用）里随机抽一张当 TA 的悄悄话，冷却 90 分钟</div>
+          <!-- v3.20.x：联系人跨桌面查岗 / 跨桌面来电——其他桌面的联系人按各自概率/冷却主动来查岗、来电 -->
+          <div class="gs-title" style="margin-top:6px">联系人跨桌面查岗</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>跨桌面查岗概率</span><div class="stepper" data-k="ckq-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ckq-prob-val2" readonly><button class="stp-max">+</button></div></div>
+            <div class="gs-row"><span>查岗冷却（分钟）</span><div class="stepper" data-k="ckq-cool" data-min="0" data-max="240" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="ckq-cool-val2" readonly><button class="stp-max">+</button></div></div>
+          </div>
+          <div class="gs-sub" style="padding:0 14px 2px">其他桌面的联系人会按各自概率（默认 2%，可在此逐联系人调整）主动来查你的岗，每个触发后 30 分钟内不重复。全局开关在 设置 →「开启 联系人跨桌面查岗」，回应字卡可在 字卡库 →「联系人跨桌面查岗」里逐张开关</div>
+          <div class="gs-title" style="margin-top:10px">联系人跨桌面打电话</div>
+          <div class="set-group glass">
+            <div class="gs-row"><span>跨桌面来电概率</span><div class="stepper" data-k="desk-call-prob" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="desk-call-prob-val" readonly><button class="stp-max">+</button></div></div>
+          </div>
+          <div class="gs-sub" style="padding:0 14px 2px">其他桌面的联系人会按各自概率（默认 2%，可在此逐联系人调整）主动给你来电，冷却与查岗一致 30 分钟。全局开关在 设置 →「开启 联系人跨桌面打电话」</div>
+        </div>
         <!-- v3.6.x：保存设置按钮——点击把当前所有概率/开关写入本地并提示 -->
         <button class="ta-add-btn gs-save-btn" id="reply-save-btn" style="width:100%;margin:6px 0 10px">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:4px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>保存设置
