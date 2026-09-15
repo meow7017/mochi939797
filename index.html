@@ -7591,9 +7591,9 @@ color: var(--card-bg, #1e1e1e);
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1789490977129">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.23</b></span>
-        <span class="sv-deploy">部署于 2026-09-16 00:49<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1789491342137">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.24</b></span>
+        <span class="sv-deploy">部署于 2026-09-16 00:55<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -8380,7 +8380,7 @@ color: var(--card-bg, #1e1e1e);
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.23</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.24</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8601,7 +8601,7 @@ color: var(--card-bg, #1e1e1e);
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.23</span>
+              <span class="lic-ver">v3.26.24</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -21128,7 +21128,7 @@ w.systemBalance += Math.round((rpRec.rpAmount || 0) * 100);
 rpWalletSet(w);
 saveMsgsNow();
 if (!rpPatchStatusInPlace(msgs.indexOf(rpRec))) renderWindow(true, true); // FIX 2026-09-07 #230 红包状态流转不整窗重建（闪屏）
-const amtTxt = '（心意币 ¥' + Number(rpRec.rpAmount || 0).toFixed(2) + '）';
+const amtTxt = '（¥' + Number(rpRec.rpAmount || 0).toFixed(2) + '）';
 setTimeout(() => addIn('你退回了红包' + amtTxt, { special: 'poke' }), randInt(300, 800));
 }, { okText: '退回', cancelText: '取消' });
 }
@@ -21166,7 +21166,7 @@ const wallet = rpWalletGet();
 wallet.myBalance += Math.round((rpRec.rpAmount || 0) * 100);
 rpWalletSet(wallet);
 saveMsgsNow();
-const amtTxt = '（心意币 ¥' + Number(rpRec.rpAmount || 0).toFixed(2) + '）';
+const amtTxt = '（¥' + Number(rpRec.rpAmount || 0).toFixed(2) + '）';
 toast('已领取' + amtTxt);
 if (!rpPatchStatusInPlace(rpIdx)) renderWindow(true, true); // FIX 2026-09-07 #230 红包状态流转不整窗重建（闪屏）
 setTimeout(() => addIn('你领取了红包' + amtTxt, { special: 'poke' }), randInt(400, 1000));
@@ -21793,7 +21793,7 @@ return m;
 }
 if (rec.special === 'askcoin') {
 m.className = 'msg-poke';
-m.innerHTML = '<span>🪙 ' + escTxt(chatPartnerName()) + ' 向 Mochi 申请了心意币 ¥' + (Number(rec.askFen || 0) / 100).toFixed(2) + '</span>';
+m.innerHTML = '<span>🪙 ' + escTxt(chatPartnerName()) + ' 向 Mochi 申请了¥' + (Number(rec.askFen || 0) / 100).toFixed(2) + '</span>';
 appendMsg(m);
 maybeScrollChatBottom(rec.side);
 return m;
@@ -24078,29 +24078,9 @@ const RP_LEGACY_WALLET_KEY = 'rp-wallet';
 const RP_WALLET_DEFAULT_FEN = 52000;
 const RP_DAILY_PREFIX = 'ml2_rp_daily_';
 function rpWalletGet() {
-if (typeof window.giftWalletGet === 'function') return window.giftWalletGet();
-try {
-const w = JSON.parse(store.get(RP_WALLET_KEY) || '');
-if (typeof w.myBalance === 'number' && typeof w.systemBalance === 'number') {
-if (w.myBalance === 99999999 && w.systemBalance === 99999999) {
-const nw = { myBalance: RP_WALLET_DEFAULT_FEN, systemBalance: RP_WALLET_DEFAULT_FEN };
-store.set(RP_WALLET_KEY, JSON.stringify(nw));
-return nw;
-}
-return w;
-}
-} catch (e) {}
-let seed = { myBalance: RP_WALLET_DEFAULT_FEN, systemBalance: RP_WALLET_DEFAULT_FEN };
-try {
-const o = JSON.parse(store.get(RP_LEGACY_WALLET_KEY) || '');
-if (typeof o.myBalance === 'number' && typeof o.systemBalance === 'number') seed = { myBalance: o.myBalance, systemBalance: o.systemBalance };
-} catch (e) {}
-store.set(RP_WALLET_KEY, JSON.stringify(seed));
-return seed;
+return { myBalance: 0, systemBalance: 0 };
 }
 function rpWalletSet(w) {
-if (typeof window.giftWalletSet === 'function') { window.giftWalletSet(w); return; }
-store.set(RP_WALLET_KEY, JSON.stringify(w));
 }
 const RP_EXPIRY_MS = 24 * 60 * 60 * 1000;
 const RP_SPECIAL_FEN = [520, 5200, 52000, 520000, 1314, 131400]; // 5.2/52/520/5200/13.14/1314 元
@@ -24272,7 +24252,7 @@ wallet.myBalance += amtFen;
 rpWalletSet(wallet);
 saveMsgsNow();
 if (!rpPatchStatusInPlace(idx)) renderWindow(false, true); // FIX 2026-09-07 #230 红包状态流转不整窗重建（闪屏）
-setTimeout(() => { if ((window.__activeCid || 'default') !== myCid) return; addIn('TA 退回了你的红包（心意币 ¥' + Number(rec.rpAmount || 0).toFixed(2) + '）', { special: 'poke' }); }, randInt(500, 1200));
+setTimeout(() => { if ((window.__activeCid || 'default') !== myCid) return; addIn('TA 退回了你的红包（¥' + Number(rec.rpAmount || 0).toFixed(2) + '）', { special: 'poke' }); }, randInt(500, 1200));
 } else if (r < 0.9) {
 rec.rpStatus = 'received';
 rec.rpOpenedAt = Date.now();
@@ -24280,7 +24260,7 @@ wallet.systemBalance += amtFen;
 rpWalletSet(wallet);
 saveMsgsNow();
 if (!rpPatchStatusInPlace(idx)) renderWindow(false, true); // FIX 2026-09-07 #230 红包状态流转不整窗重建（闪屏）
-const amtTxt = '（心意币 ¥' + Number(rec.rpAmount || 0).toFixed(2) + '）';
+const amtTxt = '（¥' + Number(rec.rpAmount || 0).toFixed(2) + '）';
 setTimeout(() => { if ((window.__activeCid || 'default') !== myCid) return; addIn('TA 领取了你的红包' + amtTxt, { special: 'poke' }); }, randInt(400, 1000));
 rpCollectFeedback();
 }
@@ -24297,7 +24277,7 @@ wallet.systemBalance += Math.round((rec.rpAmount || 0) * 100);
 rpWalletSet(wallet);
 saveMsgsNow();
 if (!rpPatchStatusInPlace(idx)) renderWindow(false, true); // FIX 2026-09-07 #230 红包状态流转不整窗重建（闪屏）
-const amtTxt = '（心意币 ¥' + Number(rec.rpAmount || 0).toFixed(2) + '）';
+const amtTxt = '（¥' + Number(rec.rpAmount || 0).toFixed(2) + '）';
 const myCid = window.__activeCid || 'default';
 setTimeout(() => { if ((window.__activeCid || 'default') !== myCid) return; addIn('TA 领取了你的红包' + amtTxt, { special: 'poke' }); }, randInt(400, 1000));
 rpCollectFeedback();
@@ -24325,58 +24305,8 @@ function rpRenderBalance() {
 const el = document.getElementById('rp-balance');
 if (!el) return;
 const w = rpWalletGet();
-el.textContent = '心意币 ¥' + (w.myBalance / 100).toFixed(2) + ' · ' + chatPartnerName() + ' ¥' + (w.systemBalance / 100).toFixed(2) + ' · 向 Mochi 申请心意币';
+el.textContent = '¥' + (w.myBalance / 100).toFixed(2) + ' · ' + chatPartnerName() + ' ¥' + (w.systemBalance / 100).toFixed(2) + ' · 向 Mochi 申请心意币';
 }
-function rpEditWallet() {
-if (!window.openModal) return;
-const taName = window.taFit ? window.taFit('TA') : 'TA';
-const LBL = { my: '我的心意币', ta: taName + '的心意币' };
-let side = 'my';
-let doneAny = false;
-const fmtYuan = (n) => (Math.round(n * 100) / 100).toFixed(2);
-const hintTxt = () => {
-const w = rpWalletGet();
-return '当前：心意币 ¥' + (w.myBalance / 100).toFixed(2) + ' · ' + taName + ' ¥' + (w.systemBalance / 100).toFixed(2) +
-(doneAny ? '\n已到账，可继续为' + LBL[side] + '申请；留空点【完成】结束' : '\n选择收款方，输入申请金额点【申请】，Mochi 打款后自动入账；留空点【完成】结束');
-};
-let ctl = null;
-ctl = window.openModal('向 Mochi 申请心意币', '', (arg) => {
-const picked = (arg === 'my' || arg === 'ta');
-const el = document.getElementById('modal-input');
-const raw = String(picked ? ((el && el.value) || '') : (arg == null ? '' : arg)).trim();
-const target = picked ? arg : side;
-if (raw === '') return; // 留空确定 = 结束本次申请（stay 未置位，正常关闭）
-const n = parseFloat(raw);
-if (isNaN(n) || n <= 0) { toast('申请金额需大于 0'); return; }
-const fen = Math.round(n * 100);
-const w = rpWalletGet();
-if (target === 'my') w.myBalance += fen;
-else w.systemBalance += fen;
-rpWalletSet(w); rpRenderBalance();
-try { if (window.giftCoinLedgerAdd) window.giftCoinLedgerAdd('ask', target === 'my' ? fen : 0, target === 'ta' ? fen : 0, '聊天申请'); } catch (e) {}
-toast('Mochi 已打款，' + LBL[target] + ' +¥' + fmtYuan(fen / 100));
-doneAny = true;
-side = target === 'my' ? 'ta' : 'my';
-if (ctl) {
-ctl.stay();
-const pbs = document.querySelectorAll('#modal-pills .pill');
-const flip = pbs[side === 'my' ? 0 : 1];
-if (flip) flip.click(); // 同步胶囊高亮与内部选中态（下一轮确认仍走 pills 分支）
-ctl.text('');
-ctl.hint(hintTxt());
-ctl.okText('完成');
-}
-}, {
-staticText: hintTxt(),
-pills: [{ value: 'my', label: '我的心意币' }, { value: 'ta', label: taName + ' 的心意币' }],
-pill: 'my',
-placeholder: '输入申请金额（元），留空结束',
-inputmode: 'decimal'
-});
-if (ctl) ctl.okText('申请');
-}
-const rpBalanceEl = document.getElementById('rp-balance');
-if (rpBalanceEl) rpBalanceEl.addEventListener('click', (e) => { e.stopPropagation(); rpEditWallet(); });
 function rpCoverKey(side) { return 'rp-cover-' + (side || 'out'); }
 function rpCoverGet(side) { return store.get(rpCoverKey(side)) || ''; }
 function rpCoverSet(side, dataUrl) {
