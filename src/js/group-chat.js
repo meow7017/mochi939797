@@ -1315,7 +1315,7 @@ if (defs && defs.type === 'text' && defs.text) t = defs.text;
   // ---- 进入/退出 ----
   function updateGroupName() {
     const g = currentGroup();
-    const n = getMembers().length;
+    const n = getMembers().length + 1;
     const nm = (g && g.name) ? g.name : '群聊';
     if (nameEl) nameEl.textContent = nm + '(' + n + ')';
   }
