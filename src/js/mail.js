@@ -49,7 +49,7 @@
   function stripLetterImg(l) {
     if (!l || typeof l !== 'object') return l;
     const c = Object.assign({}, l);
-    const strip = (s) => { if (typeof s !== 'string') return s; let t = s.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[图片]'); if (t.length > 8192) t = t.slice(0, 8192) + '…'; return t; };
+    const strip = (s) => { if (typeof s !== 'string') return s; let t = s.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]'); if (t.length > 8192) t = t.slice(0, 8192) + '…'; return t; };
     c.content = strip(c.content);
     if (c.myReply) { c.myReply = Object.assign({}, c.myReply); c.myReply.content = strip(c.myReply.content); }
     if (c.partnerReply) { c.partnerReply = Object.assign({}, c.partnerReply); c.partnerReply.content = strip(c.partnerReply.content); }
@@ -91,7 +91,7 @@
   }
   function hasRealImg(o) {
     const s = [o && o.content, o && o.myReply && o.myReply.content, o && o.partnerReply && o.partnerReply.content].join(' ');
-    return /data:image\//.test(s || '');
+    return /data:image\//.test(s || '') || (!!window.mochiMediaIsToken && s.split(' ').some(window.mochiMediaIsToken));
   }
   function mergeLists(a, b) {
     const map = {};
@@ -200,7 +200,7 @@
       t = String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       return (fit && window.taFit) ? window.taFit(t) : t;
     };
-    const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g;
+    const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+|@@m:[0-9a-f]{32})/g;
     return s.replace(RE, function (all, pre, src) {
       if (src.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') {
         return seg(all); // 普通网址（无附图前缀）按文本保留
@@ -217,6 +217,7 @@
     const cleaned = str
       .replace(/(?:sticker|image):data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '')
       .replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '')
+      .replace(/@@m:[0-9a-f]{32}/g, '')
       .replace(/\s+/g, ' ').trim();
     let out = escHtml((cleaned || '（图片）').slice(0, 30));
     if (fit && window.taFit) out = window.taFit(out);
@@ -471,7 +472,8 @@
         notifyMailToChat(cid, name + ' 给你回了信', { mailNotice: true });
         // v3.5.107：TA 回信且不在信箱页 → 前台桌面弹窗（仅当前激活桌面才弹，用户能看到）
         if (cid === (window.__activeCid || 'default') && window.showDeskPopup && !mailPageVisible()) {
-          window.showDeskPopup({ name: '信箱', text: '给你回了一封信：' + p.content, onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
+          // FIX 2026-09-13 #403 弹窗正文剥媒体池令牌/附件（原样传信件正文＝通知横幅直出乱码）
+window.showDeskPopup({ name: '信箱', text: '给你回了一封信：' + String(p.content || '').replace(/@@m:[0-9a-f]{32}/g, '[图片]').replace(/data:[a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[附件]'), onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
         }
         changed = true;
       });
@@ -598,6 +600,8 @@
       // v3.6.x：最少/最多字卡条数（回复设置-信箱可调；默认 20~50）
       minCards: c['ml-min-cards'] !== undefined ? Number(c['ml-min-cards']) : 20,
       maxCards: c['ml-max-cards'] !== undefined ? c['ml-max-cards'] : 50,
+      // #296：写信总开关裸读（不走 prob()——prob 把 0 兜底回默认值，开关关闭=0 必须原样保留）
+      writeEn: c['ml-write-en'] !== undefined ? Number(c['ml-write-en']) : 1,
       writeProb: prob('ml-write-prob', 30),
       writeMin: c['ml-write-min'] !== undefined ? c['ml-write-min'] : 1,
       writeMax: c['ml-write-max'] !== undefined ? c['ml-write-max'] : 120,
@@ -624,6 +628,7 @@
     try {
       const s = window.storeFor(cid);
       [['ml-min-cards', 'minCards'], ['ml-max-cards', 'maxCards'],
+       ['ml-write-en', 'writeEn'],
        ['ml-write-prob', 'writeProb'], ['ml-write-min', 'writeMin'], ['ml-write-max', 'writeMax'],
        ['ml-write-daily-max', 'dailyMax'], ['ml-reply-prob', 'replyProb'],
        ['ml-reply-min', 'replyMin'], ['ml-reply-max', 'replyMax'],
@@ -690,6 +695,8 @@
       // v3.6.x：语音字卡（文件名|||audio;base64）不以 data: 开头，需单独丢弃——
       //   否则整段音频 base64 会被当文字写进信件
       if (s.indexOf('|||') >= 0) return;
+      // FIX 2026-09-13 #388 媒体池令牌卡不进信件文字池（同 chat.js #383 第三道守卫）
+      if (window.mochiMediaIsToken && window.mochiMediaIsToken(s)) return;
       let isEmoji = false;
       for (const ch of s) {
         const c = ch.codePointAt(0);
@@ -720,7 +727,8 @@
       const a = (window.defaultCardApiFor && st) ? window.defaultCardApiFor(st) : null;
       const dcfg = a ? a.cfg() : ((window.defaultCardCfg && window.defaultCardCfg()) || {});
       if (dcfg.enabled === false) return '';
-      const overall = (dcfg.overall === undefined || dcfg.overall === null) ? 30 : dcfg.overall;
+      // v3.28.x：写信场景概率读 dc-overall-mail（未设置回退整体 dc-overall）——用户可单独调高写信默认字卡占比
+      const overall = (dcfg.overallFor ? dcfg.overallFor('mail') : ((dcfg.overall === undefined || dcfg.overall === null) ? 30 : dcfg.overall));
       if (Math.random() * 100 >= overall) return '';
       const keys = ['main', 'kaomoji', 'emoji'];
       const pools = { main: pool.defText, kaomoji: pool.defKaomoji, emoji: pool.defEmoji };
@@ -771,6 +779,16 @@
       }
       parts.push(words[Math.floor(Math.random() * words.length)]);
     }
+    // v3.36.x：词典写信混入——词典独立页「写信使用」开启时，按「写信使用概率」
+    //   随机把一条词典语录追加进信件正文（dictQuoteOne 自带分类/单卡开关过滤；
+    //   池空或场景关=不混，默认概率 30%）
+    try {
+      if (window.dictUse && window.dictUse('mail') && window.dictQuoteOne
+          && Math.random() * 100 < (window.dictOverall ? window.dictOverall('mail') : 30)) {
+        const dq = window.dictQuoteOne();
+        if (dq) parts.push(dq);
+      }
+    } catch (eDQ) {}
     let t = parts.join(' ');
     // 颜文字/emoji 附加：自定义对应分类为空时回退默认池（保持原补池行为）
     const kp = pool.kaomoji.length ? pool.kaomoji : pool.defKaomoji;
@@ -779,7 +797,8 @@
     if (cfg.emojiEn && ep.length && Math.random() * 100 < 15) t += ' ' + ep[Math.floor(Math.random() * ep.length)];
     // v3.11.x：只收 dataURL 媒体——信件正文按 sticker:/data:image 正则识别内联图片，
     //   链接导入的 http(s) 字卡拼进信纸只会显示成一段 URL 文字，先过滤掉
-    const st = pool.sticker.concat(pool.image).filter(s => typeof s === 'string' && s.indexOf('data:') === 0);
+    // FIX 2026-09-13 #386 媒体池令牌卡放行（renderBody 已认 @@m:hash 渲内联图）
+    const st = pool.sticker.concat(pool.image).filter(s => typeof s === 'string' && (s.indexOf('data:') === 0 || (window.mochiMediaIsToken && window.mochiMediaIsToken(s))));
     if (cfg.stickerEn && st.length && Math.random() * 100 < 20) {
       // v3.26.x：TA 自动写信/回信选中的表情包如果超大（>阈值），在这里同步换一张
       //   小图（避免几百 KB 原图拼进 content 触发信箱主键 200KB 剥图成「图片」）。
@@ -823,6 +842,8 @@
       const now = Date.now();
       // v3.12.x：按该联系人桌面读设置（每天最多写信/概率/间隔各自独立生效）
       const cfg = mailCfgFor(cid);
+      // #296：联系人主动写信总开关——关闭后本桌面 TA 不再主动来信（回信/摸鱼小结不受影响）
+      if (!cfg.writeEn) return;
       let last = letterLast(cid), next = letterNext(cid);
       if (last > now || last < 0 || isNaN(last)) { last = 0; next = 0; }
       if ((now - last) / 60000 < next) return;
@@ -848,7 +869,7 @@
         updateBadge();
         render();
         if (window.showDeskPopup && !mailPageVisible()) {
-          window.showDeskPopup({ name: '信箱', text: '给你寄来了一封信：' + content, onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
+          window.showDeskPopup({ name: '信箱', text: '给你寄来了一封信：' + String(content || '').replace(/@@m:[0-9a-f]{32}/g, '[图片]').replace(/data:[a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[附件]'), onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
         }
       }
     } catch (e) {}
@@ -862,7 +883,6 @@
   // 数据源：该联系人桌面命名空间的 fish-day-add / work-day-add（每日新增记录，与日历同源）。
   // 以 TA 口吻寄一封「本周摸鱼小结」进信箱；标记键 fish-week-report:<M-D>（周日日期）防重发。
   function fishWeekReportFor(cid) {
-    return; // 已停用：不再生成/发送每周摸鱼小结（含聊天与桌面提醒）
     // 当前桌面权威加载（mailDbReady）完成前不写——同 maybeIncomingLetterFor 守卫，
     // 防止把剥图快照当全量列表写回覆盖 IDB 带图信件
     if (cid === (window.__activeCid || 'default') && !mailDbReady) return;

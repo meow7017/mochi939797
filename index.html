@@ -2692,6 +2692,10 @@ animation: ccToastAutoHide 2.6s ease forwards;
 #dc-list .cc-item:active { transform: none; }
 #page-default-cards { overflow-y:auto; }
 #page-default-cards #dc-list { flex:0 0 auto; overflow:visible; min-height:0; -webkit-overflow-scrolling:auto; overscroll-behavior:auto; }
+#page-fun-cards { overflow-y:auto; }
+#page-fun-cards #fc-list { flex:0 0 auto; overflow:visible; min-height:0; -webkit-overflow-scrolling:auto; overscroll-behavior:auto; }
+#page-dict-cards { overflow-y:auto; }
+#page-dict-cards #d2-dict-list { flex:0 0 auto; overflow:visible; min-height:0; -webkit-overflow-scrolling:auto; overscroll-behavior:auto; }
 .cc-vspace { display:block; margin:0; padding:0; pointer-events:none; }
 .dc-toggle {
 display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -4111,6 +4115,10 @@ border:1px solid rgba(0,0,0,.1); border-radius:10px;
 padding:9px 12px; font-size:13px; font-family:inherit; outline:none; background:#fff; color:var(--ink);
 resize:vertical; line-height:1.5;
 }
+.ta-add .dec-inp-wrap.ta-inp-flex { flex:1; min-width:0; }
+.ta-add .dec-inp-wrap.ta-opts-flex { flex:1 0 100%; }
+.ta-add .dec-inp-wrap input,
+.ta-add .dec-inp-wrap .ta-opts { padding-right:38px; box-sizing:border-box; }
 .ta-add .ta-opts[hidden] { display:none; }
 .ce-box[data-for^="ta-opts-"] {
 max-height:176px; overflow-y:auto; overscroll-behavior:contain;
@@ -7583,9 +7591,9 @@ color: var(--card-bg, #1e1e1e);
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1789485212521">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.22</b></span>
-        <span class="sv-deploy">部署于 2026-09-15 23:13<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1789490977129">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.23</b></span>
+        <span class="sv-deploy">部署于 2026-09-16 00:49<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -7837,6 +7845,14 @@ color: var(--card-bg, #1e1e1e);
         <div class="ci"><div class="n">TA的吐槽·我的添加</div><div class="m">你添加的吐槽字卡</div></div>
         <div class="t" id="cc-ta-roast-count-mine">0</div>
       </div>
+            <div class="chat-item glass" id="li-cc-full-export">
+        <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></div>
+        <div class="ci"><div class="n">自定义字卡·全量导出</div><div class="m">公用/专属字卡·功能卡·寻踪·情话·TA互动 一份 json 备份</div></div>
+      </div>
+      <div class="chat-item glass" id="li-cc-full-import">
+        <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 19h16"/></svg></div>
+        <div class="ci"><div class="n">自定义字卡·全量导入</div><div class="m">从全量导出 json 恢复 · 支持追加合并/整包替换</div></div>
+      </div>
       </div>
       <div class="cc-sect-body" id="cc-sect-preset" hidden>
       <div class="sm-set-hint" style="padding:2px 16px 10px">说明：本站「系统预设字卡」均为自搓字卡（AI 辅助设计），按分类/分组展示，可逐张开启或关闭。</div>
@@ -7844,6 +7860,11 @@ color: var(--card-bg, #1e1e1e);
         <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.4l6.1-.9z"/></svg></div>
         <div class="ci"><div class="n">默认聊天字卡</div><div class="m">日常默认回复字卡（自搓）</div></div>
         <div class="t" id="dc-lib-count">0</div>
+      </div>
+            <div class="chat-item glass" id="li-dict-cards">
+        <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 013 3v13H7a3 3 0 01-3-3z"/><path d="M7 8.5h11M7 12.5h7"/></svg></div>
+        <div class="ci"><div class="n">聊天默认字卡·词典</div><div class="m">词典拼字 · 语录/词库/常用词</div></div>
+        <div class="t" id="dc-dict-count">0</div>
       </div>
       <div class="chat-item glass" id="li-fun-cards">
         <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.4l6.1-.9z"/></svg></div>
@@ -7901,11 +7922,17 @@ color: var(--card-bg, #1e1e1e);
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
       让TA现在问一次
     </button>
+    <button class="div-draw" id="ta-ask-survey-open" style="margin-top:10px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L20 6"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      设置批量提问问卷
+    </button>
     <div class="set-group glass">
       <div class="gs-row"><span>TA 偶尔向你提问</span><label class="toggle"><input type="checkbox" id="ta-ask-enable"><span class="tk"></span></label></div>
       <div class="gs-row"><span>使用系统预设问题</span><label class="toggle"><input type="checkbox" id="ta-ask-default" checked><span class="tk"></span></label></div>
+      <div class="gs-row"><span>文字题回应接聊天字卡/词典</span><label class="toggle"><input type="checkbox" id="ta-ask-chatcard"><span class="tk"></span></label></div>
       <div class="gs-row"><span>触发概率</span><input type="range" id="ta-ask-prob" min="1" max="100" step="1" class="tc-range"><span class="tc-prob-val" id="ta-ask-prob-val">5%</span></div>
       <div class="gs-row"><span>自动弹窗概率</span><input type="range" id="ta-ask-popup" min="0" max="100" step="1" class="tc-range"><span class="tc-prob-val" id="ta-ask-popup-val">70%</span></div>
+      <div class="gs-row"><span>问卷答题结束时间</span><input type="datetime-local" id="ta-ask-deadline" class="tc-input" style="flex:1;min-width:0;max-width:170px;padding:5px 8px;font-size:12px"><button id="ta-ask-deadline-clear" style="flex:none;margin-left:6px;padding:4px 10px;font-size:12px;border:1px solid var(--line,#e5e5e5);border-radius:8px;background:transparent;color:var(--muted,#999)">清除</button></div>
     </div>
     <div class="card-tabs" id="ta-ask-tabs" style="padding:6px 12px 8px">
       <button class="cc-tab sel" data-tab="sys">系统预设</button>
@@ -7927,7 +7954,7 @@ color: var(--card-bg, #1e1e1e);
             <option value="interact">互动询问</option>
             <option value="world">两个世界</option>
           </select>
-          <textarea id="ta-ask-batch" class="tc-input" rows="6" placeholder="每行一个问题，如：&#10;你吃饭了吗？&#10;现在在做什么？&#10;今天过得怎么样？"></textarea>
+          <div class="dec-inp-wrap" style="flex:1 0 100%"><textarea id="ta-ask-batch" class="tc-input" rows="6" placeholder="每行一个问题，如：&#10;你吃饭了吗？&#10;现在在做什么？&#10;&#10;单选题格式：第一行【问题】，下面每行一个选项，如：&#10;【今晚想吃什么？】&#10;火锅&#10;烧烤&#10;寿司"></textarea><button type="button" class="dec-inp-clear" data-clear="ta-ask-batch" aria-label="清空" title="清空">✕</button></div>
           <button class="ta-add-btn" style="width:100%" id="ta-ask-batch-add">批量导入到所选分类</button>
         </div>
       </div>
@@ -7935,7 +7962,32 @@ color: var(--card-bg, #1e1e1e);
     </div>
   </div>
 </div>
-
+<!-- 批量提问问卷（独立页面：用户批量出题 · 联系人作答交卷） -->
+<div class="page" id="page-ta-ask-survey" hidden>
+  <div class="chat-head">
+    <span class="ch-back" id="ta-survey-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </span>
+    <span class="ch-name">批量提问问卷</span>
+  </div>
+  <div class="gs-scroll">
+    <div class="set-group glass" style="padding:14px">
+      <div class="cal-card-title" style="padding:0 0 8px">问卷题目（批量设置）</div>
+      <div class="dec-inp-wrap" style="flex:1 0 100%"><textarea id="ta-survey-text" class="tc-input" rows="12" placeholder="单选题：第一行【问题】，下面每行一个选项，如：&#10;【今晚想吃什么？】&#10;火锅&#10;烧烤&#10;寿司&#10;&#10;文字题：第一行【问题】，下一行只写一个「一」，如：&#10;【今天过得怎么样？】&#10;一"></textarea><button type="button" class="dec-inp-clear" data-clear="ta-survey-text" aria-label="清空" title="清空">✕</button></div>
+      <div style="font-size:12px;color:var(--muted,#999);padding-top:8px;line-height:1.8">· 单选题：【问题】后每行一个选项（至少 2 个）<br>· 文字题：【问题】后一行只写「一」，TA 会用字卡作答（和正常聊天一样用自定义字卡 + 系统预设字卡；未成年人防护锁定系统预设字卡时，只用自定义字卡）<br>· 发出后 TA 开始作答：到交卷时间自动交卷，之前每 30 秒按「提前交卷概率」可能提前交卷</div>
+    </div>
+    <div class="set-group glass">
+      <div class="gs-row"><span>交卷时间（到点TA自动交卷）</span><input type="datetime-local" id="ta-survey-deadline" class="tc-input" style="flex:1;min-width:0;max-width:170px;padding:5px 8px;font-size:12px"><button id="ta-survey-deadline-clear" style="flex:none;margin-left:6px;padding:4px 10px;font-size:12px;border:1px solid var(--line,#e5e5e5);border-radius:8px;background:transparent;color:var(--muted,#999)">清除</button></div>
+      <div class="gs-row"><span>每30秒提前交卷概率</span><input type="range" id="ta-survey-prob" min="0" max="100" step="1" class="tc-range"><span class="tc-prob-val" id="ta-survey-prob-val">10%</span></div>
+    </div>
+    <div class="set-group glass" style="padding:12px 14px">
+      <div id="ta-survey-status" style="font-size:13px;line-height:1.8">尚未发出问卷</div>
+    </div>
+    <button class="ta-add-btn" style="width:100%" id="ta-survey-send">发出问卷给TA</button>
+    <button class="ta-add-btn" style="width:100%;margin-top:10px" id="ta-survey-reset">撤回问卷（重置为草稿）</button>
+    <div style="height:16px"></div>
+  </div>
+</div>
 <!-- TA的小问题（选择题管理页，独立页面） -->
 <div class="page" id="page-ta-choose" hidden>
   <div class="chat-head">
@@ -8328,7 +8380,7 @@ color: var(--card-bg, #1e1e1e);
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.22</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.23</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -8549,7 +8601,7 @@ color: var(--card-bg, #1e1e1e);
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.22</span>
+              <span class="lic-ver">v3.26.23</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -9247,13 +9299,18 @@ color: var(--card-bg, #1e1e1e);
       <div class="gs-scroll">
         <div class="gs-title">通话概率</div>
         <div class="set-group glass">
-          <div class="gs-row"><span>来电概率</span><div class="stepper" data-k="call-incoming" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-incoming-val" readonly><button class="stp-max">+</button></div></div>
+          <div class="gs-row"><span>来电概率</span><div class="stepper" data-k="call-incoming" data-min="0" data-max="100" data-step="0.01"><button class="stp-min">−</button><input class="stp-val" id="call-incoming-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>接听概率</span><div class="stepper" data-k="call-pickup" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-pickup-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>忙线概率</span><div class="stepper" data-k="call-busy" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-busy-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>拒接概率</span><div class="stepper" data-k="call-reject" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-reject-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>通话中挂断概率</span><div class="stepper" data-k="call-hangup" data-min="0" data-max="100" data-step="0.01"><button class="stp-min">−</button><input class="stp-val" id="call-hangup-val" readonly><button class="stp-max">+</button></div></div>
         </div>
-        <div class="sm-set-hint" style="padding:0 16px 8px">来电概率：TA 主动来电的命中概率。TA 回复或主动发消息后、以及后台每 1-2 分钟定时检查时各掷一次，两次来电至少间隔 5 分钟（冷却）；设为 0 则从不主动来电。接听/忙线/拒接概率：我方呼出时按三者比例互斥分配对方结果（忙线先判，其次拒接，最后接听）。挂断概率：通话接通满 3 分钟后每 60 秒检查一次，命中则对方主动挂断。</div>
+        <div class="sm-set-hint" style="padding:0 16px 8px">【来电概率是怎么触发的】有 3 类「机会」，每来一次机会就单独掷一次骰子，命中就打来电话：① TA 每回复你一条消息，掷一次；② TA 每次主动给你发消息，掷一次；③ 应用开着时，后台每 1~2 分钟也会掷一次兜底。两次来电之间至少间隔 5 分钟，设 0 则从不主动来电。<br>【为什么设得不高却感觉来得挺勤】概率是「每次机会」单独算的，不是「每天总共」的概率——你聊天越勤，机会就越多，累积起来自然来电频繁。例如设 15%：和 TA 聊 20 句就有约 20 次掷骰机会，来电概率本身没坏，是机会次数多。想让来电变少，直接把数值调小即可，效果大约成比例：调小 10 倍，来电也约少 10 倍。<br>【嫌多又不想设 0】点数值框直接输入小数（如 0.05），不用狂按 +/−。来电概率支持 0.01 粒度，最低可设 0.01（0.05、0.1 等 0.0几 的数值都可以）——设 0.01 时平均每 100 次机会才来电 1 次，基本只是偶尔响一次。<br>【接听 / 忙线 / 拒接概率】你打给 TA 时用：按「忙线 → 拒接 → 接听」顺序判定，先命中哪个就是哪种结果；三项都没命中就是「未接通」。默认 15 / 15 / 70 恰好占满 100，不会有未接通；想偶尔出现未接通，把三项合计调到 100 以下。<br>【通话中挂断概率】接通满 3 分钟保护期后，每 60 秒掷一次，命中对方就主动挂断，通话越久累计越容易被挂。支持 0.01 粒度，最低可设 0.01；设 0（或开下方「禁止联系人挂断电话」）＝对方永不主动挂断。<br>【改数值】点数值框直接输入（手机会弹数字键盘），或按 +/− 微调；改完立即保存生效。以上概率均按联系人各自保存，互不影响。</div>
+          <div class="gs-title">对方挂断</div>
+        <div class="set-group glass">
+          <div class="gs-row"><span>禁止联系人挂断电话</span><label class="toggle"><input type="checkbox" id="call-no-hangup"><span class="tk"></span></label></div>
+        </div>
+        <div class="sm-set-hint" style="padding:0 16px 8px">开启后无论挂断概率是多少，通话中对方都不会主动挂断（默认关闭，需手动开启）。注意通话概率设置按联系人各自保存：某个联系人的桌面从没保存过挂断概率时，会按默认 2% 计算——个别联系人「挂断几率明明设了 0 还是被挂断」就是这种情况，开此总开关可一并兜住。</div>
         <div class="gs-title">通话恢复</div>
         <div class="set-group glass">
           <div class="gs-row"><span>刷新后恢复通话</span><label class="toggle"><input type="checkbox" id="call-resume"><span class="tk"></span></label></div>
@@ -9336,12 +9393,26 @@ color: var(--card-bg, #1e1e1e);
         <div class="gs-row"><span>信箱使用</span><label class="toggle"><input type="checkbox" id="dc-use-mail" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>朋友圈使用</span><label class="toggle"><input type="checkbox" id="dc-use-feed" checked><span class="tk"></span></label></div>
       </div>
+      <div style="margin:14px 14px 4px;font-size:12px;color:#999;font-weight:600">使用概率（默认字卡在各场景出现的概率，0 即该场景不用默认字卡）</div>
+      <div class="set-group glass" style="margin:0 12px">
+        <div class="gs-row"><span>聊天使用概率</span><div class="stepper" id="dc-overall-chat" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-overall-chat-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>写信使用概率</span><div class="stepper" id="dc-overall-mail" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-overall-mail-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>朋友圈使用概率</span><div class="stepper" id="dc-overall-feed" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-overall-feed-val" readonly><button class="stp-max">+</button></div></div>
+      </div>
+      <div style="margin:8px 14px 2px;font-size:11px;color:#999;line-height:1.6">提示：使用概率与你自己设置的字卡是相对的，两者加起来为 100%——系统预设字卡设为 X% 时，自定义字卡即占 (100-X)% 的回复机会。</div>
       <div style="margin:14px 14px 4px;font-size:12px;color:#999;font-weight:600">分类使用（可单独开启/关闭）</div>
       <div class="set-group glass" style="margin:0 12px">
         <div class="gs-row"><span>主字卡</span><label class="toggle"><input type="checkbox" id="dc-cat-main" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>颜文字</span><label class="toggle"><input type="checkbox" id="dc-cat-kaomoji" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>emoji</span><label class="toggle"><input type="checkbox" id="dc-cat-emoji" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>拍一拍</span><label class="toggle"><input type="checkbox" id="dc-cat-touch" checked><span class="tk"></span></label></div>
+      </div>
+      <div style="margin:14px 14px 4px;font-size:12px;color:#999;font-weight:600">分类占比（默认字卡内部按此比例分配，四类合计 100%）</div>
+      <div class="set-group glass" style="margin:0 12px">
+        <div class="gs-row"><span>主字卡占比</span><div class="stepper" id="dc-prob-main" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-main-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>颜文字占比</span><div class="stepper" id="dc-prob-kaomoji" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-kaomoji-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>emoji 占比</span><div class="stepper" id="dc-prob-emoji" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-emoji-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>拍一拍占比</span><div class="stepper" id="dc-prob-touch" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-touch-val" readonly><button class="stp-max">+</button></div></div>
       </div>
       <div class="card-tabs" id="dc-tabs">
         <button class="cc-tab sel" data-type="main">主字卡</button>
@@ -9359,6 +9430,42 @@ color: var(--card-bg, #1e1e1e);
       </div>
     </div>
 
+            <!-- 词典（独立分类，供词典拼字抽句/切词；内容=语录+词库+扩展常用词，可逐张开关、可新增自建） -->
+    <div class="page" id="page-dict-cards" hidden>
+      <div class="chat-head">
+        <span class="ch-back" id="dict-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </span>
+        <span class="ch-name">聊天默认字卡·词典</span>
+      </div>
+      <div class="sm-set-hint" style="padding:8px 16px 0">说明：系统词典供「词典拼字」抽句与切词，按分组展示，可逐张开启或关闭；语录进拼字抽句池，词进切词词典。</div>
+      <div class="dict-lock-hint" id="dict-lock-hint" hidden></div>
+      <div class="set-group glass" style="margin:10px 12px 0">
+        <div class="gs-row"><span>聊天使用</span><label class="toggle"><input type="checkbox" id="dict-use-chat" checked><span class="tk"></span></label></div>
+        <div class="gs-row"><span>写信使用</span><label class="toggle"><input type="checkbox" id="dict-use-mail" checked><span class="tk"></span></label></div>
+        <div class="gs-row"><span>朋友圈使用</span><label class="toggle"><input type="checkbox" id="dict-use-feed" checked><span class="tk"></span></label></div>
+      </div>
+      <div style="margin:8px 14px 0;display:flex;justify-content:flex-end">
+        <button class="cc-tool" id="dict-use-closeall" style="padding:6px 10px;font-size:11px">使用的全部关闭</button>
+      </div>
+      <div style="margin:8px 14px 2px;font-size:12px;color:#999;font-weight:600">使用概率（词典内容在各场景出现的概率，0 即该场景不用词典）</div>
+      <div class="set-group glass" style="margin:0 12px 10px">
+        <div class="gs-row"><span>聊天使用概率</span><div class="stepper" id="dict-overall-chat" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dict-overall-chat-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>写信使用概率</span><div class="stepper" id="dict-overall-mail" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dict-overall-mail-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>朋友圈使用概率</span><div class="stepper" id="dict-overall-feed" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dict-overall-feed-val" readonly><button class="stp-max">+</button></div></div>
+      </div>
+      <div style="margin:0 14px 8px;font-size:11px;color:#999;line-height:1.6">说明：聊天词典内容走「词典拼字」（此概率是其额外总闸，回复设置里的拼字开关/概率继续生效）；写信/朋友圈开启后，词典语录按概率混入信件与动态文案。开关按当前桌面联系人独立保存。</div>
+      <div class="cc-groups-bar" id="d2-dict-groups-bar"></div>
+      <div class="card-tabs" id="d2-dict-tabs" style="display:none"></div>
+      <div class="card-search glass">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input class="card-search-input" id="d2-dict-search" placeholder="搜索词典字卡" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="card-list" id="d2-dict-list">
+        <!-- 系统词典由 JS 按分组渲染 -->
+      </div>
+    </div>
+
     <!-- 其他互动功能字卡（独立页面，可开关；功能触发字卡不放进聊天默认字卡） -->
     <div class="page" id="page-fun-cards" hidden>
       <div class="chat-head">
@@ -9368,6 +9475,9 @@ color: var(--card-bg, #1e1e1e);
         <span class="ch-name">其他互动功能字卡</span>
       </div>
       <div class="sm-set-hint" style="padding:8px 16px 0">说明：以下为各功能（摸鱼 / 吃饭 / 经期 / 喝水 / 花园 / 同频 / 伸手 / 此间 / 房间 / 存钱罐 / 漂流瓶 / 互动回应）触发时联系人会使用的自搓字卡，非聊天通用字卡，可逐张开启或关闭。</div>
+      <div class="set-group glass" style="margin:10px 12px 0">
+      <div class="gs-row"><span>使用其他互动功能字卡</span><label class="toggle"><input type="checkbox" id="dcf-enabled" checked><span class="tk"></span></label></div>
+      </div>
       <div class="card-tabs" id="fc-tabs">
         <button class="cc-tab" data-type="drift">漂流瓶</button>
         <button class="cc-tab" data-type="interact">互动回应</button>
@@ -9380,6 +9490,21 @@ color: var(--card-bg, #1e1e1e);
       </div>
       <div class="card-list" id="fc-list">
         <!-- 功能触发字卡由 JS 按分类/分组渲染 -->
+      </div>
+        <div class="set-group glass" id="dcf-prob-box" style="margin:10px 12px 12px">
+        <div class="gs-row"><span>摸鱼字卡概率</span><div class="stepper" id="dcf-prob-fish" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-fish-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>吃饭字卡概率</span><div class="stepper" id="dcf-prob-eat" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-eat-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>经期字卡概率（温柔前缀/动作/经期关心）</span><div class="stepper" id="dcf-prob-period" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-period-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>喝水字卡概率</span><div class="stepper" id="dcf-prob-water" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-water-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>花园字卡概率</span><div class="stepper" id="dcf-prob-garden" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-garden-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>同频字卡概率</span><div class="stepper" id="dcf-prob-sync" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-sync-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>伸手字卡概率</span><div class="stepper" id="dcf-prob-reach" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-reach-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>此间字卡概率</span><div class="stepper" id="dcf-prob-cjian" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-cjian-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>房间字卡概率</span><div class="stepper" id="dcf-prob-room" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-room-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>存钱罐字卡概率</span><div class="stepper" id="dcf-prob-piggy" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-piggy-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>漂流瓶字卡概率</span><div class="stepper" id="dcf-prob-drift" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-drift-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>互动回应字卡概率</span><div class="stepper" id="dcf-prob-interact" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-interact-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>音乐字卡概率</span><div class="stepper" id="dcf-prob-music" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-music-val" readonly><button class="stp-max">+</button></div></div>
       </div>
     </div>
 
@@ -44368,6 +44493,7 @@ try { d = JSON.parse(store.get(KEY) || 'null'); } catch (e) { d = null; }
 if (!d || typeof d !== 'object' || Array.isArray(d)) d = {};
 if (!d.settings || typeof d.settings !== 'object') d.settings = { enabled: true, prob: 5, popupProb: 70 };
 if (d.settings.useDefault === undefined) d.settings.useDefault = true;
+if (d.settings.useChatReply === undefined) d.settings.useChatReply = false;
 migrateInteractProb(d, KEY, [20, 10]);
 if (!Array.isArray(d.questions) || !d.questions.length) {
 const isNew = !store.get(KEY);
@@ -44388,6 +44514,18 @@ return d;
 function taAskSave(d) {
 try { store.set(KEY, JSON.stringify(d)); } catch (e) {}
 }
+function askDeadlineMs(d) {
+const v = (d && d.settings && d.settings.deadline) || 0;
+return (typeof v === 'number' && v > 0) ? v : 0;
+}
+function askDeadlinePassed(d) {
+const dl = askDeadlineMs(d);
+return dl > 0 && Date.now() > dl;
+}
+function fmtDeadlineLocal(ts) {
+const dt = new Date(ts), p = n => (n < 10 ? '0' : '') + n;
+return dt.getFullYear() + '-' + p(dt.getMonth() + 1) + '-' + p(dt.getDate()) + 'T' + p(dt.getHours()) + ':' + p(dt.getMinutes());
+}
 function taAskPick(d) {
 const s = d.settings || {};
 const useDefault = s.useDefault !== false;
@@ -44398,7 +44536,7 @@ return qs[Math.floor(Math.random() * qs.length)];
 window.pickAskCardReply = function (presetPool) {
 try {
 const cards = (window.getCustomCards && window.getCustomCards()) || [];
-const words = cards.filter(s => typeof s === 'string' && s.indexOf('data:') !== 0 && s.indexOf('|||') < 0 && s.trim());
+const words = cards.filter(s => typeof s === 'string' && s.indexOf('data:') !== 0 && s.indexOf('|||') < 0 && !(window.mochiMediaIsToken && window.mochiMediaIsToken(s)) && s.trim());
 const preset = (Array.isArray(presetPool) ? presetPool : [])
 .filter(c => !(window.isDefaultCardOff && window.isDefaultCardOff('interact', c)));
 const hasPreset = preset.length > 0;
@@ -44416,6 +44554,21 @@ if (words.length) return words[Math.floor(Math.random() * words.length)];
 const defs = ['收到你的回答。', '好呀，我知道了。', '嗯嗯，我也是这么想的。', '你这么说，我记住了。', '好的，我记在心里了。'];
 return defs[Math.floor(Math.random() * defs.length)];
 };
+function taAskTextReply() {
+try {
+const d = taAskLoad();
+if (!(d.settings && d.settings.useChatReply)) return null;
+if (window.getDefaultCards) {
+const dc = window.getDefaultCards('chat');
+if (dc && dc.type !== 'poke' && typeof dc.text === 'string' && dc.text.trim()) return dc.text;
+}
+if (window.quoteSpellPick && window.replyCfg) {
+const sp = window.quoteSpellPick(window.replyCfg());
+if (sp && Array.isArray(sp.segs) && sp.segs.length) return sp.segs.join(' ');
+}
+} catch (e) {}
+return null;
+}
 function pushAsk(q, opts) {
 if (!window.chatAddSystem) return;
 const isSingle = q && q.type === 'single' && Array.isArray(q.options) && q.options.length;
@@ -44451,6 +44604,7 @@ try {
 const d = taAskLoad();
 const s = d.settings || { enabled: true, prob: 5, popupProb: 70 };
 if (s.enabled === false) return;
+if (askDeadlinePassed(d)) return;
 if (Date.now() - (d.lastAskAt || 0) < 45 * 60000) return;
 if (!interactGateOk()) return;
 if (Math.random() * 100 >= (typeof s.prob === 'number' ? s.prob : 5)) return;
@@ -44485,6 +44639,7 @@ return null;
 }
 window.openAskReply = function (msgIdx) {
 if (!window.openModal) return;
+if (askDeadlinePassed(taAskLoad())) { toast('已过问卷答题结束时间，不能再作答'); return; }
 msgIdx = locateCardIdx(msgIdx, 'ask-card', 'askStatus');
 if (msgIdx < 0) return;
 let question = '';
@@ -44502,21 +44657,27 @@ if (fixedIdx < 0) return;
 msgIdx = fixedIdx;
 }
 if (window.chatAskReply) {
+const chatReply = taAskTextReply();
+if (chatReply) {
+window.chatAskReply(msgIdx, answer, chatReply, { raw: true });
+} else {
 const defs = ['收到你的回答。', '好呀，我知道了。', '你这么说，我记住了。', '好的，我记在心里了。'];
 const pool = window.getInteractPool ? window.getInteractPool('询问·回应', defs) : defs;
 window.chatAskReply(msgIdx, answer, pool[Math.floor(Math.random() * pool.length)]);
+}
 toast('已回复TA的提问');
 }
 }, { staticText: 'TA 问你：' + question, textareaPlaceholder: '输入你的回答…' });
 };
 if (window.chatAskReply && !window.__taAskReplyWrapped) {
 const _origChatAskReply = window.chatAskReply;
-window.chatAskReply = function (msgIdx, answer, reply) {
+window.chatAskReply = function (msgIdx, answer, reply, opts) {
 const rec = getCardAt(msgIdx);
-if (rec && rec.deskCk) return _origChatAskReply.call(this, msgIdx, answer, reply);
+if (rec && rec.deskCk) return _origChatAskReply.call(this, msgIdx, answer, reply, opts);
+if (askDeadlinePassed(taAskLoad())) { toast('已过问卷答题结束时间，不能再作答'); return undefined; }
 const askTs = rec && rec.askTs ? rec.askTs : null;
 const question = rec ? (rec.askQuestion || rec.text || '') : '';
-const result = _origChatAskReply.call(this, msgIdx, answer, reply);
+const result = _origChatAskReply.call(this, msgIdx, answer, reply, opts);
 if (result === undefined) return result;
 try {
 const d = taAskLoad();
@@ -44539,6 +44700,7 @@ const page = document.getElementById('page-ta-ask');
 if (!page) return;
 window.triggerTaAskNow = function () {
 const d = taAskLoad();
+if (askDeadlinePassed(d)) { toast('已过问卷答题结束时间，不再发出询问'); return; }
 const q = taAskPick(d);
 if (!q) { toast('题库没有启用的问题'); return; }
 const s = d.settings || { enabled: true, prob: 5, popupProb: 70 };
@@ -44556,6 +44718,8 @@ const enEl = document.getElementById('ta-ask-enable');
 if (enEl) enEl.checked = s.enabled !== false;
 const defEl = document.getElementById('ta-ask-default');
 if (defEl) defEl.checked = s.useDefault !== false;
+const ccEl = document.getElementById('ta-ask-chatcard');
+if (ccEl) ccEl.checked = !!s.useChatReply;
 const probEl = document.getElementById('ta-ask-prob');
 const probVal = document.getElementById('ta-ask-prob-val');
 if (probEl) probEl.value = typeof s.prob === 'number' ? s.prob : 5;
@@ -44565,6 +44729,9 @@ const popVal = document.getElementById('ta-ask-popup-val');
 const pp = askPopupProb(s);
 if (popEl) popEl.value = pp;
 if (popVal) popVal.textContent = pp + '%';
+const dlEl = document.getElementById('ta-ask-deadline');
+const dl = askDeadlineMs(d);
+if (dlEl) dlEl.value = dl ? fmtDeadlineLocal(dl) : '';
 }
 const askEn = document.getElementById('ta-ask-enable');
 if (askEn) askEn.addEventListener('change', () => {
@@ -44580,6 +44747,13 @@ d.settings.useDefault = askDefault.checked;
 taAskSave(d);
 switchAskTab(askTab);
 toast(askDefault.checked ? '系统预设问题已开启' : '系统预设问题已关闭（仅用你添加的问题）');
+});
+const askChatCard = document.getElementById('ta-ask-chatcard');
+if (askChatCard) askChatCard.addEventListener('change', () => {
+const d = taAskLoad();
+d.settings.useChatReply = askChatCard.checked;
+taAskSave(d);
+toast(askChatCard.checked ? '文字题回应已接通聊天字卡/词典' : '文字题回应已恢复预设池回应');
 });
 const askProb = document.getElementById('ta-ask-prob');
 if (askProb) askProb.addEventListener('input', () => {
@@ -44599,6 +44773,23 @@ const v = document.getElementById('ta-ask-popup-val');
 if (v) v.textContent = askPopup.value + '%';
 toast('弹窗概率已设为 ' + askPopup.value + '%');
 });
+const askDeadlineEl = document.getElementById('ta-ask-deadline');
+if (askDeadlineEl) askDeadlineEl.addEventListener('change', () => {
+const d = taAskLoad();
+const t = askDeadlineEl.value ? new Date(askDeadlineEl.value).getTime() : 0;
+d.settings.deadline = (t && !isNaN(t)) ? t : 0;
+taAskSave(d);
+toast(d.settings.deadline ? '答题结束时间已设置：' + askDeadlineEl.value.replace('T', ' ') : '答题结束时间已清除');
+});
+const askDeadlineClear = document.getElementById('ta-ask-deadline-clear');
+if (askDeadlineClear) askDeadlineClear.addEventListener('click', () => {
+const d = taAskLoad();
+if (!askDeadlineMs(d)) { toast('尚未设置答题结束时间'); return; }
+d.settings.deadline = 0;
+taAskSave(d);
+if (askDeadlineEl) askDeadlineEl.value = '';
+toast('答题结束时间已清除');
+});
 renderAskSettings();
 const batchCatEl = document.getElementById('ta-ask-batch-cat');
 const batchTextEl = document.getElementById('ta-ask-batch');
@@ -44611,17 +44802,32 @@ window.cardGroups.bindNewGrp(batchCatEl, d0.groups, function () { taAskSave(d0);
 }
 if (batchCatEl && batchTextEl && batchAddBtn) {
 rebuildAskBatchCatSelect();
+bindTaInpClears(batchTextEl.parentElement);
 batchAddBtn.addEventListener('click', () => {
 const parsed = window.cardGroups.parseCatVal(batchCatEl.value);
 if (!parsed) { toast('请先选择要导入的分类或分组'); return; }
 const lines = (batchTextEl.value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-if (!lines.length) { toast('请先输入问题，每行一个'); return; }
+if (!lines.length) { toast('请先输入问题，每行一个；单选题第一行用【问题】，下面每行一个选项'); return; }
 const d2 = taAskLoad();
-lines.forEach(t => {
-const q = { id: 'q_' + Date.now() + '_' + Math.floor(Math.random() * 9999), text: t, cat: parsed.cat || 'daily', enabled: true, isPreset: false };
+let cur = null, imported = 0, singles = 0;
+const flush = () => {
+if (!cur) return;
+const q = { id: 'q_' + Date.now() + '_' + Math.floor(Math.random() * 9999), text: cur.text, cat: parsed.cat || 'daily', enabled: true, isPreset: false };
 if (parsed.grp) q.grp = parsed.grp;
+if (cur.opts.length >= 2) { q.type = 'single'; q.options = cur.opts.slice(); singles++; }
 d2.questions.push(q);
+imported++;
+cur = null;
+};
+lines.forEach(t => {
+const m = t.match(/^【(.+?)】$/);
+if (m) { flush(); if (m[1].trim()) cur = { text: m[1].trim(), opts: [] }; return; }
+if (cur) { cur.opts.push(t); return; }
+cur = { text: t, opts: [] };
+flush();
 });
+flush();
+if (!imported) { toast('没有可导入的问题'); return; }
 taAskSave(d2);
 let label;
 if (parsed.grp) {
@@ -44632,7 +44838,7 @@ label = (CATS.find(c => c[0] === parsed.cat) || [])[1] || parsed.cat;
 }
 batchTextEl.value = '';
 renderAskMineWithForms();
-toast('已导入 ' + lines.length + ' 个问题到' + label);
+toast('已导入 ' + imported + ' 个问题' + (singles ? '（含 ' + singles + ' 道单选题）' : '') + '到' + label);
 });
 }
 const backBtn = document.getElementById('ta-ask-back');
@@ -44731,15 +44937,29 @@ return '<div class="ta-row">' +
 '<button class="ta-del" data-idx="' + idx + '">✕</button>' +
 '</div>';
 }
+function bindTaInpClears(root) {
+if (!root) return;
+root.querySelectorAll('.dec-inp-clear').forEach(btn => {
+btn.addEventListener('click', () => {
+const ta = document.getElementById(btn.dataset.clear);
+if (!ta) return;
+const box = ta.__ceBox;
+if (box) box.textContent = '';
+else ta.value = '';
+ta.focus();
+toast('已清空');
+});
+});
+}
 function askAddFormHtml(blockKey, grp, cat) {
 return '<div class="ta-add">' +
 '<select class="ta-type tc-input" data-key="' + blockKey + '">' +
 '<option value="text">文字回复</option>' +
 '<option value="single">单选题</option>' +
 '</select>' +
-'<input id="ta-new-' + blockKey + '" type="text" placeholder="添加问题…">' +
+'<div class="dec-inp-wrap ta-inp-flex"><input id="ta-new-' + blockKey + '" type="text" placeholder="添加问题…"><button type="button" class="dec-inp-clear" data-clear="ta-new-' + blockKey + '" aria-label="清空" title="清空">✕</button></div>' +
 '<button class="ta-add-btn" data-key="' + blockKey + '" data-cat="' + (cat || 'daily') + '" data-grp="' + (grp || '') + '">添加</button>' +
-'<textarea id="ta-opts-' + blockKey + '" class="ta-opts tc-input" rows="3" placeholder="每行一个选项。可写 选项~TA回应；多条回应用 ; 分隔，如 听我说说话~好，我在听。;嗯，你慢慢说。" hidden></textarea>' +
+'<div class="dec-inp-wrap ta-opts-flex"><textarea id="ta-opts-' + blockKey + '" class="ta-opts tc-input" rows="3" placeholder="每行一个选项。可写 选项~TA回应；多条回应用 ; 分隔，如 听我说说话~好，我在听。;嗯，你慢慢说。" hidden></textarea><button type="button" class="dec-inp-clear" data-clear="ta-opts-' + blockKey + '" aria-label="清空" title="清空">✕</button></div>' +
 '</div>';
 }
 function renderAskMineWithForms(search) {
@@ -44777,6 +44997,7 @@ html += askAddFormHtml('c' + k, '', k);
 });
 html += '</div>';
 mineCatsEl.innerHTML = html;
+bindTaInpClears(mineCatsEl);
 mineCatsEl.querySelectorAll('input[data-idx]').forEach(cb => {
 cb.addEventListener('change', () => {
 const d2 = taAskLoad();
@@ -44801,7 +45022,7 @@ const o = document.getElementById('ta-opts-' + sel.dataset.key);
 if (!o) return;
 o.hidden = sel.value !== 'single';
 if (o.__ceBox) o.__ceBox.hidden = o.hidden;
-else if (o.nextElementSibling && o.nextElementSibling.classList && o.nextElementSibling.classList.contains('ce-box')) o.nextElementSibling.hidden = o.hidden;
+else if (o.parentElement) o.parentElement.querySelectorAll('.ce-box').forEach(b => { b.hidden = o.hidden; });
 };
 sel.addEventListener('change', toggleOpts);
 toggleOpts();
@@ -44996,7 +45217,7 @@ const TC_DEFAULT = [
 { id: "cd6", cat: "daily", text: "我们谁先说晚安？", pref: 2, options: [
 { t: "我", reply: ["那你可得等我。","你先说？那我熬到你不困。","那你先说，我等着接。","那几点说？我守着。"], liked: false }, { t: "你", reply: ["好，我等你先说。","我先说？那我定个闹钟。","好，我先说，你接着。","那现在说？还是等会儿。"], liked: false }, { t: "一起说", reply: ["那很浪漫。","一起说？那数一二三。","一起说，浪漫，我配合。","那数到几说？三还是二？"], liked: true }] },
 { id: "cr4", cat: "rel", text: "万一吵架了，谁先低头？", pref: 3, options: [
-{ t: "我", reply: ["那我先低头也行。","你先低头？那台阶我备好。","你先低头我也心疼，别吵最好。","那上次谁先低的？我记着。"], liked: false }, { t: "你", reply: ["哼，这次你先。","我先？哼，那台阶你给。","那我先也行，只要你别走。","那台阶够不够？我下。"], liked: false }, { t: "看情况", reply: ["那就别吵太久。","看情况？那谁错谁先？","别吵太久，伤感情。","那什么情况你先什么我先？"], liked: false }, { t: "不吵架", reply: ["这个选项我喜欢。","不吵架？那我们太平天国。","不吵最好，这个答案我喜欢。","那真不吵过？我不信。"], liked: true }] },
+{ t: "我", reply: ["那我先低头也行。","你先低头？那台阶我备好。","你先低头我也心疼，别吵最好。","那上次谁先低的？我记着。"], liked: false }, { t: "你", reply: ["哼，这次你先。","我先？哼，那台阶你给。","那我先也行，只要你别走。","那台阶够不够？我下。"], liked: false }, { t: "看情况", reply: ["那就别吵太久。","看情况？那谁错谁先？","别吵太久，伤感情。","那什么情况你先什么我先？"], liked: false }, { t: "不吵架", reply: ["这个选项我喜欢。","不吵架？那拉钩，谁反悔是小狗。","不吵最好，这个答案我喜欢。","那真不吵过？我不信。"], liked: true }] },
 { id: "cd7", cat: "daily", text: "如果这个周末完完全全属于我们俩，你想怎么开始？", pref: 1, options: [
 { t: "睡到自然醒", reply: ["好，醒来第一眼就是我发的字卡。","睡到自然醒？那中午见。","醒来第一眼是我的字卡，我守着。","那几点算自然醒？我等着发。"], liked: false }, { t: "一睁眼就跟你说话", reply: ["那我得提前想好今天说什么。","一睁眼就说？那我有起床气你忍着。","那我提前想好，一睁眼就陪你聊。","那第一句说什么？我先想。"], liked: true }, { t: "出门吃顿好的", reply: ["行，想吃什么都依你。","出门吃好的？那选贵的。","想吃什么都依你，我请。","那吃什么？我订位。"], liked: false }, { t: "不用开始，一直都在", reply: ["……这句话我说不出，借你用了。","一直都在？那省了开场白。","这句话我借你用，一直都在。","那从什么时候算开始？"], liked: false }] },
 { id: "cd8", cat: "daily", text: "一起点奶茶的话，你会替我选什么口味？", pref: 0, options: [
@@ -45277,7 +45498,7 @@ if (Array.isArray(msgs) && msgs[msgIdx]) rec = msgs[msgIdx];
 if (!rec || rec.special !== 'ask-choose') return;
 if (rec.choiceStatus === 'answered') { renderTCResult(msgIdx); return; }
 const opts = rec.choiceOptions || [];
-let html = '<div class="tc-hint">TA想问你</div><div class="tc-q">' + (rec.choiceQuestion || '') + '</div>';
+let html = '<div class="tc-hint">TA想问你</div><div class="tc-q">' + ((rec.choiceQuestion || rec.text || '')) + '</div>';
 opts.forEach((o, i) => {
 html += '<div class="tc-opt" data-i="' + i + '">' + String(o.t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</div>';
 });
@@ -46013,7 +46234,7 @@ const body = document.getElementById('qa-body');
 const title = document.getElementById('qa-title');
 if (!mask || !body) return;
 if (title) title.textContent = window.taFit ? window.taFit('TA的好奇') : 'TA的好奇';
-let html = '<div class="qa-hint">TA有点好奇</div><div class="qa-q">' + String(rec.curiousQuestion || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</div>';
+let html = '<div class="qa-hint">TA有点好奇</div><div class="qa-q">' + String(rec.curiousQuestion || rec.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</div>';
 const quicks = rec.curiousQuick || [];
 if (quicks.length) {
 html += '<div class="qa-quicks">' + quicks.map(x => '<span class="qa-chip" data-v="' + String(x).replace(/"/g, '&quot;') + '">' + String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</span>').join('') + '</div>';
@@ -46050,7 +46271,7 @@ if (!rec || rec.special !== 'ask-curious' || rec.curiousStatus === 'answered') r
 const replies = (rec.curiousReplies && rec.curiousReplies.length) ? rec.curiousReplies : TCU_FALLBACK.slice();
 const reply = window.pickAskCardReply ? window.pickAskCardReply(replies) : replies[Math.floor(Math.random() * replies.length)];
 const d = tcuLoad();
-const qid = rec.curiousQid || ('q_' + String(rec.curiousQuestion || ''));
+const qid = rec.curiousQid || ('q_' + String(rec.curiousQuestion || rec.text || ''));
 d.known[qid] = answer;
 d.history.unshift({ q: rec.curiousQuestion, my: answer, reply: reply, cat: rec.curiousCat || '', ts: Date.now() });
 tcuSave(d);
@@ -46073,7 +46294,7 @@ const body = document.getElementById('qa-body');
 const title = document.getElementById('qa-title');
 if (!mask || !body) return;
 if (title) title.textContent = window.taFit ? window.taFit('TA的好奇') : 'TA的好奇';
-body.innerHTML = '<div class="qa-q">' + String(rec.curiousQuestion || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</div>' +
+body.innerHTML = '<div class="qa-q">' + String(rec.curiousQuestion || rec.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</div>' +
 '<div class="qa-mine">你说：' + String(rec.curiousAnswer || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</div>' +
 '<div class="qa-reply"><b>' + (window.taFit ? window.taFit('TA：') : 'TA：') + '</b>“' + String(window.taFit ? window.taFit(rec.curiousReply || '') : (rec.curiousReply || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '”</div>' +
 '<div class="qa-close" id="qa-close2">收起来</div>';
@@ -46563,6 +46784,7 @@ const t = s.trim();
 if (!t || t.length > 60) return false;
 if (t.indexOf('|||') >= 0) return false;
 if (t.indexOf('data:') === 0 || t.indexOf('http:') === 0 || t.indexOf('https:') === 0) return false;
+if (window.mochiMediaIsToken && window.mochiMediaIsToken(t)) return false; // FIX 2026-09-13 #388 同款守卫
 return true;
 });
 };
@@ -46605,7 +46827,7 @@ const body = document.getElementById('qa-body');
 const title = document.getElementById('qa-title');
 if (!mask || !body) return;
 if (title) title.textContent = window.taFit ? window.taFit('TA的吐槽') : 'TA的吐槽';
-body.innerHTML = '<div class="qa-hint">TA 吐槽你</div><div class="qa-q">“' + String(rec.roastText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '”</div>' +
+body.innerHTML = '<div class="qa-hint">TA 吐槽你</div><div class="qa-q">“' + String(rec.roastText || rec.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '”</div>' +
 '<input id="qa-input" class="qa-input" type="text" placeholder="回 TA 一句…">' +
 '<button class="qa-send" id="qa-send">回TA一句</button>';
 mask.hidden = false;
@@ -46650,7 +46872,7 @@ const body = document.getElementById('qa-body');
 const title = document.getElementById('qa-title');
 if (!mask || !body) return;
 if (title) title.textContent = window.taFit ? window.taFit('TA的吐槽') : 'TA的吐槽';
-body.innerHTML = '<div class="qa-q">“' + String(rec.roastText || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '”</div>' +
+body.innerHTML = '<div class="qa-q">“' + String(rec.roastText || rec.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '”</div>' +
 '<div class="qa-mine">你说：' + String(rec.roastAnswer || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '</div>' +
 '<div class="qa-reply"><b>' + (window.taFit ? window.taFit('TA：') : 'TA：') + '</b>“' + String(window.taFit ? window.taFit(rec.roastReply || '') : (rec.roastReply || '')).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;') + '”</div>' +
 '<div class="qa-close" id="qa-close2">收起来</div>';
@@ -46897,10 +47119,36 @@ function fmtDT(ts) {
 const dd = new Date(ts);
 return ('0' + dd.getHours()).slice(-2) + ':' + ('0' + dd.getMinutes()).slice(-2) + ' ' + ((dd.getMonth() + 1) + '月' + dd.getDate() + '日');
 }
+function allDeskHistories(key) {
+const out = [];
+const cur = window.__activeCid || 'default';
+const cids = ['default'].concat((window.getContacts ? window.getContacts() : []).map(function (c) { return c && c.id; }).filter(Boolean));
+const seen = {};
+cids.sort(function (a, b) { if (a === cur) return -1; if (b === cur) return 1; return 0; });
+cids.forEach(function (cid) {
+if (!cid || seen[cid]) return;
+seen[cid] = 1;
+try {
+let hist = [];
+if (cid === cur) {
+hist = taAskLoad().history || [];
+} else {
+const s = window.storeFor ? window.storeFor(cid) : null;
+if (!s) return;
+const raw = s.get(key);
+if (!raw) return;
+const d = JSON.parse(raw);
+hist = (d && Array.isArray(d.history)) ? d.history : [];
+}
+out.push.apply(out, hist);
+} catch (e) {}
+});
+return out;
+}
 window.renderAskRecords = function () {
 const askEl = document.getElementById('ar-ask');
 if (askEl) {
-const h = taAskLoad().history || [];
+const h = allDeskHistories('ta-ask');
 askEl.innerHTML = h.length
 ? h.slice().reverse().map(x => '<div class="tc-listitem"><div class="tc-li-q">问：' + x.q + '</div>' + (x.status === 'pending' ? '<div class="tc-li-pending">待回答</div>' : '<div class="tc-li-line">你：' + x.a + '</div>' + (x.reply ? '<div class="tc-li-line">' + (window.taFit ? window.taFit('TA：') : 'TA：') + (window.taFit ? window.taFit(x.reply) : x.reply) + '</div>' : '')) + '<div class="tc-li-time">' + fmtDT(x.ts) + '</div></div>').join('')
 : '<div class="ta-empty">暂无询问记录</div>';
@@ -47045,6 +47293,214 @@ attachIdbRestore(KEY, taAskLoad, taAskMerge);
 attachIdbRestore(KEY2, tcLoad, tcMerge);
 attachIdbRestore(KEY3, tcuLoad, tcuMerge);
 attachIdbRestore(KEY4, trLoad, trMerge);
+const SKEY = 'ta-survey';
+function surveyLoad() {
+let d = null;
+try { d = JSON.parse(store.get(SKEY) || 'null'); } catch (e) { d = null; }
+if (!d || typeof d !== 'object' || Array.isArray(d)) d = {};
+if (typeof d.text !== 'string') d.text = '';
+if (!d.settings || typeof d.settings !== 'object') d.settings = { prob: 10, deadline: 0 };
+if (typeof d.settings.prob !== 'number') d.settings.prob = 10;
+if (typeof d.settings.deadline !== 'number') d.settings.deadline = 0;
+if (!Array.isArray(d.qs)) d.qs = [];
+if (!Array.isArray(d.answers)) d.answers = [];
+if (d.status !== 'sent' && d.status !== 'done') { d.status = 'draft'; d.sentAt = 0; }
+return d;
+}
+function surveySave(d) { try { store.set(SKEY, JSON.stringify(d)); } catch (e) {} }
+function surveyParse(text) {
+const lines = String(text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+const qs = [];
+let cur = null, marked = false;
+const flush = () => {
+if (!cur) return;
+if (!marked && cur.opts.length >= 2) qs.push({ type: 'single', text: cur.text, options: cur.opts.slice() });
+else qs.push({ type: 'text', text: cur.text, options: [] });
+cur = null; marked = false;
+};
+lines.forEach(t => {
+const m = t.match(/^【(.+?)】$/);
+if (m) { flush(); if (m[1].trim()) cur = { text: m[1].trim(), opts: [] }; return; }
+if (cur) {
+if (!marked && !cur.opts.length && t === '一') { marked = true; return; }
+cur.opts.push(t); return;
+}
+flush();
+qs.push({ type: 'text', text: t, options: [] }); // 无【】裸行：整行当文字题题干
+});
+flush();
+return qs.filter(q => q.text);
+}
+function surveyAnswerText() {
+let t = '';
+let words = [];
+try {
+const cards = (window.getCustomCards && window.getCustomCards()) || [];
+words = cards.filter(s => typeof s === 'string' && s.trim() && s.indexOf('data:') !== 0 && s.indexOf('|||') < 0 && !(window.mochiMediaIsToken && window.mochiMediaIsToken(s)));
+} catch (e) {}
+if (words.length) {
+const n = 1 + Math.floor(Math.random() * Math.min(5, words.length));
+const copy = words.slice(); const out = [];
+while (out.length < n) out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+t = out.join(' ');
+}
+try {
+const dc = window.getDefaultCards && window.getDefaultCards('chat');
+if (dc && dc.type !== 'poke' && typeof dc.text === 'string' && dc.text.trim()) t = dc.text;
+} catch (e) {}
+if (!t) {
+if (window.cardLockOpen && window.cardLockOpen()) {
+t = window.pickAskCardReply ? window.pickAskCardReply() : '收到你的回答。';
+} else {
+t = '……';
+}
+}
+return t;
+}
+function surveySeqAnswers(qs, cb, i) {
+if (i >= qs.length) { cb(); return; }
+const q = qs[i];
+let msg;
+if (q.type === 'single' && Array.isArray(q.options) && q.options.length) {
+msg = '【' + q.text + '】我的选择：' + q.options[Math.floor(Math.random() * q.options.length)];
+} else {
+msg = '【' + q.text + '】' + surveyAnswerText();
+}
+try { window.chatAddIn(msg, {}); } catch (e) {}
+setTimeout(() => surveySeqAnswers(qs, cb, i + 1), 1200 + Math.floor(Math.random() * 1600));
+}
+function surveySubmitAll(d, early) {
+const remaining = d.qs.slice(d.answers.length);
+const finish = () => {
+const d2 = surveyLoad();
+if (d2.status !== 'sent') return;
+d2.answers = d2.qs.map((q, i) => d2.answers[i] || surveyAnswerText());
+d2.status = 'done';
+surveySave(d2);
+try { window.chatAddSystem(early ? 'TA 提前交卷了（共 ' + d2.qs.length + ' 题）。' : 'TA 交卷了（共 ' + d2.qs.length + ' 题）。', { special: 'ask-msg' }); } catch (e) {}
+surveyRender();
+};
+if (remaining.length) surveySeqAnswers(remaining, finish, 0); else finish();
+}
+function surveyTick() {
+let d;
+try { d = surveyLoad(); } catch (e) { return; }
+if (d.status !== 'sent') return;
+if (Date.now() - (d.sentAt || 0) < 15000) return; // 刚发出 15s 内不动作
+const done = d.answers.length >= d.qs.length;
+const deadlineHit = d.settings.deadline > 0 && Date.now() >= d.settings.deadline;
+const earlyHit = !done && !deadlineHit && Math.random() * 100 < d.settings.prob;
+if (done || deadlineHit || earlyHit) { surveySubmitAll(d, earlyHit); return; }
+const q = d.qs[d.answers.length];
+if (!q) return;
+surveySeqAnswers([q], () => {
+const d2 = surveyLoad();
+if (d2.status !== 'sent') return;
+d2.answers.push(surveyAnswerText());
+surveySave(d2);
+surveyRender();
+}, 0);
+}
+setInterval(surveyTick, 30000);
+function surveySend() {
+const d = surveyLoad();
+if (d.status === 'sent') { toast('问卷已发出，TA 正在作答'); return; }
+const tEl = document.getElementById('ta-survey-text');
+if (tEl) { d.text = tEl.value; d.qs = surveyParse(tEl.value); surveySave(d); }
+if (!d.qs.length) { toast('请先填写问卷题目（【问题】+ 选项行 / 「一」行）'); return; }
+if (d.settings.deadline && d.settings.deadline <= Date.now()) { toast('交卷时间已过期，请重新设置'); return; }
+d.status = 'sent'; d.sentAt = Date.now(); d.answers = [];
+surveySave(d);
+try { window.chatAddSystem('你向TA发出了一份问卷（' + d.qs.length + ' 题）。', { special: 'ask-msg' }); } catch (e) {}
+surveyRender();
+toast('问卷已发出，TA 开始作答');
+}
+function surveyRender() {
+const d = surveyLoad();
+const txt = document.getElementById('ta-survey-text');
+if (txt && document.activeElement !== txt && txt.value !== d.text) txt.value = d.text;
+const dl = document.getElementById('ta-survey-deadline');
+if (dl && document.activeElement !== dl) dl.value = d.settings.deadline ? fmtDeadlineLocal(d.settings.deadline) : '';
+const prob = document.getElementById('ta-survey-prob');
+if (prob && document.activeElement !== prob) prob.value = d.settings.prob;
+const pv = document.getElementById('ta-survey-prob-val');
+if (pv) pv.textContent = d.settings.prob + '%';
+const st = document.getElementById('ta-survey-status');
+if (st) {
+if (d.status === 'draft') {
+const nS = d.qs.filter(q => q.type === 'single').length;
+st.innerHTML = '当前状态：草稿 —— 已解析 <b>' + d.qs.length + '</b> 题' + (d.qs.length ? '（单选 ' + nS + ' 题 / 文字 ' + (d.qs.length - nS) + ' 题）' : '') + '。填好后点「发出问卷给TA」。';
+} else if (d.status === 'sent') {
+st.innerHTML = '当前状态：TA 作答中 —— 已答 <b>' + d.answers.length + '</b> / ' + d.qs.length + ' 题' + (d.settings.deadline ? '；交卷时间 ' + fmtDeadlineLocal(d.settings.deadline) : '；未设交卷时间') + '；每 30 秒按 ' + d.settings.prob + '% 概率提前交卷。';
+} else {
+st.innerHTML = '当前状态：已交卷 —— 共 ' + d.qs.length + ' 题。可修改题目/时间后再次发出。';
+}
+}
+}
+const surveyPage = document.getElementById('page-ta-ask-survey');
+if (surveyPage) {
+const surveyOpen = document.getElementById('ta-ask-survey-open');
+if (surveyOpen) surveyOpen.addEventListener('click', () => {
+document.querySelectorAll('.page').forEach(p => p.hidden = true);
+surveyPage.hidden = false;
+surveyRender();
+});
+const backS = document.getElementById('ta-survey-back');
+if (backS) backS.addEventListener('click', () => {
+document.querySelectorAll('.page').forEach(p => p.hidden = true);
+const home = document.getElementById('page-ta-ask');
+if (home) home.hidden = false;
+});
+const stxt = document.getElementById('ta-survey-text');
+if (stxt) {
+stxt.addEventListener('change', () => {
+const d = surveyLoad();
+d.text = stxt.value;
+d.qs = surveyParse(stxt.value);
+surveySave(d);
+surveyRender();
+});
+bindTaInpClears(stxt.parentElement);
+}
+const sdl = document.getElementById('ta-survey-deadline');
+if (sdl) sdl.addEventListener('change', () => {
+const d = surveyLoad();
+const t = sdl.value ? new Date(sdl.value).getTime() : 0;
+d.settings.deadline = (t && !isNaN(t)) ? t : 0;
+surveySave(d);
+toast(d.settings.deadline ? '交卷时间已设置：' + sdl.value.replace('T', ' ') : '交卷时间已清除');
+surveyRender();
+});
+const sdlClear = document.getElementById('ta-survey-deadline-clear');
+if (sdlClear) sdlClear.addEventListener('click', () => {
+const d = surveyLoad();
+d.settings.deadline = 0;
+surveySave(d);
+if (sdl) sdl.value = '';
+toast('交卷时间已清除');
+surveyRender();
+});
+const sprob = document.getElementById('ta-survey-prob');
+if (sprob) sprob.addEventListener('input', () => {
+const d = surveyLoad();
+d.settings.prob = parseInt(sprob.value, 10) || 0;
+surveySave(d);
+const v = document.getElementById('ta-survey-prob-val');
+if (v) v.textContent = sprob.value + '%';
+});
+const ssend = document.getElementById('ta-survey-send');
+if (ssend) ssend.addEventListener('click', surveySend);
+const sreset = document.getElementById('ta-survey-reset');
+if (sreset) sreset.addEventListener('click', () => {
+const d = surveyLoad();
+if (d.status === 'draft' && !d.answers.length) { toast('尚未发出问卷'); return; }
+d.status = 'draft'; d.answers = []; d.sentAt = 0;
+surveySave(d);
+surveyRender();
+toast('问卷已撤回（重置为草稿）');
+});
+surveyRender();
+}
 var _askCeReflowT = null;
 function _reflowAskCeBoxes() {
 var page = document.getElementById('page-ta-ask');
@@ -48534,6 +48990,7 @@ pickup: c['call-pickup'] !== undefined ? c['call-pickup'] : CALL.pickup,
 busy: c['call-busy'] !== undefined ? c['call-busy'] : CALL.busy,
 reject: c['call-reject'] !== undefined ? c['call-reject'] : CALL.reject,
 hangup: c['call-hangup'] !== undefined ? c['call-hangup'] : CALL.hangup,
+nohangup: c['call-no-hangup'] === 1 || c['call-no-hangup'] === '1',
 resume: c['call-resume'] !== undefined ? c['call-resume'] : 1
 };
 }
@@ -48639,6 +49096,7 @@ applyCallBg();
 }
 } catch (e) {}
 applyCallBg();
+document.addEventListener('contact-switched', applyCallBg);
 const CALL_MINI_KEY = 'call-mini-enabled';
 function callMiniEnabled() {
 try { return store.get(CALL_MINI_KEY) !== '0'; } catch (e) { return true; }
@@ -48655,6 +49113,7 @@ if (currentCall.status === 'connected' && mask && mask.hidden) {
 syncCallName();
 syncCallAv();
 mini.hidden = false;
+liftMiniIntoSafeArea(); // v3.26.x #137：显示时校正，防旧坐标落进系统状态栏区
 }
 } else {
 mini.hidden = true;
@@ -48676,6 +49135,51 @@ const miniBtn = document.getElementById('call-minimize-btn');
 const miniAv = document.getElementById('call-mini-av');
 const miniName = document.getElementById('call-mini-name');
 const miniTime = document.getElementById('call-mini-time');
+let _miniSafeTopCache = -1;
+function miniSafeTop() {
+try {
+if (!document.documentElement.classList.contains('ios-pwa-standalone')) return 0;
+if (_miniSafeTopCache >= 0) return _miniSafeTopCache;
+let top = 0;
+try {
+const probe = document.createElement('div');
+probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none;';
+document.body.appendChild(probe);
+const v = parseFloat(getComputedStyle(probe).paddingTop);
+document.body.removeChild(probe);
+if (!isNaN(v) && v >= 20 && v <= 160) top = v;
+} catch (e1) {}
+if (!top) {
+const sh = (window.screen && window.screen.height) || 0;
+const ih = window.innerHeight || 0;
+if (sh > 0 && ih > 0) {
+const diff = sh - ih;
+if (diff >= 20 && diff <= 160) top = diff;
+}
+}
+if (!top) top = 59;
+_miniSafeTopCache = top;
+return top;
+} catch (e) {}
+return 0;
+}
+function liftMiniIntoSafeArea() {
+try {
+if (!mini || mini.hidden) return;
+const st = miniSafeTop();
+if (st <= 0) return;
+const m = String(mini.style.top || '').match(/^(-?\d+(\.\d+)?)px$/);
+if (!m) return; // 无内联 top（默认底部居中），无需处理
+const y = parseFloat(m[1]);
+if (y < st) {
+mini.style.top = st + 'px';
+if (mini.style.bottom && mini.style.bottom !== 'auto') mini.style.bottom = 'auto';
+if (!miniPos) miniPos = { left: mini.style.left, top: mini.style.top };
+else miniPos.top = mini.style.top;
+try { store.set('call-mini-pos', JSON.stringify(miniPos)); } catch (e2) {}
+}
+} catch (e) {}
+}
 let miniPos = null;
 try { miniPos = JSON.parse(store.get('call-mini-pos') || 'null'); } catch (e) {}
 function miniPosValid(p) {
@@ -48690,6 +49194,12 @@ if (y < 0 || y > window.innerHeight - 30) return false;
 return true;
 }
 if (miniPos && mini && miniPosValid(miniPos)) {
+const _st = miniSafeTop();
+let _y = parseFloat(String(miniPos.top).match(/(-?\d+(\.\d+)?)px/)[1]);
+if (_st > 0 && _y < _st) {
+miniPos.top = _st + 'px';
+try { store.set('call-mini-pos', JSON.stringify(miniPos)); } catch (e) {}
+}
 mini.style.left = miniPos.left;
 mini.style.top = miniPos.top;
 mini.style.bottom = 'auto';
@@ -48698,7 +49208,10 @@ mini.style.transform = 'none';
 try { store.remove('call-mini-pos'); } catch (e) {}
 miniPos = null;
 }
-function partnerName() { return store.get('cs-lbl-partner') || (window.taWord ? window.taWord() : 'TA'); }
+function partnerName() {
+const nick = store.get('cs-lbl-partner') || (window.contactNameFor ? window.contactNameFor(window.__activeCid || 'default') : '');
+return nick || (window.taWord ? window.taWord() : 'TA');
+}
 function partnerAv() { return store.get('cs-avatar-partner') || store.get('avatar-partner') || ''; }
 function bindCall(callObj) {
 callObj.cid = window.__activeCid || 'default';
@@ -48708,17 +49221,25 @@ saveCallActive();
 return callObj;
 }
 const CALL_ACTIVE_KEY = 'xy-home-v2:call-active';
-function saveCallActive() {
-try {
-if (!currentCall) return;
-sessionStorage.setItem(CALL_ACTIVE_KEY, JSON.stringify({
+function callActivePayload() {
+return JSON.stringify({
 cid: currentCall.cid, direction: currentCall.direction, status: currentCall.status,
 startTime: currentCall.startTime, connectedTime: currentCall.connectedTime || 0,
 name: currentCall.name || '', av: currentCall.av || '', ts: Date.now()
-}));
+});
+}
+function saveCallActive() {
+try {
+if (!currentCall) return;
+const payload = callActivePayload();
+sessionStorage.setItem(CALL_ACTIVE_KEY, payload);
+try { localStorage.setItem(CALL_ACTIVE_KEY, payload); } catch (e) {}
 } catch (e) {}
 }
-function clearCallActive() { try { sessionStorage.removeItem(CALL_ACTIVE_KEY); } catch (e) {} }
+function clearCallActive() {
+try { sessionStorage.removeItem(CALL_ACTIVE_KEY); } catch (e) {}
+try { localStorage.removeItem(CALL_ACTIVE_KEY); } catch (e) {}
+}
 function fillAv(el, data) {
 if (!el) return;
 el.innerHTML = '';
@@ -48750,7 +49271,9 @@ if (!currentCall) return;
 let name = '';
 try {
 const s = (window.storeFor && window.storeFor(currentCall.cid)) || store;
-name = s.get('cs-lbl-partner') || (window.taWord ? window.taWord() : 'TA');
+name = s.get('cs-lbl-partner')
+|| (window.contactNameFor ? window.contactNameFor(currentCall.cid) : '')
+|| (window.taWordFor ? window.taWordFor(currentCall.cid) : (window.taWord ? window.taWord() : 'TA'));
 } catch (e) { name = currentCall.name || partnerName(); }
 if (name === shownName) return;
 shownName = name;
@@ -48777,6 +49300,7 @@ if (callMiniEnabled()) {
 syncCallName();
 syncCallAv();
 mini.hidden = false;
+liftMiniIntoSafeArea(); // v3.26.x #137：显示时校正，防旧坐标落进系统状态栏区
 } else {
 mini.hidden = true;
 }
@@ -48797,16 +49321,19 @@ stopTimers();
 if (!currentCall.connectedTime) currentCall.connectedTime = Date.now(); // v3.26.x：恢复通话时已有 connectedTime 不覆盖，计时从接通时刻继续
 updateDur(); // v3.13.x：接通立即刷新显示，避免接通瞬间仍停留「00:00」卡一下
 let checkCount = 0;
+let hbCount = 0;
 durationTimer = setInterval(() => {
 updateDur();
 syncCallAv();
 syncCallName();
+if (++hbCount >= 20) { hbCount = 0; saveCallActive(); }
 if (currentCall && currentCall.status === 'connected') {
 if (Date.now() - currentCall.connectedTime >= 180000) {
 checkCount++;
 if (checkCount >= 60) {
 checkCount = 0;
-if (Math.random() * 100 < callCfg().hangup) {
+const hp = callCfg();
+if (!(hp.nohangup || hp.hangup <= 0) && Math.random() * 100 < hp.hangup) {
 endCall('对方挂断了电话');
 }
 }
@@ -48831,7 +49358,7 @@ list.unshift({ type: recType, text: recText, ts: Date.now() });
 s.set('records-call', JSON.stringify(list.slice(0, 50)));
 } catch (e) {}
 }
-function endCall(text) {
+function endCall(text, holdSilent) {
 clearCallActive(); // v3.26.x：正常结束清除进行中标记（中断恢复靠残留检测）
 if (window.stopSfx) window.stopSfx('ring');
 if (window.musicHoldForCall) window.musicHoldForCall(false);
@@ -48839,7 +49366,7 @@ stopTimers();
 if (mask) mask.hidden = true;
 if (mini) mini.hidden = true;
 if (cdEl) cdEl.hidden = true;
-if (currentCall) {
+if (currentCall && !holdSilent) {
 const dur = currentCall.durationSec || (currentCall.connectedTime ? Math.max(0, Math.floor((Date.now() - currentCall.connectedTime) / 1000)) : 0);
 const dir = currentCall.direction;
 const name = currentCall.name || partnerName();
@@ -48857,6 +49384,68 @@ currentCall = null;
 shownAv = null;
 shownName = null;
 }
+function bgCallNotify(name, hint, avOverride) {
+try {
+if (window.bgNotifyCheck) window.bgNotifyCheck(name + ' 来电了' + (hint ? '，' + hint : ''), Date.now(), { name: name + '来电', av: avOverride || partnerAv(), avFixed: true, force: true });
+} catch (e) {}
+}
+const CALL_HOLD_MS = 3 * 60 * 1000;
+const CALL_HOLD_KEY = 'xy-home-v2:call-hold';
+function heldMissedHtml(nm) {
+return '<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>' + nm + ' 来电 · 未接听';
+}
+function holdIncomingCall(name, cid, avOverride, msgWritten) {
+let prev = null;
+try { prev = readCallHold(); } catch (e) {}
+if (prev && prev.cid && Date.now() - prev.ts > CALL_HOLD_MS) {
+notifyCallEnd(prev.cid, heldMissedHtml(prev.name || partnerName()), 'in', '未接听');
+}
+const h = { ts: Date.now(), name: name, cid: cid || (window.__activeCid || 'default'), msg: !!msgWritten };
+try { localStorage.setItem(CALL_HOLD_KEY, JSON.stringify(h)); } catch (e) {}
+if (window.idbSet) { try { window.idbSet(CALL_HOLD_KEY, h); } catch (e) {} }
+bgCallNotify(name, '快回来接听，对方会等你几分钟', avOverride);
+}
+window.callHoldIncoming = holdIncomingCall;
+function readCallHold() {
+try {
+const h = JSON.parse(localStorage.getItem(CALL_HOLD_KEY) || 'null');
+return (h && h.ts) ? h : null;
+} catch (e) { return null; }
+}
+function clearCallHold() {
+try { localStorage.setItem(CALL_HOLD_KEY, '{"ts":0}'); } catch (e) {}
+if (window.idbSet) { try { window.idbSet(CALL_HOLD_KEY, { ts: 0 }); } catch (e) {} }
+}
+let holdBusy = false;
+function resumeHeldCall() {
+if (holdBusy) return;
+const h = readCallHold();
+if (h) { clearCallHold(); resumeProcessHold(h); return; }
+if (window.idbGet) {
+holdBusy = true;
+window.idbGet(CALL_HOLD_KEY).then(function (ih) {
+holdBusy = false;
+if (!ih || !ih.ts) return;
+clearCallHold();
+resumeProcessHold(ih);
+}).catch(function () { holdBusy = false; });
+}
+}
+function resumeProcessHold(h) {
+const cur = window.__activeCid || 'default';
+if (Date.now() - h.ts <= CALL_HOLD_MS && !currentCall) {
+if (h.cid === cur) { incomingCall(true, !!h.msg); return; }
+if (h.cid && window.setActiveContact) {
+let known = (h.cid === 'default');
+try { if (window.getContacts) known = window.getContacts().some(c => c && c.id === h.cid); } catch (e) {}
+if (known) {
+try { window.setActiveContact(h.cid); } catch (e) {}
+if ((window.__activeCid || 'default') === h.cid) { incomingCall(true, !!h.msg); return; }
+}
+}
+}
+notifyCallEnd(h.cid || cur, heldMissedHtml(h.name || partnerName()), 'in', '未接听');
+}
 document.addEventListener('contact-renamed', (e) => {
 if (currentCall && e.detail && e.detail.id === currentCall.cid) {
 syncCallName();
@@ -48864,7 +49453,13 @@ syncCallName();
 });
 document.addEventListener('visibilitychange', () => {
 if (document.visibilityState === 'hidden' && currentCall && currentCall.status === 'ringing') {
-endCall('未接听');
+const cid = currentCall.cid || (window.__activeCid || 'default');
+const nm = currentCall.name || partnerName();
+const msgOk = !!(currentCall.sysMsg); // FIX 2026-09-13 #406：续传「打来了语音通话」已写标记
+endCall('', true);
+holdIncomingCall(nm, cid, undefined, msgOk);
+} else if (document.visibilityState === 'visible') {
+resumeHeldCall();
 }
 });
 function closeImageOverlay() {
@@ -48873,7 +49468,7 @@ const iv = document.getElementById('img-view-mask');
 if (iv) iv.hidden = true;
 } catch (e) {}
 }
-function incomingCall() {
+function incomingCall(isReplay, msgWritten) {
 if (currentCall) return;
 closeImageOverlay();
 if (window.playSfx) window.playSfx('ring');
@@ -48890,7 +49485,12 @@ if (statusEl) statusEl.textContent = '对方来电...';
 if (durEl) durEl.textContent = '00:00';
 if (mask) mask.hidden = false;
 setMaskBtns('ringing');
-if (window.chatAddSystem) window.chatAddSystem('<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>' +  name + ' 给你打来了语音通话');
+let wroteSysMsg = false;
+if ((!isReplay || !msgWritten) && window.chatAddSystem) {
+window.chatAddSystem('<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>' +  name + ' 给你打来了语音通话');
+wroteSysMsg = true;
+}
+if (currentCall) currentCall.sysMsg = !!msgWritten || wroteSysMsg;
 let count = 30;
 if (cdEl) { cdEl.hidden = false; cdEl.textContent = count + ' 秒后未接听'; }
 const t = setInterval(() => {
@@ -48927,6 +49527,7 @@ if (mini) {
 syncCallName();
 syncCallAv();
 mini.hidden = false;
+liftMiniIntoSafeArea(); // v3.26.x #137：显示时校正，防旧坐标落进系统状态栏区
 }
 }
 }
@@ -48980,7 +49581,7 @@ setTimeout(() => {
 if (currentCall === callRef && callRef.status === 'connected') {
 if (callMiniEnabled()) {
 if (mask) mask.hidden = true;
-if (mini) { syncCallName(); syncCallAv(); mini.hidden = false; }
+if (mini) { syncCallName(); syncCallAv(); mini.hidden = false; liftMiniIntoSafeArea(); /* v3.26.x #137 显示时校正 */ }
 }
 }
 }, 2000);
@@ -49016,7 +49617,7 @@ moved = true;
 let x = e.clientX - offX, y = e.clientY - offY;
 const mw = mini.offsetWidth, mh = mini.offsetHeight;
 x = Math.max(4, Math.min(window.innerWidth - mw - 4, x));
-y = Math.max(4, Math.min(window.innerHeight - mh - 4, y));
+y = Math.max(miniSafeTop(), Math.min(window.innerHeight - mh - 4, y));
 mini.style.left = x + 'px';
 mini.style.top = y + 'px';
 });
@@ -49043,13 +49644,16 @@ window.triggerIncomingCall = incomingCall;
 function callLast() { const v = parseInt(store.get('records-call-last'), 10); return isNaN(v) ? 0 : v; }
 function maybeIncoming() {
 try {
-if (document.hidden) return; // v3.5.127：后台不触发来电
 if (currentCall) return;
 const now = Date.now();
 const last = Math.min(callLast(), now);
 if (now - last < 300000) return; // 5 分钟冷却
 if (Math.random() * 100 >= callCfg().incoming) return;
 store.set('records-call-last', String(now));
+if (document.hidden) {
+holdIncomingCall(partnerName(), window.__activeCid || 'default');
+return;
+}
 incomingCall();
 } catch (e) {}
 }
@@ -49068,19 +49672,25 @@ window.hangupCall = function () { userHangup(); };
 function recoverCall() {
 let info = null;
 try { info = JSON.parse(sessionStorage.getItem(CALL_ACTIVE_KEY) || 'null'); } catch (e) { info = null; }
+let fromLs = false;
+if (!info) {
+try { info = JSON.parse(localStorage.getItem(CALL_ACTIVE_KEY) || 'null'); } catch (e) { info = null; }
+fromLs = !!info;
+}
 if (!info) return;
 if (!info.connectedTime) { clearCallActive(); return; } // 未接通就中断（响铃/呼叫中刷新），不恢复不记
 const cid = info.cid || 'default';
 const dir = info.direction || 'out';
 const name = info.name || 'TA';
 if (callCfg().resume !== 0) {
+if (fromLs && Date.now() - (info.ts || 0) > 600000) { clearCallActive(); return; }
 try {
 currentCall = { cid: cid, direction: dir, status: 'connected', startTime: info.startTime || info.connectedTime, connectedTime: info.connectedTime, durationSec: 0, name: name, av: info.av || '' };
 shownAv = null; shownName = null;
 if (callMiniEnabled()) {
 if (mask) mask.hidden = true;
 if (cdEl) cdEl.hidden = true;
-if (mini) { syncCallName(); syncCallAv(); mini.hidden = false; }
+if (mini) { syncCallName(); syncCallAv(); mini.hidden = false; liftMiniIntoSafeArea(); /* v3.26.x #137 显示时校正 */ }
 } else {
 if (mask) mask.hidden = false;
 if (cdEl) cdEl.hidden = true;
@@ -49090,6 +49700,7 @@ setMaskBtns('active');
 syncCallAv(); syncCallName();
 }
 startCallDuration();
+saveCallActive(); // #120 回写 sessionStorage（后续刷新优先走 sessionStorage 快路径）+ 刷新 ts
 } catch (e) { clearCallActive(); }
 return;
 }
@@ -49114,8 +49725,13 @@ else if (window.chatAppendToDeskMsg) { window.chatAppendToDeskMsg(cid, sysHtml);
 } catch (e) {}
 try { if (!document.getElementById('page-home').hidden && window.__renderHomeCall) window.__renderHomeCall(); } catch (e) {}
 }
-if (window.__mochiDataReady) { try { recoverCall(); } catch (e) {} }
-else { try { document.addEventListener('mochi-restore-done', function () { try { recoverCall(); } catch (e) {} }); } catch (e) {} }
+function bootCallResume() {
+try { recoverCall(); } catch (e) {}
+setTimeout(function () { try { resumeHeldCall(); } catch (e) {} }, 1200);
+}
+if (window.__mochiDataReady) { try { bootCallResume(); } catch (e) {} }
+else { try { document.addEventListener('mochi-restore-done', function () { try { bootCallResume(); } catch (e) {} }); } catch (e) {} }
+setTimeout(function () { try { resumeHeldCall(); } catch (e) {} }, 20000); // 回填挂起设备兜底（幂等）
 setTimeout(() => {
 function scheduleCallCheck() {
 maybeIncoming();
@@ -49161,7 +49777,7 @@ return [];
 function stripLetterImg(l) {
 if (!l || typeof l !== 'object') return l;
 const c = Object.assign({}, l);
-const strip = (s) => { if (typeof s !== 'string') return s; let t = s.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[图片]'); if (t.length > 8192) t = t.slice(0, 8192) + '…'; return t; };
+const strip = (s) => { if (typeof s !== 'string') return s; let t = s.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]'); if (t.length > 8192) t = t.slice(0, 8192) + '…'; return t; };
 c.content = strip(c.content);
 if (c.myReply) { c.myReply = Object.assign({}, c.myReply); c.myReply.content = strip(c.myReply.content); }
 if (c.partnerReply) { c.partnerReply = Object.assign({}, c.partnerReply); c.partnerReply.content = strip(c.partnerReply.content); }
@@ -49194,7 +49810,7 @@ return a.length + b.length + c.length;
 }
 function hasRealImg(o) {
 const s = [o && o.content, o && o.myReply && o.myReply.content, o && o.partnerReply && o.partnerReply.content].join(' ');
-return /data:image\//.test(s || '');
+return /data:image\//.test(s || '') || (!!window.mochiMediaIsToken && s.split(' ').some(window.mochiMediaIsToken));
 }
 function mergeLists(a, b) {
 const map = {};
@@ -49269,7 +49885,7 @@ const seg = (t) => {
 t = String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 return (fit && window.taFit) ? window.taFit(t) : t;
 };
-const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g;
+const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+|@@m:[0-9a-f]{32})/g;
 return s.replace(RE, function (all, pre, src) {
 if (src.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') {
 return seg(all); // 普通网址（无附图前缀）按文本保留
@@ -49283,6 +49899,7 @@ const str = String(s || '');
 const cleaned = str
 .replace(/(?:sticker|image):data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '')
 .replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '')
+.replace(/@@m:[0-9a-f]{32}/g, '')
 .replace(/\s+/g, ' ').trim();
 let out = escHtml((cleaned || '（图片）').slice(0, 30));
 if (fit && window.taFit) out = window.taFit(out);
@@ -49483,7 +50100,7 @@ list[idx].partnerReply = { content: p.content, tm: now };
 save(list, cid);
 notifyMailToChat(cid, name + ' 给你回了信', { mailNotice: true });
 if (cid === (window.__activeCid || 'default') && window.showDeskPopup && !mailPageVisible()) {
-window.showDeskPopup({ name: '信箱', text: '给你回了一封信：' + p.content, onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
+window.showDeskPopup({ name: '信箱', text: '给你回了一封信：' + String(p.content || '').replace(/@@m:[0-9a-f]{32}/g, '[图片]').replace(/data:[a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[附件]'), onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
 }
 changed = true;
 });
@@ -49586,6 +50203,7 @@ return v !== undefined && v !== '' && Number(v) > 0 ? Number(v) : def;
 return {
 minCards: c['ml-min-cards'] !== undefined ? Number(c['ml-min-cards']) : 20,
 maxCards: c['ml-max-cards'] !== undefined ? c['ml-max-cards'] : 50,
+writeEn: c['ml-write-en'] !== undefined ? Number(c['ml-write-en']) : 1,
 writeProb: prob('ml-write-prob', 30),
 writeMin: c['ml-write-min'] !== undefined ? c['ml-write-min'] : 1,
 writeMax: c['ml-write-max'] !== undefined ? c['ml-write-max'] : 120,
@@ -49604,6 +50222,7 @@ if (!cid || cid === (window.__activeCid || 'default')) return cfg;
 try {
 const s = window.storeFor(cid);
 [['ml-min-cards', 'minCards'], ['ml-max-cards', 'maxCards'],
+['ml-write-en', 'writeEn'],
 ['ml-write-prob', 'writeProb'], ['ml-write-min', 'writeMin'], ['ml-write-max', 'writeMax'],
 ['ml-write-daily-max', 'dailyMax'], ['ml-reply-prob', 'replyProb'],
 ['ml-reply-min', 'replyMin'], ['ml-reply-max', 'replyMax'],
@@ -49658,6 +50277,7 @@ if (!s || typeof s !== 'string') return;
 if (pokeSet && pokeSet.has(s)) return;
 if (/^data:/.test(s)) return;
 if (s.indexOf('|||') >= 0) return;
+if (window.mochiMediaIsToken && window.mochiMediaIsToken(s)) return;
 let isEmoji = false;
 for (const ch of s) {
 const c = ch.codePointAt(0);
@@ -49685,7 +50305,7 @@ const st = (cid && window.storeFor) ? window.storeFor(cid) : null;
 const a = (window.defaultCardApiFor && st) ? window.defaultCardApiFor(st) : null;
 const dcfg = a ? a.cfg() : ((window.defaultCardCfg && window.defaultCardCfg()) || {});
 if (dcfg.enabled === false) return '';
-const overall = (dcfg.overall === undefined || dcfg.overall === null) ? 30 : dcfg.overall;
+const overall = (dcfg.overallFor ? dcfg.overallFor('mail') : ((dcfg.overall === undefined || dcfg.overall === null) ? 30 : dcfg.overall));
 if (Math.random() * 100 >= overall) return '';
 const keys = ['main', 'kaomoji', 'emoji'];
 const pools = { main: pool.defText, kaomoji: pool.defKaomoji, emoji: pool.defEmoji };
@@ -49727,12 +50347,19 @@ if (d) { parts.push(d); continue; }
 }
 parts.push(words[Math.floor(Math.random() * words.length)]);
 }
+try {
+if (window.dictUse && window.dictUse('mail') && window.dictQuoteOne
+&& Math.random() * 100 < (window.dictOverall ? window.dictOverall('mail') : 30)) {
+const dq = window.dictQuoteOne();
+if (dq) parts.push(dq);
+}
+} catch (eDQ) {}
 let t = parts.join(' ');
 const kp = pool.kaomoji.length ? pool.kaomoji : pool.defKaomoji;
 const ep = pool.emoji.length ? pool.emoji : pool.defEmoji;
 if (cfg.kaomojiEn && kp.length && Math.random() * 100 < 30) t += ' ' + kp[Math.floor(Math.random() * kp.length)];
 if (cfg.emojiEn && ep.length && Math.random() * 100 < 15) t += ' ' + ep[Math.floor(Math.random() * ep.length)];
-const st = pool.sticker.concat(pool.image).filter(s => typeof s === 'string' && s.indexOf('data:') === 0);
+const st = pool.sticker.concat(pool.image).filter(s => typeof s === 'string' && (s.indexOf('data:') === 0 || (window.mochiMediaIsToken && window.mochiMediaIsToken(s))));
 if (cfg.stickerEn && st.length && Math.random() * 100 < 20) {
 const orig = st[Math.floor(Math.random() * st.length)];
 const small = (window._shrunkStickerCache && window._shrunkStickerCache[orig]) || orig;
@@ -49763,6 +50390,7 @@ if (cid === (window.__activeCid || 'default') && !mailDbReady) return;
 const cs = csFor(cid);
 const now = Date.now();
 const cfg = mailCfgFor(cid);
+if (!cfg.writeEn) return;
 let last = letterLast(cid), next = letterNext(cid);
 if (last > now || last < 0 || isNaN(last)) { last = 0; next = 0; }
 if ((now - last) / 60000 < next) return;
@@ -49787,7 +50415,7 @@ if (cid === (window.__activeCid || 'default')) {
 updateBadge();
 render();
 if (window.showDeskPopup && !mailPageVisible()) {
-window.showDeskPopup({ name: '信箱', text: '给你寄来了一封信：' + content, onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
+window.showDeskPopup({ name: '信箱', text: '给你寄来了一封信：' + String(content || '').replace(/@@m:[0-9a-f]{32}/g, '[图片]').replace(/data:[a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[附件]'), onClick: openMailPage, isHidden: document.visibilityState === 'hidden' });
 }
 }
 } catch (e) {}
@@ -49797,7 +50425,6 @@ const list = (window.getContacts && window.getContacts()) || [{ id: 'default' }]
 list.forEach(c => maybeIncomingLetterFor(c.id));
 }
 function fishWeekReportFor(cid) {
-return; // 已停用：不再生成/发送每周摸鱼小结（含聊天与桌面提醒）
 if (cid === (window.__activeCid || 'default') && !mailDbReady) return;
 const cs = csFor(cid);
 const now = window.__fishWeekNowOverride ? window.__fishWeekNowOverride() : new Date(); // 测试钩子：生产为 null
@@ -50241,7 +50868,8 @@ updateBadge();
 const uid = 'xy-home-v2';
 const store = window.xyStore(uid);
 (function feedRootRescue() {
-const KEYS = ['feed-notices', 'feed-app-unread', 'feed-cover-bg', 'feed-ta-cover', 'feed-ta-name', 'feed-ta-avatar', 'feed-user-name', 'feed-user-avatar'];
+const KEYS = ['feed-notices', 'feed-app-unread'];
+const DESK_KEYS = ['feed-cover-bg', 'feed-ta-cover', 'feed-ta-name', 'feed-ta-avatar', 'feed-user-name', 'feed-user-avatar'];
 function run() {
 try {
 const root = window.xyStore('xy-home-v2');
@@ -50256,6 +50884,19 @@ if (dv !== null && dv !== undefined && dv !== '') {
 try { root.set(k, dv); } catch (e) {}
 try { def.remove(k); } catch (e) {}
 }
+});
+DESK_KEYS.forEach(function (k) {
+let dv = null;
+try { dv = def.get(k); } catch (e) {}
+if (dv !== null && dv !== undefined && dv !== '') return; // per-cid 现行值：绝不动更不删（#232 根因）
+let rv = null;
+try { rv = root.get(k); } catch (e) {}
+if (rv === null || rv === undefined || rv === '') return;
+try {
+window.idbHasKey('xy-home-v2:default:' + k).then(function (has) {
+if (has === false) { try { def.set(k, rv); } catch (e) {} }
+}).catch(function () {});
+} catch (e) {}
 });
 (function deskSchedRescue() {
 const today = feedToday();
@@ -50308,7 +50949,7 @@ if (Array.isArray(c.imgs)) c.imgs = [];
 c.authorAv = '';
 c.taAv = '';
 if (typeof c.content === 'string') {
-c.content = c.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]');
+c.content = c.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]');
 if (c.content.length > 8192) c.content = c.content.slice(0, 8192) + '…';
 }
 if (Array.isArray(c.comments)) {
@@ -50316,7 +50957,7 @@ c.comments = c.comments.map(co => {
 if (!co || typeof co !== 'object') return co;
 const cc = Object.assign({}, co);
 if (typeof cc.content === 'string') {
-cc.content = cc.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]');
+cc.content = cc.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]');
 if (cc.content.length > 8192) cc.content = cc.content.slice(0, 8192) + '…';
 }
 if (Array.isArray(cc.replies)) {
@@ -50324,7 +50965,7 @@ cc.replies = cc.replies.map(r => {
 if (!r || typeof r !== 'object') return r;
 const rr = Object.assign({}, r);
 if (typeof rr.content === 'string') {
-rr.content = rr.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]');
+rr.content = rr.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]');
 if (rr.content.length > 8192) rr.content = rr.content.slice(0, 8192) + '…';
 }
 return rr;
@@ -50343,8 +50984,8 @@ function taAvFor(owner) {
 try {
 const o = owner || 'default';
 const s = window.storeFor(o);
-let v = s.get('feed-ta-avatar') || s.get('avatar-partner') || '';
-if (!v && o === 'default') v = store.get('feed-ta-avatar') || store.get('avatar-partner') || '';
+let v = s.get('feed-ta-avatar') || s.get('avatar-partner') || s.get('cs-avatar-partner') || '';
+if (!v && o === 'default') v = store.get('feed-ta-avatar') || store.get('avatar-partner') || store.get('cs-avatar-partner') || '';
 if (v && typeof v === 'string' && v.length > 500 * 1024) return '';
 return v || '';
 } catch (e) { return ''; }
@@ -50439,6 +51080,21 @@ return p;
 }
 let feedDbReady = false;
 let feedPending = null;
+let feedAuthSeen = false;
+let feedAuthWritable = null;   // null=未探测；true=确认可写（权威键确实不存在）；false=权威仍在
+let feedAuthRetried = 0;       // 守卫拒写后的权威重读次数上限 2（间隔 10s，防病理存储下无限循环）
+function feedGuardWrite(raw) {
+if (feedAuthSeen || store.get(KEY) !== null) {
+try { store.set(KEY, raw); } catch (e) {}
+return Promise.resolve(true);
+}
+if (!window.idbHasKey) { try { store.set(KEY, raw); } catch (e) {} return Promise.resolve(true); }
+if (feedAuthWritable === null) feedAuthWritable = window.idbHasKey(uid + ':' + KEY).then(ok => ok === false);
+return feedAuthWritable.then(writable => {
+if (writable) { try { store.set(KEY, raw); } catch (e) {} }
+return writable;
+});
+}
 function itemKey(o) { return (o && o.ts ? o.ts : 0) + '|' + (o.role || o.by || '') + '|' + (o.authorName || ''); }
 function deeperList(a, b) {
 const byKey = {};
@@ -50449,8 +51105,8 @@ const prev = byKey[k];
 if (!prev) { byKey[k] = Object.assign({}, o); return; }
 if (Array.isArray(o.replies) && o.replies.length) prev.replies = deeperList(prev.replies || [], o.replies);
 else if (!Array.isArray(prev.replies) && Array.isArray(o.replies)) prev.replies = o.replies;
-const prevImg = /data:image\//.test(String(prev.content || ''));
-const oImg = /data:image\//.test(String(o.content || ''));
+const prevImg = /data:image\//.test(String(prev.content || '')) || (window.mochiMediaIsToken && window.mochiMediaIsToken(String(prev.content || '').trim()));
+const oImg = /data:image\//.test(String(o.content || '')) || (window.mochiMediaIsToken && window.mochiMediaIsToken(String(o.content || '').trim()));
 if (!prevImg && oImg) prev.content = o.content;
 };
 (a || []).forEach(put);
@@ -50496,7 +51152,7 @@ const v = loadSnap();
 if (v.length) list = v.map(normPost);
 } catch (e) {}
 }
-if (!feedDbReady && feedPending && feedPending.length) {
+if (feedPending && feedPending.length) {
 list = mergePosts(list, feedPending);
 }
 return list;
@@ -50535,12 +51191,12 @@ const raw = JSON.stringify(arr);
 if (!feedDbReady) {
 try { feedPending = arr.slice(); } catch (e) {}
 if (arr.length) {
-try { store.set(KEY, raw); } catch (e) {}
+feedGuardWrite(raw);
 persistSnap(arr);
 }
 return;
 }
-store.set(KEY, raw);
+feedGuardWrite(raw);
 if (!arr.length) {
 try { localStorage.removeItem('xy-home-v2:default:' + SNAP_KEY); } catch (e) {}
 return;
@@ -50561,13 +51217,14 @@ const pk = cid ? (window.getPokeCardsFor ? window.getPokeCardsFor(cid) : []) : (
 return pk.length ? new Set(pk) : null;
 })();
 const text = [], kaomoji = [], emoji = [];
-const onlyData = (arr) => (arr || []).filter(s => typeof s === 'string' && s.indexOf('data:') === 0);
+const onlyData = (arr) => (arr || []).filter(s => typeof s === 'string' && (s.indexOf('data:') === 0 || (window.mochiMediaIsToken && window.mochiMediaIsToken(s))));
 const mediaSticker = onlyData(cid ? (window.getMediaCardsFor ? window.getMediaCardsFor(cid, 'sticker') : []) : ((window.getMediaCards && window.getMediaCards('sticker')) || []));
 const mediaImage = onlyData(cid ? (window.getMediaCardsFor ? window.getMediaCardsFor(cid, 'image') : []) : ((window.getMediaCards && window.getMediaCards('image')) || []));
 cards.forEach(c => {
 if (pokeSet && pokeSet.has(c)) return;
 if (typeof c === 'string' && c.indexOf('data:') === 0) return; // dataURL 已按媒体分类
 if (typeof c === 'string' && c.indexOf('|||') >= 0) return;
+if (c && window.mochiMediaIsToken && window.mochiMediaIsToken(c)) return;
 if (/[\uD800-\uDBFF]/.test(c) || /^[😀-🙏🌀-🫿]/u.test(c)) emoji.push(c);
 else if (/[\(（｡◕(◕)(づ｡(¬)]/.test(c) && /[\)）】)]/.test(c)) kaomoji.push(c);
 else text.push(c);
@@ -50577,7 +51234,9 @@ const st = (cid && window.storeFor) ? window.storeFor(cid) : null;
 const a = (window.defaultCardApiFor && st) ? window.defaultCardApiFor(st) : null;
 const useFeed = a ? a.use('feed') : (window.defaultCardUse ? window.defaultCardUse('feed') : true);
 const en = a ? a.enabled() : ((window.defaultCardCfg && window.defaultCardCfg().enabled) !== false);
-if (en && useFeed && window.getDefaultCardGroups) {
+let feedOverall = 100;
+try { const fv = st ? st.get('dc-overall-feed') : null; if (fv !== null) feedOverall = Math.max(0, Math.min(100, Number(fv))); } catch (e) {}
+if (en && useFeed && Math.random() * 100 < feedOverall && window.getDefaultCardGroups) {
 const gd = window.getDefaultCardGroups;
 const catOn = a ? a.cat : (window.defaultCardCat || (() => true));
 const isOff = a ? a.isOff : (window.isDefaultCardOff || null);
@@ -50586,6 +51245,13 @@ if (catOn('kaomoji') && !kaomoji.length) (gd('kaomoji') || []).forEach(g => (g[1
 if (catOn('emoji') && !emoji.length) (gd('emoji') || []).forEach(g => (g[1] || []).forEach(c => { if (isOff && isOff('emoji', c)) return; if (typeof c === 'string' && c) emoji.push(c); }));
 }
 } catch (e) {}
+try {
+if (window.dictUse && window.dictUse('feed') && window.dictQuoteOne
+&& Math.random() * 100 < (window.dictOverall ? window.dictOverall('feed') : 30)) {
+const dq = window.dictQuoteOne();
+if (dq) text.push(dq);
+}
+} catch (eDictFeed) {}
 return { text: text, kaomoji: kaomoji, emoji: emoji, sticker: mediaSticker, image: mediaImage };
 }
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
@@ -50596,7 +51262,7 @@ const fitSeg = (seg) => {
 seg = String(seg).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 return (cid && window.taFit) ? window.taFit(seg, cid) : seg;
 };
-const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g;
+const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|@@m:[0-9a-f]{32}|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g;
 return str.replace(RE, function (all, pre, src) {
 if (src.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') {
 return fitSeg(all); // 普通网址（无附图前缀）按文本保留
@@ -50677,12 +51343,24 @@ return { content: textParts.join(' '), imgs: imgs };
 function contentHtmlFor(p) {
 let content = String(p.content || '');
 const imgs = (p.imgs && p.imgs.length) ? p.imgs.slice() : (p.img ? [p.img] : []);
-content = content.replace(/((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g, (m, pre, u) => { if (u.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') return m; imgs.push(u); return ' '; });
+content = content.replace(/((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|@@m:[0-9a-f]{32}|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g, (m, pre, u) => { if (u.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') return m; imgs.push(u); return ' '; });
 let html = inlineBody(content, (p.role || p.by) === 'me' ? '' : p.owner);
 if (imgs.length) {
-html += '<div class="feed-imgs">' + imgs.map(u => '<img src="' + attrEsc(u) + '" alt="图片" loading="lazy">').join('') + '</div>';
+html += '<div class="feed-imgs">' + imgs.map(u => '<img src="' + attrEsc(u) + '" alt="图片" loading="lazy">').join('') + feedStickersHtml(p) + '</div>';
 }
 return html;
+}
+function feedStickersHtml(p) {
+const list = Array.isArray(p.stickers) ? p.stickers : [];
+if (!list.length) return '';
+return list.map((s, i) => {
+const who = s.authorName || ((s.role || s.owner) === 'me' ? feedUserName() : 'TA');
+const inner = s.src
+? '<img src="' + attrEsc(s.src) + '" alt="贴纸">'
+: '<span class="feed-sticker-emoji">' + esc(s.emoji || '❤️') + '</span>';
+const del = (s.role || s.owner) === 'me' ? ' data-sticker-del="' + esc(p.id) + '|' + i + '"' : '';
+return '<span class="feed-sticker"' + del + ' style="left:' + Number(s.x || 0) + '%;top:' + Number(s.y || 0) + '%" title="' + esc(who) + ' 贴的贴纸">' + inner + '</span>';
+}).join('');
 }
 function commentsHtmlFor(p, name) {
 if (!p.comments || !p.comments.length) return '';
@@ -50800,6 +51478,7 @@ return '<div class="feed-post" id="feed-post-' + p.id + '"><div class="feed-head
 '<div class="feed-actions">' +
 '<button class="feed-act' + (liked ? ' liked' : '') + '" data-like="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 21s-7.5-4.7-9.3-9A5.3 5.3 0 0112 6.4a5.3 5.3 0 019.3 5.6c-1.8 4.3-9.3 9-9.3 9z"/></svg>赞</button>' +
 '<button class="feed-act" data-comment="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"/><circle cx="8.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/></svg>评论</button>' +
+(((p.imgs && p.imgs.length) || p.img) ? '<button class="feed-act" data-sticker="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0"/><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>贴纸</button>' : '') +
 '<button class="feed-act feed-fav' + (faved ? ' faved' : '') + '" data-fav="' + p.id + '"><svg viewBox="0 0 24 24" fill="' + (faved ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 2l2.4 5 5.6.8-4 4 .9 5.6-4.9-2.6-4.9 2.6.9-5.6-4-4 5.6-.8z"/></svg>收藏</button>' +
 '</div>' + likes + commentsHtmlFor(p, name) + '</div>';
 }
@@ -50843,10 +51522,12 @@ if (!listEl) return;
 const posts = feedSortedAll();
 feedShownMain = Math.min(posts.length, FEED_RENDER_MAX);
 const name = partnerName();
-listEl.innerHTML = posts.length
+const memPost = feedMemoryPost();
+const memHtml = (memPost && !feedMemDismissed()) ? feedMemBannerHtml(memPost) : '';
+listEl.innerHTML = memHtml + (posts.length
 ? posts.slice(0, feedShownMain).map(p => postCardHtml(p, name)).join('') +
 (posts.length > feedShownMain ? feedMoreBtnHtml(posts.length - feedShownMain) : '')
-: '<div class="ta-empty">还没有动态，TA 会不定期分享生活</div>';
+: '<div class="ta-empty">还没有动态，TA 会不定期分享生活</div>');
 const clearBtn = document.getElementById('feed-head-clear');
 if (clearBtn) clearBtn.hidden = !posts.length;
 bindEvents(listEl);
@@ -50869,6 +51550,196 @@ if (fa && !fa.hidden) openFeedAll(feedAllCid); else render();
 function renderVisible() {
 const fa = document.getElementById('page-feed-all');
 if (fa && !fa.hidden) { try { renderFeedAll(); } catch (e) {} } else { render(); }
+}
+function feedAllStickers() {
+const savedTab = comStickerTab;
+const out = [];
+try {
+comStickerTab = 'ta'; comStickerGroups().forEach(g => (g[1] || []).forEach(s => out.push(s)));
+comStickerTab = 'mine'; comStickerGroups().forEach(g => (g[1] || []).forEach(s => out.push(s)));
+} catch (e) {}
+comStickerTab = savedTab;
+return out;
+}
+let feedStickerCard = null;
+function openFeedStickerPanel(pid) {
+if (!feedStickerCard) {
+feedStickerCard = document.createElement('div');
+feedStickerCard.id = 'feed-sticker-card';
+feedStickerCard.className = 'poke-card emoji-card';
+feedStickerCard.style.position = 'fixed';
+feedStickerCard.style.left = '8px';
+feedStickerCard.style.right = '8px';
+feedStickerCard.style.bottom = '10px';
+feedStickerCard.style.maxHeight = '46vh';
+feedStickerCard.style.zIndex = '3000';
+feedStickerCard.hidden = true;
+feedStickerCard.innerHTML =
+'<div class="emoji-head">' +
+'<div class="emoji-tabs"><span class="emoji-tab sel">选个贴纸贴到照片上</span></div>' +
+'<button class="poke-card-close" data-fsc="1">✕</button>' +
+'</div>' +
+'<div class="poke-card-scroll" style="min-height:100px;max-height:36vh" id="feed-sticker-list"></div>';
+document.body.appendChild(feedStickerCard);
+feedStickerCard.querySelector('[data-fsc]').addEventListener('click', () => { feedStickerCard.hidden = true; });
+feedStickerCard.addEventListener('click', (e) => { if (e.target === feedStickerCard) feedStickerCard.hidden = true; });
+}
+feedStickerCard.dataset.pid = pid;
+feedStickerCard.hidden = false;
+const list = document.getElementById('feed-sticker-list');
+const srcs = feedAllStickers();
+list.innerHTML = '';
+if (!srcs.length) {
+list.innerHTML = '<div class="ta-empty">暂无表情包，请到自定义字卡 → 表情包 上传</div>';
+return;
+}
+const grid = document.createElement('div');
+grid.className = 'emoji-grid';
+srcs.forEach(src => {
+const d = document.createElement('div');
+d.className = 'emoji-item';
+const img = document.createElement('img');
+img.src = src;
+img.alt = '贴纸';
+d.appendChild(img);
+d.addEventListener('click', (e) => {
+e.stopPropagation();
+feedPickStickerPos(feedStickerCard.dataset.pid, src);
+});
+grid.appendChild(d);
+});
+list.appendChild(grid);
+}
+function feedRandStickerPos() {
+return { x: Math.round(6 + Math.random() * 74), y: Math.round(6 + Math.random() * 70) };
+}
+let feedPickCtx = null;
+function feedCancelPickSticker() {
+if (!feedPickCtx) return;
+const ctx = feedPickCtx;
+feedPickCtx = null;
+ctx.box.removeEventListener('click', ctx.onPick, true);
+if (ctx.box.isConnected) {
+ctx.box.classList.remove('feed-sticker-picking');
+const hint = ctx.box.querySelector('.feed-pick-hint');
+if (hint) hint.remove();
+}
+}
+function feedPickStickerPos(pid, src) {
+feedCancelPickSticker();
+const post = document.getElementById('feed-post-' + pid);
+const box = post ? post.querySelector('.feed-imgs') : null;
+if (!box) { addFeedSticker(pid, { src }); return; }
+feedStickerCard.hidden = true;
+box.classList.add('feed-sticker-picking');
+const hint = document.createElement('div');
+hint.className = 'feed-pick-hint';
+hint.innerHTML = '<span>📍 点击照片选贴纸位置</span><button type="button">取消</button>';
+hint.querySelector('button').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); feedCancelPickSticker(); });
+box.appendChild(hint);
+const onPick = (e) => {
+e.preventDefault(); e.stopPropagation();
+if (e.target.closest('.feed-pick-hint')) { feedCancelPickSticker(); return; }
+if (!box.isConnected) { feedCancelPickSticker(); return; }
+const r = box.getBoundingClientRect();
+const x = Math.round(Math.min(90, Math.max(4, ((e.clientX - r.left) / Math.max(1, r.width)) * 100)));
+const y = Math.round(Math.min(90, Math.max(6, ((e.clientY - r.top) / Math.max(1, r.height)) * 100)));
+feedCancelPickSticker();
+addFeedSticker(pid, { src, x, y });
+};
+box.addEventListener('click', onPick, true);
+feedPickCtx = { box, onPick };
+}
+function addFeedSticker(pid, st) {
+const list = load();
+const p = list.find(x => x.id === pid);
+if (!p) { toast('这条动态不存在了'); return; }
+p.stickers = Array.isArray(p.stickers) ? p.stickers : [];
+if (p.stickers.length >= 5) { toast('这张照片上贴纸够多啦（最多 5 张）'); return; }
+const pos = (st && Number.isFinite(Number(st.x)) && Number.isFinite(Number(st.y)))
+? { x: Math.min(92, Math.max(0, Math.round(Number(st.x)))), y: Math.min(92, Math.max(0, Math.round(Number(st.y)))) }
+: feedRandStickerPos();
+p.stickers.push({ src: st.src || '', emoji: st.emoji || '', x: pos.x, y: pos.y, ts: Date.now(), role: 'me', owner: 'me', authorName: feedUserName() });
+save(list);
+refreshPostCard(pid);
+const cid = p.owner || 'default';
+const cfg = feedCfgFor(cid);
+if (Math.random() * 100 < cfg.commentProb) {
+setTimeout(() => {
+const l2 = load();
+const p2 = l2.find(x => x.id === pid);
+if (!p2) return;
+p2.stickers = Array.isArray(p2.stickers) ? p2.stickers : [];
+if (p2.stickers.length >= 5) return;
+const taSt = feedTaPickSticker();
+const pos2 = feedRandStickerPos();
+const nm = p2.taName || taFeedNameFor(cid);
+p2.stickers.push({ src: taSt.src || '', emoji: taSt.emoji || '', x: pos2.x, y: pos2.y, ts: Date.now(), role: 'ta', owner: cid, authorName: nm });
+save(l2);
+refreshPostCard(pid);
+addNotice('comment', pid, nm + ' 在配图上贴了一张贴纸', cid);
+}, (cfg.commentSpeedMin + Math.random() * Math.max(1, cfg.commentSpeedMax - cfg.commentSpeedMin)) * 1000);
+}
+}
+function feedTaPickSticker() {
+const saved = comStickerTab;
+comStickerTab = 'ta';
+const g = comStickerGroups();
+comStickerTab = saved;
+const srcs = [];
+g.forEach(x => (x[1] || []).forEach(s => srcs.push(s)));
+if (srcs.length && Math.random() < 0.7) return { src: srcs[Math.floor(Math.random() * srcs.length)] };
+const EM = ['❤️', '😘', '🥰', '👍', '😂', '🌈', '✨', '🎀', '😻', '🤗'];
+return { emoji: EM[Math.floor(Math.random() * EM.length)] };
+}
+function removeFeedSticker(pid, i) {
+if (!window.openModal) return;
+window.openModal('撤回这张贴纸？', '', () => {
+const list = load();
+const p = list.find(x => x.id === pid);
+if (!p || !p.stickers || !p.stickers[i]) return;
+p.stickers.splice(i, 1);
+save(list);
+refreshPostCard(pid);
+}, { noInput: true });
+}
+function feedMemoryPost() {
+const now = new Date();
+const mmdd = (now.getMonth() + 1) + '-' + now.getDate();
+let best = null;
+feedSortedAll().forEach(p => {
+const d = new Date(p.ts);
+if (d.getFullYear() >= now.getFullYear()) return;
+if ((d.getMonth() + 1) + '-' + d.getDate() !== mmdd) return;
+if (!best || p.ts > best.ts) best = p;
+});
+return best;
+}
+function feedMemDismissed() {
+try { return store.get('feed-mem-dismiss') === new Date().toDateString(); } catch (e) { return false; }
+}
+function feedMemBannerHtml(p) {
+const y = new Date(p.ts).getFullYear();
+const txt = String(p.content || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+const th = (p.imgs && p.imgs[0]) || p.img || '';
+return '<div class="feed-mem-card glass" id="feed-mem-card" data-pid="' + esc(p.id) + '">' +
+'<div class="feed-mem-label">📅 回忆闪回 · ' + y + ' 年的今天</div>' +
+'<div class="feed-mem-body">' + (th ? '<img src="' + attrEsc(th) + '" alt="">' : '') + '<span>' + esc(txt || '（图片动态）') + '</span></div>' +
+'<button class="feed-mem-dismiss" type="button">✕</button></div>';
+}
+function revealFeedPost(pid) {
+const posts = feedSortedAll();
+const idx = posts.findIndex(p => p.id === pid);
+if (idx < 0) return;
+if (idx >= feedShownMain) {
+feedShownMain = Math.min(posts.length, idx + 20);
+render();
+}
+const el = document.getElementById('feed-post-' + pid);
+if (!el) return;
+try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { try { el.scrollIntoView(); } catch (e2) {} }
+el.classList.add('feed-hl');
+setTimeout(() => el.classList.remove('feed-hl'), 2400);
 }
 function refreshPostCard(pid) {
 const el = document.getElementById('feed-post-' + pid);
@@ -50922,6 +51793,28 @@ addNotice('like', p2.id, (p2.taName || taFeedNameFor(p2.owner || 'default')) + '
 listEl.querySelectorAll('.feed-act[data-comment]').forEach(b => b.addEventListener('click', () => {
 showCommentBar(b.dataset.comment);
 }));
+listEl.querySelectorAll('.feed-act[data-sticker]').forEach(b => b.addEventListener('click', (e) => {
+e.stopPropagation();
+openFeedStickerPanel(b.dataset.sticker);
+}));
+listEl.querySelectorAll('.feed-sticker[data-sticker-del]').forEach(el2 => el2.addEventListener('click', (e) => {
+e.stopPropagation();
+const parts = String(el2.dataset.stickerDel).split('|');
+removeFeedSticker(parts[0], parseInt(parts[1], 10));
+}));
+const memCard = listEl.querySelector('.feed-mem-card');
+if (memCard) {
+memCard.addEventListener('click', (e) => {
+if (e.target && e.target.closest && e.target.closest('.feed-mem-dismiss')) return;
+revealFeedPost(memCard.dataset.pid);
+});
+const dis = memCard.querySelector('.feed-mem-dismiss');
+if (dis) dis.addEventListener('click', (e) => {
+e.stopPropagation();
+try { store.set('feed-mem-dismiss', new Date().toDateString()); } catch (err) {}
+memCard.remove();
+});
+}
 listEl.querySelectorAll('.feed-act[data-fav]').forEach(b => b.addEventListener('click', () => {
 const pid = b.dataset.fav;
 const list = load();
@@ -51055,9 +51948,15 @@ let comStickerTab = 'ta';   // 'ta' | 'mine'
 let comStickerCur = '';     // 当前分组
 function comStickerGroups() {
 const onlyData = (groups) => (groups || [])
-.map(([n, a]) => [n, (a || []).filter(s => typeof s === 'string' && s.indexOf('data:') === 0)])
+.map(([n, a]) => [n, (a || []).filter(s => typeof s === 'string' && (s.indexOf('data:') === 0 || (window.mochiMediaIsToken && window.mochiMediaIsToken(s))))])
 .filter(([, a]) => a.length);
 if (comStickerTab === 'ta') return onlyData((window.getMediaGroups && window.getMediaGroups('sticker')) || []);
+try {
+if (window.getMyEmojiGroups) {
+const g = window.getMyEmojiGroups();
+if (Array.isArray(g) && g.length) return onlyData(g);
+}
+} catch (e) {}
 try {
 const v = JSON.parse(window.xyStore('xy-home-v2').get('my-emoji-groups') || 'null');
 return Array.isArray(v) ? onlyData(v) : [];
@@ -51285,7 +52184,7 @@ else addNotice('comment', p2.id, taName2 + ' 回复了你的评论：' + noticeT
 if (comSend) comSend.addEventListener('click', submitComment);
 if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); submitComment(); } });
 function noticeTextClean(s) {
-return String(s || '').replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[表情包]');
+return String(s || '').replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[表情包]').replace(/@@m:[0-9a-f]{32}/g, '[表情包]');
 }
 function notices() { try { return JSON.parse(store.get('feed-notices') || '[]'); } catch (e) { return []; } }
 function saveNotices(list) { store.set('feed-notices', JSON.stringify(list)); }
@@ -51315,7 +52214,7 @@ try { store.set('feed-app-unread', String(feedAppUnread() + 1)); } catch (e) {}
 renderNoticeBadge();
 if (window.showDeskPopup && !feedPageVisible()) {
 const av = owner ? taAvFor(owner) : '';
-window.showDeskPopup({ name: '朋友圈', text: (window.taFit ? window.taFit(noticeTextClean(text), owner) : noticeTextClean(text)), av: av, onClick: openFeedPage, isHidden: document.visibilityState === 'hidden' });
+window.showDeskPopup({ name: '朋友圈', text: (window.taFit ? window.taFit(noticeTextClean(text), owner) : noticeTextClean(text)), av: av, avFixed: true, onClick: openFeedPage, isHidden: document.visibilityState === 'hidden' });
 } else if (feedPageVisible() && document.visibilityState !== 'hidden') {
 let nt = noticeTextClean(text);
 if (nt.length > 40) nt = nt.slice(0, 40) + '…';
@@ -51369,7 +52268,7 @@ if (!p || !p.comments || !p.comments[n.ci]) return '';
 const src = (n.ri != null && Array.isArray(p.comments[n.ci].replies) && p.comments[n.ci].replies[n.ri])
 ? p.comments[n.ci].replies[n.ri].content
 : p.comments[n.ci].content;
-const m = /data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/.exec(String(src || ''));
+const m = /(?:data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+|@@m:[0-9a-f]{32})/.exec(String(src || ''));
 return m ? m[0] : '';
 } catch (e) { return ''; }
 }
@@ -51544,7 +52443,7 @@ renderPreview();
 if (input) input.value = '';
 renderVisible();
 if (!document.getElementById('feed-post-' + id)) {
-try { store.set(KEY, JSON.stringify(list)); } catch (e) {}
+feedGuardWrite(JSON.stringify(list));
 renderVisible();
 }
 toast('已发布');
@@ -51625,7 +52524,7 @@ const s = window.storeFor(cid || 'default');
 const c = {};
 ['fd-like-prob', 'fd-like-speed-min', 'fd-like-speed-max', 'fd-comment-prob', 'fd-comment-speed-min', 'fd-comment-speed-max',
 'fd-reply-prob', 'fd-reply-speed-min', 'fd-reply-speed-max', 'fd-likeback-prob', 'fd-card-prob', 'fd-max-cards', 'fd-image-prob',
-'fd-post-prob', 'fd-post-daily-max', 'fd-post-cool', 'fd-min-interval', 'fd-max-interval',
+'fd-post-prob', 'fd-post-daily-max', 'fd-post-cool', 'fd-min-interval', 'fd-max-interval', 'fd-post-en',
 'fd-min-cards-post', 'fd-max-cards-post', 'fd-post-kaomoji', 'fd-post-emoji', 'fd-post-sticker', 'fd-post-image'].forEach(k => {
 try {
 const v = s.get('reply-' + k);
@@ -51640,6 +52539,7 @@ replyProb: num('fd-reply-prob', 60), replySpeedMin: num('fd-reply-speed-min', 1)
 likeback: num('fd-likeback-prob', 50),
 cardProb: num('fd-card-prob', 80), maxCards: num('fd-max-cards', 5),
 imageProb: num('fd-image-prob', 50),
+postEn: num('fd-post-en', 1),
 postProb: num('fd-post-prob', 40), dailyMax: num('fd-post-daily-max', 5),
 postCool: num('fd-post-cool', 30),
 minInterval: num('fd-min-interval', 1), maxInterval: num('fd-max-interval', 720),
@@ -51677,6 +52577,7 @@ try {
 const cs = window.storeFor(cid);
 const now = Date.now();
 const cfg = feedCfgFor(cid);
+if (!cfg.postEn) return;
 let last = parseInt(cs.get('feed-last'), 10); if (isNaN(last)) last = 0;
 let next = parseFloat(cs.get('feed-next')); if (isNaN(next)) next = 0;
 if (last > now || last < 0) { last = 0; next = 0; }
@@ -51757,6 +52658,7 @@ return '<div class="feed-post" id="feed-post-' + p.id + '"><div class="feed-head
 '<div class="feed-actions">' +
 '<button class="feed-act' + (liked ? ' liked' : '') + '" data-like="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 21s-7.5-4.7-9.3-9A5.3 5.3 0 0112 6.4a5.3 5.3 0 019.3 5.6c-1.8 4.3-9.3 9-9.3 9z"/></svg>赞</button>' +
 '<button class="feed-act" data-comment="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"/><circle cx="8.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/></svg>评论</button>' +
+(((p.imgs && p.imgs.length) || p.img) ? '<button class="feed-act" data-sticker="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0"/><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>贴纸</button>' : '') +
 '<button class="feed-act feed-fav' + (faved ? ' faved' : '') + '" data-fav="' + p.id + '"><svg viewBox="0 0 24 24" fill="' + (faved ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 2l2.4 5 5.6.8-4 4 .9 5.6-4.9-2.6-4.9 2.6.9-5.6-4-4 5.6-.8z"/></svg>收藏</button>' +
 '</div>' + likes +
 commentsHtmlFor(p, author) + '</div>';
@@ -52100,9 +53002,10 @@ render();
 function feedMergeFromIdb(v) {
 try {
 const pending = feedPending || [];
-feedPending = null;
 let base = [];
-if (v && typeof v === 'string' && v.length > 2) {
+const authOk = !!(v && typeof v === 'string' && v.length > 2);
+if (authOk) {
+feedAuthSeen = true;
 const idbArr = JSON.parse(v);
 if (Array.isArray(idbArr)) base = idbArr.map(normPost);
 }
@@ -52111,7 +53014,23 @@ const raw = store.get(KEY);
 if (raw !== null) { try { const a = JSON.parse(raw); if (Array.isArray(a)) cur = a.map(normPost); } catch (e) {} }
 if (!cur.length) cur = loadSnap().map(normPost);
 const merged = mergePosts(base, mergePosts(cur, pending));
-if (merged.length) store.set(KEY, JSON.stringify(merged));
+if (!merged.length) { if (authOk && feedPending === pending) feedPending = null; return; }
+feedGuardWrite(JSON.stringify(merged)).then(written => {
+if (written) {
+if (feedPending === pending) feedPending = null;
+return;
+}
+if (feedPending === null) feedPending = pending;
+else if (feedPending !== pending) feedPending = mergePosts(pending, feedPending);
+if (feedAuthRetried >= 2 || !window.idbGet) return;
+feedAuthRetried++;
+setTimeout(function () {
+window.idbGet(uid + ':' + KEY).then(v2 => {
+feedMergeFromIdb(v2);
+if (v2 && typeof v2 === 'string' && v2.length > 2) render();
+});
+}, 10000);
+});
 } catch (e) { /* 解析失败仍置就绪，避免下次启动重复合并 */ }
 }
 try {
@@ -52155,7 +53074,7 @@ renderCover();
 } catch (e) { feedDbReady = true; }
 setTimeout(function () {
 if (feedDbReady) return;
-try { const all = load(); if (all.length) store.set(KEY, JSON.stringify(all)); } catch (e) {}
+try { const all = load(); if (all.length) feedGuardWrite(JSON.stringify(all)); } catch (e) {}
 feedDbReady = true;
 render();
 }, 15000);
@@ -52176,6 +53095,15 @@ const p = cardPool(cid);
 return { text: p.text.indexOf(s) >= 0, kaomoji: p.kaomoji.indexOf(s) >= 0, emoji: p.emoji.indexOf(s) >= 0 };
 } catch (e) { return null; }
 };
+window.__cardSearchFns = window.__cardSearchFns || [];
+window.__cardSearchFns.push({ name: '朋友圈互动', fn: function (kw) {
+const out = [];
+try {
+TA_COMMENT_POOL.forEach(c => { if (String(c).toLowerCase().indexOf(kw) >= 0) out.push({ t: String(c), cat: 'TA评论' }); });
+TA_REPLY_POOL.forEach(c => { if (String(c).toLowerCase().indexOf(kw) >= 0) out.push({ t: String(c), cat: 'TA回应回复' }); });
+} catch (e) {}
+return out;
+} });
 })();
 } catch (__e) { try { console.error("[JS] feed.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
 (function () { try {

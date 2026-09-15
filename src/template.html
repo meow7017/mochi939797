@@ -451,6 +451,14 @@
         <div class="ci"><div class="n">TA的吐槽·我的添加</div><div class="m">你添加的吐槽字卡</div></div>
         <div class="t" id="cc-ta-roast-count-mine">0</div>
       </div>
+            <div class="chat-item glass" id="li-cc-full-export">
+        <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></div>
+        <div class="ci"><div class="n">自定义字卡·全量导出</div><div class="m">公用/专属字卡·功能卡·寻踪·情话·TA互动 一份 json 备份</div></div>
+      </div>
+      <div class="chat-item glass" id="li-cc-full-import">
+        <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 19h16"/></svg></div>
+        <div class="ci"><div class="n">自定义字卡·全量导入</div><div class="m">从全量导出 json 恢复 · 支持追加合并/整包替换</div></div>
+      </div>
       </div>
       <div class="cc-sect-body" id="cc-sect-preset" hidden>
       <div class="sm-set-hint" style="padding:2px 16px 10px">说明：本站「系统预设字卡」均为自搓字卡（AI 辅助设计），按分类/分组展示，可逐张开启或关闭。</div>
@@ -458,6 +466,11 @@
         <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.4l6.1-.9z"/></svg></div>
         <div class="ci"><div class="n">默认聊天字卡</div><div class="m">日常默认回复字卡（自搓）</div></div>
         <div class="t" id="dc-lib-count">0</div>
+      </div>
+            <div class="chat-item glass" id="li-dict-cards">
+        <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 013 3v13H7a3 3 0 01-3-3z"/><path d="M7 8.5h11M7 12.5h7"/></svg></div>
+        <div class="ci"><div class="n">聊天默认字卡·词典</div><div class="m">词典拼字 · 语录/词库/常用词</div></div>
+        <div class="t" id="dc-dict-count">0</div>
       </div>
       <div class="chat-item glass" id="li-fun-cards">
         <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.4l6.1-.9z"/></svg></div>
@@ -515,11 +528,17 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
       让TA现在问一次
     </button>
+    <button class="div-draw" id="ta-ask-survey-open" style="margin-top:10px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L20 6"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      设置批量提问问卷
+    </button>
     <div class="set-group glass">
       <div class="gs-row"><span>TA 偶尔向你提问</span><label class="toggle"><input type="checkbox" id="ta-ask-enable"><span class="tk"></span></label></div>
       <div class="gs-row"><span>使用系统预设问题</span><label class="toggle"><input type="checkbox" id="ta-ask-default" checked><span class="tk"></span></label></div>
+      <div class="gs-row"><span>文字题回应接聊天字卡/词典</span><label class="toggle"><input type="checkbox" id="ta-ask-chatcard"><span class="tk"></span></label></div>
       <div class="gs-row"><span>触发概率</span><input type="range" id="ta-ask-prob" min="1" max="100" step="1" class="tc-range"><span class="tc-prob-val" id="ta-ask-prob-val">5%</span></div>
       <div class="gs-row"><span>自动弹窗概率</span><input type="range" id="ta-ask-popup" min="0" max="100" step="1" class="tc-range"><span class="tc-prob-val" id="ta-ask-popup-val">70%</span></div>
+      <div class="gs-row"><span>问卷答题结束时间</span><input type="datetime-local" id="ta-ask-deadline" class="tc-input" style="flex:1;min-width:0;max-width:170px;padding:5px 8px;font-size:12px"><button id="ta-ask-deadline-clear" style="flex:none;margin-left:6px;padding:4px 10px;font-size:12px;border:1px solid var(--line,#e5e5e5);border-radius:8px;background:transparent;color:var(--muted,#999)">清除</button></div>
     </div>
     <div class="card-tabs" id="ta-ask-tabs" style="padding:6px 12px 8px">
       <button class="cc-tab sel" data-tab="sys">系统预设</button>
@@ -541,7 +560,7 @@
             <option value="interact">互动询问</option>
             <option value="world">两个世界</option>
           </select>
-          <textarea id="ta-ask-batch" class="tc-input" rows="6" placeholder="每行一个问题，如：&#10;你吃饭了吗？&#10;现在在做什么？&#10;今天过得怎么样？"></textarea>
+          <div class="dec-inp-wrap" style="flex:1 0 100%"><textarea id="ta-ask-batch" class="tc-input" rows="6" placeholder="每行一个问题，如：&#10;你吃饭了吗？&#10;现在在做什么？&#10;&#10;单选题格式：第一行【问题】，下面每行一个选项，如：&#10;【今晚想吃什么？】&#10;火锅&#10;烧烤&#10;寿司"></textarea><button type="button" class="dec-inp-clear" data-clear="ta-ask-batch" aria-label="清空" title="清空">✕</button></div>
           <button class="ta-add-btn" style="width:100%" id="ta-ask-batch-add">批量导入到所选分类</button>
         </div>
       </div>
@@ -549,7 +568,32 @@
     </div>
   </div>
 </div>
-
+<!-- 批量提问问卷（独立页面：用户批量出题 · 联系人作答交卷） -->
+<div class="page" id="page-ta-ask-survey" hidden>
+  <div class="chat-head">
+    <span class="ch-back" id="ta-survey-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </span>
+    <span class="ch-name">批量提问问卷</span>
+  </div>
+  <div class="gs-scroll">
+    <div class="set-group glass" style="padding:14px">
+      <div class="cal-card-title" style="padding:0 0 8px">问卷题目（批量设置）</div>
+      <div class="dec-inp-wrap" style="flex:1 0 100%"><textarea id="ta-survey-text" class="tc-input" rows="12" placeholder="单选题：第一行【问题】，下面每行一个选项，如：&#10;【今晚想吃什么？】&#10;火锅&#10;烧烤&#10;寿司&#10;&#10;文字题：第一行【问题】，下一行只写一个「一」，如：&#10;【今天过得怎么样？】&#10;一"></textarea><button type="button" class="dec-inp-clear" data-clear="ta-survey-text" aria-label="清空" title="清空">✕</button></div>
+      <div style="font-size:12px;color:var(--muted,#999);padding-top:8px;line-height:1.8">· 单选题：【问题】后每行一个选项（至少 2 个）<br>· 文字题：【问题】后一行只写「一」，TA 会用字卡作答（和正常聊天一样用自定义字卡 + 系统预设字卡；未成年人防护锁定系统预设字卡时，只用自定义字卡）<br>· 发出后 TA 开始作答：到交卷时间自动交卷，之前每 30 秒按「提前交卷概率」可能提前交卷</div>
+    </div>
+    <div class="set-group glass">
+      <div class="gs-row"><span>交卷时间（到点TA自动交卷）</span><input type="datetime-local" id="ta-survey-deadline" class="tc-input" style="flex:1;min-width:0;max-width:170px;padding:5px 8px;font-size:12px"><button id="ta-survey-deadline-clear" style="flex:none;margin-left:6px;padding:4px 10px;font-size:12px;border:1px solid var(--line,#e5e5e5);border-radius:8px;background:transparent;color:var(--muted,#999)">清除</button></div>
+      <div class="gs-row"><span>每30秒提前交卷概率</span><input type="range" id="ta-survey-prob" min="0" max="100" step="1" class="tc-range"><span class="tc-prob-val" id="ta-survey-prob-val">10%</span></div>
+    </div>
+    <div class="set-group glass" style="padding:12px 14px">
+      <div id="ta-survey-status" style="font-size:13px;line-height:1.8">尚未发出问卷</div>
+    </div>
+    <button class="ta-add-btn" style="width:100%" id="ta-survey-send">发出问卷给TA</button>
+    <button class="ta-add-btn" style="width:100%;margin-top:10px" id="ta-survey-reset">撤回问卷（重置为草稿）</button>
+    <div style="height:16px"></div>
+  </div>
+</div>
 <!-- TA的小问题（选择题管理页，独立页面） -->
 <div class="page" id="page-ta-choose" hidden>
   <div class="chat-head">
@@ -1861,13 +1905,18 @@
       <div class="gs-scroll">
         <div class="gs-title">通话概率</div>
         <div class="set-group glass">
-          <div class="gs-row"><span>来电概率</span><div class="stepper" data-k="call-incoming" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-incoming-val" readonly><button class="stp-max">+</button></div></div>
+          <div class="gs-row"><span>来电概率</span><div class="stepper" data-k="call-incoming" data-min="0" data-max="100" data-step="0.01"><button class="stp-min">−</button><input class="stp-val" id="call-incoming-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>接听概率</span><div class="stepper" data-k="call-pickup" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-pickup-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>忙线概率</span><div class="stepper" data-k="call-busy" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-busy-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>拒接概率</span><div class="stepper" data-k="call-reject" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="call-reject-val" readonly><button class="stp-max">+</button></div></div>
           <div class="gs-row"><span>通话中挂断概率</span><div class="stepper" data-k="call-hangup" data-min="0" data-max="100" data-step="0.01"><button class="stp-min">−</button><input class="stp-val" id="call-hangup-val" readonly><button class="stp-max">+</button></div></div>
         </div>
-        <div class="sm-set-hint" style="padding:0 16px 8px">来电概率：TA 主动来电的命中概率。TA 回复或主动发消息后、以及后台每 1-2 分钟定时检查时各掷一次，两次来电至少间隔 5 分钟（冷却）；设为 0 则从不主动来电。接听/忙线/拒接概率：我方呼出时按三者比例互斥分配对方结果（忙线先判，其次拒接，最后接听）。挂断概率：通话接通满 3 分钟后每 60 秒检查一次，命中则对方主动挂断。</div>
+        <div class="sm-set-hint" style="padding:0 16px 8px">【来电概率是怎么触发的】有 3 类「机会」，每来一次机会就单独掷一次骰子，命中就打来电话：① TA 每回复你一条消息，掷一次；② TA 每次主动给你发消息，掷一次；③ 应用开着时，后台每 1~2 分钟也会掷一次兜底。两次来电之间至少间隔 5 分钟，设 0 则从不主动来电。<br>【为什么设得不高却感觉来得挺勤】概率是「每次机会」单独算的，不是「每天总共」的概率——你聊天越勤，机会就越多，累积起来自然来电频繁。例如设 15%：和 TA 聊 20 句就有约 20 次掷骰机会，来电概率本身没坏，是机会次数多。想让来电变少，直接把数值调小即可，效果大约成比例：调小 10 倍，来电也约少 10 倍。<br>【嫌多又不想设 0】点数值框直接输入小数（如 0.05），不用狂按 +/−。来电概率支持 0.01 粒度，最低可设 0.01（0.05、0.1 等 0.0几 的数值都可以）——设 0.01 时平均每 100 次机会才来电 1 次，基本只是偶尔响一次。<br>【接听 / 忙线 / 拒接概率】你打给 TA 时用：按「忙线 → 拒接 → 接听」顺序判定，先命中哪个就是哪种结果；三项都没命中就是「未接通」。默认 15 / 15 / 70 恰好占满 100，不会有未接通；想偶尔出现未接通，把三项合计调到 100 以下。<br>【通话中挂断概率】接通满 3 分钟保护期后，每 60 秒掷一次，命中对方就主动挂断，通话越久累计越容易被挂。支持 0.01 粒度，最低可设 0.01；设 0（或开下方「禁止联系人挂断电话」）＝对方永不主动挂断。<br>【改数值】点数值框直接输入（手机会弹数字键盘），或按 +/− 微调；改完立即保存生效。以上概率均按联系人各自保存，互不影响。</div>
+          <div class="gs-title">对方挂断</div>
+        <div class="set-group glass">
+          <div class="gs-row"><span>禁止联系人挂断电话</span><label class="toggle"><input type="checkbox" id="call-no-hangup"><span class="tk"></span></label></div>
+        </div>
+        <div class="sm-set-hint" style="padding:0 16px 8px">开启后无论挂断概率是多少，通话中对方都不会主动挂断（默认关闭，需手动开启）。注意通话概率设置按联系人各自保存：某个联系人的桌面从没保存过挂断概率时，会按默认 2% 计算——个别联系人「挂断几率明明设了 0 还是被挂断」就是这种情况，开此总开关可一并兜住。</div>
         <div class="gs-title">通话恢复</div>
         <div class="set-group glass">
           <div class="gs-row"><span>刷新后恢复通话</span><label class="toggle"><input type="checkbox" id="call-resume"><span class="tk"></span></label></div>
@@ -1950,12 +1999,26 @@
         <div class="gs-row"><span>信箱使用</span><label class="toggle"><input type="checkbox" id="dc-use-mail" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>朋友圈使用</span><label class="toggle"><input type="checkbox" id="dc-use-feed" checked><span class="tk"></span></label></div>
       </div>
+      <div style="margin:14px 14px 4px;font-size:12px;color:#999;font-weight:600">使用概率（默认字卡在各场景出现的概率，0 即该场景不用默认字卡）</div>
+      <div class="set-group glass" style="margin:0 12px">
+        <div class="gs-row"><span>聊天使用概率</span><div class="stepper" id="dc-overall-chat" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-overall-chat-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>写信使用概率</span><div class="stepper" id="dc-overall-mail" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-overall-mail-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>朋友圈使用概率</span><div class="stepper" id="dc-overall-feed" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-overall-feed-val" readonly><button class="stp-max">+</button></div></div>
+      </div>
+      <div style="margin:8px 14px 2px;font-size:11px;color:#999;line-height:1.6">提示：使用概率与你自己设置的字卡是相对的，两者加起来为 100%——系统预设字卡设为 X% 时，自定义字卡即占 (100-X)% 的回复机会。</div>
       <div style="margin:14px 14px 4px;font-size:12px;color:#999;font-weight:600">分类使用（可单独开启/关闭）</div>
       <div class="set-group glass" style="margin:0 12px">
         <div class="gs-row"><span>主字卡</span><label class="toggle"><input type="checkbox" id="dc-cat-main" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>颜文字</span><label class="toggle"><input type="checkbox" id="dc-cat-kaomoji" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>emoji</span><label class="toggle"><input type="checkbox" id="dc-cat-emoji" checked><span class="tk"></span></label></div>
         <div class="gs-row"><span>拍一拍</span><label class="toggle"><input type="checkbox" id="dc-cat-touch" checked><span class="tk"></span></label></div>
+      </div>
+      <div style="margin:14px 14px 4px;font-size:12px;color:#999;font-weight:600">分类占比（默认字卡内部按此比例分配，四类合计 100%）</div>
+      <div class="set-group glass" style="margin:0 12px">
+        <div class="gs-row"><span>主字卡占比</span><div class="stepper" id="dc-prob-main" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-main-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>颜文字占比</span><div class="stepper" id="dc-prob-kaomoji" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-kaomoji-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>emoji 占比</span><div class="stepper" id="dc-prob-emoji" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-emoji-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>拍一拍占比</span><div class="stepper" id="dc-prob-touch" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dc-prob-touch-val" readonly><button class="stp-max">+</button></div></div>
       </div>
       <div class="card-tabs" id="dc-tabs">
         <button class="cc-tab sel" data-type="main">主字卡</button>
@@ -1973,6 +2036,42 @@
       </div>
     </div>
 
+            <!-- 词典（独立分类，供词典拼字抽句/切词；内容=语录+词库+扩展常用词，可逐张开关、可新增自建） -->
+    <div class="page" id="page-dict-cards" hidden>
+      <div class="chat-head">
+        <span class="ch-back" id="dict-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </span>
+        <span class="ch-name">聊天默认字卡·词典</span>
+      </div>
+      <div class="sm-set-hint" style="padding:8px 16px 0">说明：系统词典供「词典拼字」抽句与切词，按分组展示，可逐张开启或关闭；语录进拼字抽句池，词进切词词典。</div>
+      <div class="dict-lock-hint" id="dict-lock-hint" hidden></div>
+      <div class="set-group glass" style="margin:10px 12px 0">
+        <div class="gs-row"><span>聊天使用</span><label class="toggle"><input type="checkbox" id="dict-use-chat" checked><span class="tk"></span></label></div>
+        <div class="gs-row"><span>写信使用</span><label class="toggle"><input type="checkbox" id="dict-use-mail" checked><span class="tk"></span></label></div>
+        <div class="gs-row"><span>朋友圈使用</span><label class="toggle"><input type="checkbox" id="dict-use-feed" checked><span class="tk"></span></label></div>
+      </div>
+      <div style="margin:8px 14px 0;display:flex;justify-content:flex-end">
+        <button class="cc-tool" id="dict-use-closeall" style="padding:6px 10px;font-size:11px">使用的全部关闭</button>
+      </div>
+      <div style="margin:8px 14px 2px;font-size:12px;color:#999;font-weight:600">使用概率（词典内容在各场景出现的概率，0 即该场景不用词典）</div>
+      <div class="set-group glass" style="margin:0 12px 10px">
+        <div class="gs-row"><span>聊天使用概率</span><div class="stepper" id="dict-overall-chat" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dict-overall-chat-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>写信使用概率</span><div class="stepper" id="dict-overall-mail" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dict-overall-mail-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>朋友圈使用概率</span><div class="stepper" id="dict-overall-feed" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dict-overall-feed-val" readonly><button class="stp-max">+</button></div></div>
+      </div>
+      <div style="margin:0 14px 8px;font-size:11px;color:#999;line-height:1.6">说明：聊天词典内容走「词典拼字」（此概率是其额外总闸，回复设置里的拼字开关/概率继续生效）；写信/朋友圈开启后，词典语录按概率混入信件与动态文案。开关按当前桌面联系人独立保存。</div>
+      <div class="cc-groups-bar" id="d2-dict-groups-bar"></div>
+      <div class="card-tabs" id="d2-dict-tabs" style="display:none"></div>
+      <div class="card-search glass">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input class="card-search-input" id="d2-dict-search" placeholder="搜索词典字卡" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="card-list" id="d2-dict-list">
+        <!-- 系统词典由 JS 按分组渲染 -->
+      </div>
+    </div>
+
     <!-- 其他互动功能字卡（独立页面，可开关；功能触发字卡不放进聊天默认字卡） -->
     <div class="page" id="page-fun-cards" hidden>
       <div class="chat-head">
@@ -1982,6 +2081,9 @@
         <span class="ch-name">其他互动功能字卡</span>
       </div>
       <div class="sm-set-hint" style="padding:8px 16px 0">说明：以下为各功能（摸鱼 / 吃饭 / 经期 / 喝水 / 花园 / 同频 / 伸手 / 此间 / 房间 / 存钱罐 / 漂流瓶 / 互动回应）触发时联系人会使用的自搓字卡，非聊天通用字卡，可逐张开启或关闭。</div>
+      <div class="set-group glass" style="margin:10px 12px 0">
+      <div class="gs-row"><span>使用其他互动功能字卡</span><label class="toggle"><input type="checkbox" id="dcf-enabled" checked><span class="tk"></span></label></div>
+      </div>
       <div class="card-tabs" id="fc-tabs">
         <button class="cc-tab" data-type="drift">漂流瓶</button>
         <button class="cc-tab" data-type="interact">互动回应</button>
@@ -1994,6 +2096,21 @@
       </div>
       <div class="card-list" id="fc-list">
         <!-- 功能触发字卡由 JS 按分类/分组渲染 -->
+      </div>
+        <div class="set-group glass" id="dcf-prob-box" style="margin:10px 12px 12px">
+        <div class="gs-row"><span>摸鱼字卡概率</span><div class="stepper" id="dcf-prob-fish" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-fish-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>吃饭字卡概率</span><div class="stepper" id="dcf-prob-eat" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-eat-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>经期字卡概率（温柔前缀/动作/经期关心）</span><div class="stepper" id="dcf-prob-period" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-period-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>喝水字卡概率</span><div class="stepper" id="dcf-prob-water" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-water-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>花园字卡概率</span><div class="stepper" id="dcf-prob-garden" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-garden-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>同频字卡概率</span><div class="stepper" id="dcf-prob-sync" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-sync-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>伸手字卡概率</span><div class="stepper" id="dcf-prob-reach" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-reach-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>此间字卡概率</span><div class="stepper" id="dcf-prob-cjian" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-cjian-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>房间字卡概率</span><div class="stepper" id="dcf-prob-room" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-room-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>存钱罐字卡概率</span><div class="stepper" id="dcf-prob-piggy" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-piggy-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>漂流瓶字卡概率</span><div class="stepper" id="dcf-prob-drift" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-drift-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>互动回应字卡概率</span><div class="stepper" id="dcf-prob-interact" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-interact-val" readonly><button class="stp-max">+</button></div></div>
+        <div class="gs-row"><span>音乐字卡概率</span><div class="stepper" id="dcf-prob-music" data-min="0" data-max="100" data-step="5"><button class="stp-min">−</button><input class="stp-val" id="dcf-prob-music-val" readonly><button class="stp-max">+</button></div></div>
       </div>
     </div>
 

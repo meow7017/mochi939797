@@ -14,7 +14,17 @@
   (function feedRootRescue() {
     // v3.25.x：feed-last/feed-next/feed-day-count 不在此列——它们是【按联系人桌面】
     // 独立存取的 TA 发帖调度状态（见 deskSchedRescue 与 maybeAutoPostFor），不是全局共享键
-    const KEYS = ['feed-notices', 'feed-app-unread', 'feed-cover-bg', 'feed-ta-cover', 'feed-ta-name', 'feed-ta-avatar', 'feed-user-name', 'feed-user-avatar'];
+    // #232：身份/封面六键（cover-bg/ta-cover/ta-name/ta-avatar/user-name/user-avatar）同样
+    // 不在此列了——v3.8.x 朋友圈好友列表起它们已改【按联系人桌面】独立存取（所有读取方
+    // per-cid 优先、根键只是旧版全局回退），default 命名空间里的值是现行数据而非滞留残留。
+    // 旧逻辑「根键有值就删 default 副本」把用户编辑后的朋友圈头像/昵称/封面在每次启动时
+    // 删回旧全局值（红米 Note12 Turbo Chrome 报「保存后刷新恢复初始」，多机型同发），且
+    // 首次刷新还会把 per-cid 值搬上根键，从此每次编辑都活不过下一次刷新。六键改走下方
+    // DESK_KEYS 收养式回收：per-cid 有值一律不动；per-cid 为空且根键还有旧全局值时才收养
+    // 进 default（收养前向 IDB 三态确认 per-cid 真的没有值——>200KB 大值只存 IDB，
+    // def.get 看不到 ≠ 不存在，贸然收养会用旧全局值盖掉它），根键保留作回退，幂等。
+    const KEYS = ['feed-notices', 'feed-app-unread'];
+    const DESK_KEYS = ['feed-cover-bg', 'feed-ta-cover', 'feed-ta-name', 'feed-ta-avatar', 'feed-user-name', 'feed-user-avatar'];
     function run() {
       try {
         const root = window.xyStore('xy-home-v2');
@@ -29,6 +39,21 @@
             try { root.set(k, dv); } catch (e) {}
             try { def.remove(k); } catch (e) {}
           }
+        });
+        DESK_KEYS.forEach(function (k) {
+          let dv = null;
+          try { dv = def.get(k); } catch (e) {}
+          if (dv !== null && dv !== undefined && dv !== '') return; // per-cid 现行值：绝不动更不删（#232 根因）
+          let rv = null;
+          try { rv = root.get(k); } catch (e) {}
+          if (rv === null || rv === undefined || rv === '') return;
+          // 收养旧全局值前先向 IDB 确认 default 桌面确实没有该键（三态：false=没有才收养；
+          // true=大值在 IDB 只是 def.get 看不到 / null=探测失败，都保守跳过，下次刷新再试）
+          try {
+            window.idbHasKey('xy-home-v2:default:' + k).then(function (has) {
+              if (has === false) { try { def.set(k, rv); } catch (e) {} }
+            }).catch(function () {});
+          } catch (e) {}
         });
         // v3.25.x：TA 发帖调度键反向归位（修复用户反馈「回复设置里设了联系人每天最多发
         // N 条朋友圈，联系人照样无限发」）——上面 KEYS 的回收逻辑曾把 default 桌面命名
@@ -100,7 +125,7 @@
     c.authorAv = '';
     c.taAv = '';
     if (typeof c.content === 'string') {
-      c.content = c.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]');
+      c.content = c.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]');
       if (c.content.length > 8192) c.content = c.content.slice(0, 8192) + '…';
     }
     if (Array.isArray(c.comments)) {
@@ -108,7 +133,7 @@
         if (!co || typeof co !== 'object') return co;
         const cc = Object.assign({}, co);
         if (typeof cc.content === 'string') {
-          cc.content = cc.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]');
+          cc.content = cc.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]');
           if (cc.content.length > 8192) cc.content = cc.content.slice(0, 8192) + '…';
         }
         if (Array.isArray(cc.replies)) {
@@ -116,7 +141,7 @@
             if (!r || typeof r !== 'object') return r;
             const rr = Object.assign({}, r);
             if (typeof rr.content === 'string') {
-              rr.content = rr.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]');
+              rr.content = rr.content.replace(/data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+/g, '[图片]').replace(/@@m:[0-9a-f]{32}/g, '[图片]');
               if (rr.content.length > 8192) rr.content = rr.content.slice(0, 8192) + '…';
             }
             return rr;
@@ -147,8 +172,11 @@
       // 头像历史标准归属是根命名空间 store，storeFor('default') 读「default 桌面」会取不到，
       // 导致「联系人发送朋友圈」的通知弹窗右侧不显示发布者头像（用户反馈）。未取到且为
       // default 时补根键回退；非 default 联系人仍只读各自桌面，不串头像。
-      let v = s.get('feed-ta-avatar') || s.get('avatar-partner') || '';
-      if (!v && o === 'default') v = store.get('feed-ta-avatar') || store.get('avatar-partner') || '';
+      // v3.27.x：补读聊天专用键 cs-avatar-partner（v3.12.x 起换头像只写该键，桌面
+      // avatar-partner 独立不再跟随）——否则发布者如只在聊天里换过头像，此处分取不到，
+      // 后台通知会回退成当前桌面联系人头像（用户反馈：通知头像显示成当前桌面的 TA）。
+      let v = s.get('feed-ta-avatar') || s.get('avatar-partner') || s.get('cs-avatar-partner') || '';
+      if (!v && o === 'default') v = store.get('feed-ta-avatar') || store.get('avatar-partner') || store.get('cs-avatar-partner') || '';
       if (v && typeof v === 'string' && v.length > 500 * 1024) return '';
       return v || '';
     } catch (e) { return ''; }
@@ -266,6 +294,32 @@
   //   save 只暂存内存（feedPending），绝不落盘；load 合并暂存，弹窗提示过的动态都可见。
   let feedDbReady = false;
   let feedPending = null;
+  // #187 权威键守卫——iPad QQ浏览器/WKWebView 系（iOS 挂后台杀 IDB 连接家族）首发
+  //   idbGet 4s+4s 超时返回 undefined，与「键不存在」不可分；此时 feed-posts >200KB
+  //   只进 IDB（LS 无副本、回填未到）→ load() 手上只有剥图快照。旧代码三条写回路径
+  //  （feedMergeFromIdb 合并写回 / save 非空直写 / 15s 保险丝 load 写回）都会把这个
+  //   无图版本整包写进权威键：图片从数据层永久消失，之后 IDB 恢复也救不回（用户实报
+  //   iPad QQ浏览器朋友圈只剩文字不显示图片，页内无任何 img 加载错误＝img 没渲染出来）。
+  //   守则：本会话读到过权威数据（feedAuthSeen，含清空后的 '[]'）或 LS/内存缓存里已有
+  //   权威副本（store.get(KEY) 非空＝回填已完成）→ 照常写；否则 idbHasKey 探测——
+  //   确认存在＝绝不写回（本次增量留内存 pending + 剥图快照文本兜底，10s 后重读权威），
+  //   确认不存在（全新安装/丢库重建）＝放心写（保住原「并集保数据」行为）；探测失败
+  //  （null＝存储繁忙）按存在处理：宁丢本次增量，不毁权威历史。
+  let feedAuthSeen = false;
+  let feedAuthWritable = null;   // null=未探测；true=确认可写（权威键确实不存在）；false=权威仍在
+  let feedAuthRetried = 0;       // 守卫拒写后的权威重读次数上限 2（间隔 10s，防病理存储下无限循环）
+  function feedGuardWrite(raw) {
+    if (feedAuthSeen || store.get(KEY) !== null) {
+      try { store.set(KEY, raw); } catch (e) {}
+      return Promise.resolve(true);
+    }
+    if (!window.idbHasKey) { try { store.set(KEY, raw); } catch (e) {} return Promise.resolve(true); }
+    if (feedAuthWritable === null) feedAuthWritable = window.idbHasKey(uid + ':' + KEY).then(ok => ok === false);
+    return feedAuthWritable.then(writable => {
+      if (writable) { try { store.set(KEY, raw); } catch (e) {} }
+      return writable;
+    });
+  }
   // v3.10.x 修复「评论聊了多个回合次日只剩一条」：同 id 动态深度合并。
   //   原实现 post 级后者整条覆盖——启动权威回读 feedMergeFromIdb 里本地副本（LS 主键/
   //   剥图快照）优先级高于 IDB，而本地副本可能陈旧：主键 >200KB 时只进 IDB 不进 LS，
@@ -287,8 +341,8 @@
       if (!prev) { byKey[k] = Object.assign({}, o); return; }
       if (Array.isArray(o.replies) && o.replies.length) prev.replies = deeperList(prev.replies || [], o.replies);
       else if (!Array.isArray(prev.replies) && Array.isArray(o.replies)) prev.replies = o.replies;
-      const prevImg = /data:image\//.test(String(prev.content || ''));
-      const oImg = /data:image\//.test(String(o.content || ''));
+      const prevImg = /data:image\//.test(String(prev.content || '')) || (window.mochiMediaIsToken && window.mochiMediaIsToken(String(prev.content || '').trim()));
+      const oImg = /data:image\//.test(String(o.content || '')) || (window.mochiMediaIsToken && window.mochiMediaIsToken(String(o.content || '').trim()));
       if (!prevImg && oImg) prev.content = o.content;
     };
     (a || []).forEach(put);
@@ -343,7 +397,9 @@
     // v3.7.x：权威读取（feedDbReady=false）期间收到的动态只暂存在 feedPending，原 load()
     //   只读持久层 → 弹窗/通知提示了新动态、朋友圈列表却是空白（OPPO Edge IDB 慢时复现）；
     //   这里把暂存动态按 id 合并在持久层之上，提示过的一切动态都可见可赞可评。
-    if (!feedDbReady && feedPending && feedPending.length) {
+    //   #187：去掉 !feedDbReady 前置——守卫拒写（权威键仍在、本次只是读超时）时暂存不落盘，
+    //   就绪后也必须继续合并渲染（mergePosts 按 id 去重，不会重复显示）。
+    if (feedPending && feedPending.length) {
       list = mergePosts(list, feedPending);
     }
     return list;
@@ -400,12 +456,12 @@
       //   IDB 大键分流 + 内存) 与快照落盘。只写非空，不会重演旧的「save([]) 用空值
       //   覆盖 IDB 旧动态」问题；IDB 合并是并集，稍后回填也不会丢。
       if (arr.length) {
-        try { store.set(KEY, raw); } catch (e) {}
+        feedGuardWrite(raw);
         persistSnap(arr);
       }
       return;
     }
-    store.set(KEY, raw);
+    feedGuardWrite(raw);
     // 清空时同步清掉旧快照（防清空后又被陈旧快照"恢复"出已删除的动态）
     if (!arr.length) {
       try { localStorage.removeItem('xy-home-v2:default:' + SNAP_KEY); } catch (e) {}
@@ -431,7 +487,8 @@
     const text = [], kaomoji = [], emoji = [];
     // v3.11.x：只收 dataURL 媒体——朋友圈配图会把图片拼进正文文本（data:image 正则
     // 识别内联），链接导入的 http(s) 字卡进来只会显示成一段 URL 文字，先过滤掉
-    const onlyData = (arr) => (arr || []).filter(s => typeof s === 'string' && s.indexOf('data:') === 0);
+    // FIX 2026-09-13 #386 媒体池令牌卡也是媒体载荷（渲染端 inlineBody/图片网格已认 @@m:hash）
+    const onlyData = (arr) => (arr || []).filter(s => typeof s === 'string' && (s.indexOf('data:') === 0 || (window.mochiMediaIsToken && window.mochiMediaIsToken(s))));
     const mediaSticker = onlyData(cid ? (window.getMediaCardsFor ? window.getMediaCardsFor(cid, 'sticker') : []) : ((window.getMediaCards && window.getMediaCards('sticker')) || []));
     const mediaImage = onlyData(cid ? (window.getMediaCardsFor ? window.getMediaCardsFor(cid, 'image') : []) : ((window.getMediaCards && window.getMediaCards('image')) || []));
     cards.forEach(c => {
@@ -440,6 +497,8 @@
       // v3.6.x：语音字卡（文件名|||audio;base64）不以 data: 开头，需单独丢弃——
       //   否则整段音频 base64 会被当文字拼进朋友圈正文/评论
       if (typeof c === 'string' && c.indexOf('|||') >= 0) return;
+      // FIX 2026-09-13 #386 裸 @@m:hash 令牌卡不进文字池（与 chat.js getPool #383 同款第三道守卫）
+      if (c && window.mochiMediaIsToken && window.mochiMediaIsToken(c)) return;
       if (/[\uD800-\uDBFF]/.test(c) || /^[😀-🙏🌀-🫿]/u.test(c)) emoji.push(c);
       else if (/[\(（｡◕(◕)(づ｡(¬)]/.test(c) && /[\)）】)]/.test(c)) kaomoji.push(c);
       else text.push(c);
@@ -459,7 +518,11 @@
       const a = (window.defaultCardApiFor && st) ? window.defaultCardApiFor(st) : null;
       const useFeed = a ? a.use('feed') : (window.defaultCardUse ? window.defaultCardUse('feed') : true);
       const en = a ? a.enabled() : ((window.defaultCardCfg && window.defaultCardCfg().enabled) !== false);
-      if (en && useFeed && window.getDefaultCardGroups) {
+      // v3.28.x：朋友圈使用概率——读 dc-overall-feed（未设置=100，维持「始终混入」历史行为；
+      //   用户可在默认字卡设置页单独调低朋友圈默认字卡占比）
+      let feedOverall = 100;
+      try { const fv = st ? st.get('dc-overall-feed') : null; if (fv !== null) feedOverall = Math.max(0, Math.min(100, Number(fv))); } catch (e) {}
+      if (en && useFeed && Math.random() * 100 < feedOverall && window.getDefaultCardGroups) {
         const gd = window.getDefaultCardGroups;
         const catOn = a ? a.cat : (window.defaultCardCat || (() => true));
         const isOff = a ? a.isOff : (window.isDefaultCardOff || null);
@@ -468,6 +531,16 @@
         if (catOn('emoji') && !emoji.length) (gd('emoji') || []).forEach(g => (g[1] || []).forEach(c => { if (isOff && isOff('emoji', c)) return; if (typeof c === 'string' && c) emoji.push(c); }));
       }
     } catch (e) {}
+    // v3.36.x：词典朋友圈混入——词典独立页「朋友圈使用」开启时，按「朋友圈使用概率」
+    //   把一条词典语录并进动态/评论文案池（dictQuoteOne 自带分类/单卡开关过滤；
+    //   池空或场景关=不混，默认概率 30%）。独立于默认字卡的 dc-enabled 总闸。
+    try {
+      if (window.dictUse && window.dictUse('feed') && window.dictQuoteOne
+          && Math.random() * 100 < (window.dictOverall ? window.dictOverall('feed') : 30)) {
+        const dq = window.dictQuoteOne();
+        if (dq) text.push(dq);
+      }
+    } catch (eDictFeed) {}
     return { text: text, kaomoji: kaomoji, emoji: emoji, sticker: mediaSticker, image: mediaImage };
   }
   // v3.6.x：完整 HTML 转义（昵称/评论/点赞列表/分组名是用户输入，直拼 innerHTML 可注入）
@@ -486,7 +559,7 @@
       seg = String(seg).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       return (cid && window.taFit) ? window.taFit(seg, cid) : seg;
     };
-    const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g;
+    const RE = /((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|@@m:[0-9a-f]{32}|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g;
     return str.replace(RE, function (all, pre, src) {
       if (src.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') {
         return fitSeg(all); // 普通网址（无附图前缀）按文本保留
@@ -587,12 +660,26 @@
     // 引擎会在 'data:image' 中间误匹配 'image'，导致后面 (data:image…) 整体匹配失败
     // （mail.js renderBody 同款已生效模式）
     // v3.26.x：对齐 inlineBody——base64、svg 类非 base64 dataURL 与带前缀外链图都并入图片网格
-    content = content.replace(/((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g, (m, pre, u) => { if (u.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') return m; imgs.push(u); return ' '; });
+    content = content.replace(/((?:sticker|image):)?(https?:\/\/[^\s"'<>]+|@@m:[0-9a-f]{32}|data:image\/[a-zA-Z0-9.+-]+(?:;[a-zA-Z0-9.+-]*(?:=[^;,]*)?)*,[^\s"'<>]+)/g, (m, pre, u) => { if (u.indexOf('http') === 0 && pre !== 'sticker:' && pre !== 'image:') return m; imgs.push(u); return ' '; });
     let html = inlineBody(content, (p.role || p.by) === 'me' ? '' : p.owner);
     if (imgs.length) {
-      html += '<div class="feed-imgs">' + imgs.map(u => '<img src="' + attrEsc(u) + '" alt="图片" loading="lazy">').join('') + '</div>';
+      // #302：贴纸回复——贴纸绝对定位叠在配图区上（x/y 为区块百分比），随卡片一起局部刷新
+      html += '<div class="feed-imgs">' + imgs.map(u => '<img src="' + attrEsc(u) + '" alt="图片" loading="lazy">').join('') + feedStickersHtml(p) + '</div>';
     }
     return html;
+  }
+  // #302 贴纸回复：配图上的贴纸层（仅贴过才有输出）；我贴的可点撤回
+  function feedStickersHtml(p) {
+    const list = Array.isArray(p.stickers) ? p.stickers : [];
+    if (!list.length) return '';
+    return list.map((s, i) => {
+      const who = s.authorName || ((s.role || s.owner) === 'me' ? feedUserName() : 'TA');
+      const inner = s.src
+        ? '<img src="' + attrEsc(s.src) + '" alt="贴纸">'
+        : '<span class="feed-sticker-emoji">' + esc(s.emoji || '❤️') + '</span>';
+      const del = (s.role || s.owner) === 'me' ? ' data-sticker-del="' + esc(p.id) + '|' + i + '"' : '';
+      return '<span class="feed-sticker"' + del + ' style="left:' + Number(s.x || 0) + '%;top:' + Number(s.y || 0) + '%" title="' + esc(who) + ' 贴的贴纸">' + inner + '</span>';
+    }).join('');
   }
   // 评论区 HTML（v3.5.95：提升到模块作用域，主列表 + 全部朋友圈共用）
   // v3.14.x：回复目标按对话轮次解析——不再一律指向原评论作者（旧版 TA 回应我的回复
@@ -739,6 +826,8 @@
       '<div class="feed-actions">' +
       '<button class="feed-act' + (liked ? ' liked' : '') + '" data-like="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 21s-7.5-4.7-9.3-9A5.3 5.3 0 0112 6.4a5.3 5.3 0 019.3 5.6c-1.8 4.3-9.3 9-9.3 9z"/></svg>赞</button>' +
       '<button class="feed-act" data-comment="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"/><circle cx="8.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/></svg>评论</button>' +
+      // #302：贴纸回复——仅配图动态出现，把表情贴纸贴到照片上
+      (((p.imgs && p.imgs.length) || p.img) ? '<button class="feed-act" data-sticker="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0"/><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>贴纸</button>' : '') +
       '<button class="feed-act feed-fav' + (faved ? ' faved' : '') + '" data-fav="' + p.id + '"><svg viewBox="0 0 24 24" fill="' + (faved ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 2l2.4 5 5.6.8-4 4 .9 5.6-4.9-2.6-4.9 2.6.9-5.6-4-4 5.6-.8z"/></svg>收藏</button>' +
       '</div>' + likes + commentsHtmlFor(p, name) + '</div>';
   }
@@ -791,10 +880,13 @@
     const posts = feedSortedAll();
     feedShownMain = Math.min(posts.length, FEED_RENDER_MAX);
     const name = partnerName();
-    listEl.innerHTML = posts.length
+    // #302：回忆闪回——那年今天的动态以记忆卡形式置顶（今日点 ✕ 后当天不再出现）
+    const memPost = feedMemoryPost();
+    const memHtml = (memPost && !feedMemDismissed()) ? feedMemBannerHtml(memPost) : '';
+    listEl.innerHTML = memHtml + (posts.length
       ? posts.slice(0, feedShownMain).map(p => postCardHtml(p, name)).join('') +
         (posts.length > feedShownMain ? feedMoreBtnHtml(posts.length - feedShownMain) : '')
-      : '<div class="ta-empty">还没有动态，TA 会不定期分享生活</div>';
+      : '<div class="ta-empty">还没有动态，TA 会不定期分享生活</div>');
     const clearBtn = document.getElementById('feed-head-clear');
     if (clearBtn) clearBtn.hidden = !posts.length;
     bindEvents(listEl);
@@ -822,6 +914,204 @@
   function renderVisible() {
     const fa = document.getElementById('page-feed-all');
     if (fa && !fa.hidden) { try { renderFeedAll(); } catch (e) {} } else { render(); }
+  }
+  // ===== #302 贴纸回复 =====
+  // 贴纸来源：TA 的表情包 + 我的表情包（复用评论条同一来源，只收 dataURL）
+  function feedAllStickers() {
+    const savedTab = comStickerTab;
+    const out = [];
+    try {
+      comStickerTab = 'ta'; comStickerGroups().forEach(g => (g[1] || []).forEach(s => out.push(s)));
+      comStickerTab = 'mine'; comStickerGroups().forEach(g => (g[1] || []).forEach(s => out.push(s)));
+    } catch (e) {}
+    comStickerTab = savedTab;
+    return out;
+  }
+  let feedStickerCard = null;
+  function openFeedStickerPanel(pid) {
+    if (!feedStickerCard) {
+      feedStickerCard = document.createElement('div');
+      feedStickerCard.id = 'feed-sticker-card';
+      feedStickerCard.className = 'poke-card emoji-card';
+      feedStickerCard.style.position = 'fixed';
+      feedStickerCard.style.left = '8px';
+      feedStickerCard.style.right = '8px';
+      feedStickerCard.style.bottom = '10px';
+      feedStickerCard.style.maxHeight = '46vh';
+      feedStickerCard.style.zIndex = '3000';
+      feedStickerCard.hidden = true;
+      feedStickerCard.innerHTML =
+        '<div class="emoji-head">' +
+          '<div class="emoji-tabs"><span class="emoji-tab sel">选个贴纸贴到照片上</span></div>' +
+          '<button class="poke-card-close" data-fsc="1">✕</button>' +
+        '</div>' +
+        '<div class="poke-card-scroll" style="min-height:100px;max-height:36vh" id="feed-sticker-list"></div>';
+      document.body.appendChild(feedStickerCard);
+      feedStickerCard.querySelector('[data-fsc]').addEventListener('click', () => { feedStickerCard.hidden = true; });
+      feedStickerCard.addEventListener('click', (e) => { if (e.target === feedStickerCard) feedStickerCard.hidden = true; });
+    }
+    feedStickerCard.dataset.pid = pid;
+    feedStickerCard.hidden = false;
+    const list = document.getElementById('feed-sticker-list');
+    const srcs = feedAllStickers();
+    list.innerHTML = '';
+    if (!srcs.length) {
+      list.innerHTML = '<div class="ta-empty">暂无表情包，请到自定义字卡 → 表情包 上传</div>';
+      return;
+    }
+    const grid = document.createElement('div');
+    grid.className = 'emoji-grid';
+    srcs.forEach(src => {
+      const d = document.createElement('div');
+      d.className = 'emoji-item';
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = '贴纸';
+      d.appendChild(img);
+      d.addEventListener('click', (e) => {
+        e.stopPropagation();
+        feedPickStickerPos(feedStickerCard.dataset.pid, src);
+      });
+      grid.appendChild(d);
+    });
+    list.appendChild(grid);
+  }
+  function feedRandStickerPos() {
+    return { x: Math.round(6 + Math.random() * 74), y: Math.round(6 + Math.random() * 70) };
+  }
+  // v3.36.x：我贴的贴纸位置可自定义——选完贴纸进入「点照片选位置」模式，点哪里贴哪里；
+  // 找不到配图（数据被并发删掉等）时退回随机落位；TA 回贴仍走 feedRandStickerPos
+  let feedPickCtx = null;
+  function feedCancelPickSticker() {
+    if (!feedPickCtx) return;
+    const ctx = feedPickCtx;
+    feedPickCtx = null;
+    ctx.box.removeEventListener('click', ctx.onPick, true);
+    if (ctx.box.isConnected) {
+      ctx.box.classList.remove('feed-sticker-picking');
+      const hint = ctx.box.querySelector('.feed-pick-hint');
+      if (hint) hint.remove();
+    }
+  }
+  function feedPickStickerPos(pid, src) {
+    feedCancelPickSticker();
+    const post = document.getElementById('feed-post-' + pid);
+    const box = post ? post.querySelector('.feed-imgs') : null;
+    if (!box) { addFeedSticker(pid, { src }); return; }
+    feedStickerCard.hidden = true;
+    box.classList.add('feed-sticker-picking');
+    const hint = document.createElement('div');
+    hint.className = 'feed-pick-hint';
+    hint.innerHTML = '<span>📍 点击照片选贴纸位置</span><button type="button">取消</button>';
+    hint.querySelector('button').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); feedCancelPickSticker(); });
+    box.appendChild(hint);
+    const onPick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (e.target.closest('.feed-pick-hint')) { feedCancelPickSticker(); return; }
+      if (!box.isConnected) { feedCancelPickSticker(); return; }
+      const r = box.getBoundingClientRect();
+      const x = Math.round(Math.min(90, Math.max(4, ((e.clientX - r.left) / Math.max(1, r.width)) * 100)));
+      const y = Math.round(Math.min(90, Math.max(6, ((e.clientY - r.top) / Math.max(1, r.height)) * 100)));
+      feedCancelPickSticker();
+      addFeedSticker(pid, { src, x, y });
+    };
+    box.addEventListener('click', onPick, true);
+    feedPickCtx = { box, onPick };
+  }
+  // 我贴一张：每条动态上限 5 张；贴完 TA 有概率（评论回应概率同源）回贴一张并进通知
+  function addFeedSticker(pid, st) {
+    const list = load();
+    const p = list.find(x => x.id === pid);
+    if (!p) { toast('这条动态不存在了'); return; }
+    p.stickers = Array.isArray(p.stickers) ? p.stickers : [];
+    if (p.stickers.length >= 5) { toast('这张照片上贴纸够多啦（最多 5 张）'); return; }
+    // v3.36.x：位置自定义——st 带 x/y（点照片选位置的落点）就用它，否则随机
+    const pos = (st && Number.isFinite(Number(st.x)) && Number.isFinite(Number(st.y)))
+      ? { x: Math.min(92, Math.max(0, Math.round(Number(st.x)))), y: Math.min(92, Math.max(0, Math.round(Number(st.y)))) }
+      : feedRandStickerPos();
+    p.stickers.push({ src: st.src || '', emoji: st.emoji || '', x: pos.x, y: pos.y, ts: Date.now(), role: 'me', owner: 'me', authorName: feedUserName() });
+    save(list);
+    refreshPostCard(pid);
+    const cid = p.owner || 'default';
+    const cfg = feedCfgFor(cid);
+    if (Math.random() * 100 < cfg.commentProb) {
+      setTimeout(() => {
+        const l2 = load();
+        const p2 = l2.find(x => x.id === pid);
+        if (!p2) return;
+        p2.stickers = Array.isArray(p2.stickers) ? p2.stickers : [];
+        if (p2.stickers.length >= 5) return;
+        const taSt = feedTaPickSticker();
+        const pos2 = feedRandStickerPos();
+        const nm = p2.taName || taFeedNameFor(cid);
+        p2.stickers.push({ src: taSt.src || '', emoji: taSt.emoji || '', x: pos2.x, y: pos2.y, ts: Date.now(), role: 'ta', owner: cid, authorName: nm });
+        save(l2);
+        refreshPostCard(pid);
+        addNotice('comment', pid, nm + ' 在配图上贴了一张贴纸', cid);
+      }, (cfg.commentSpeedMin + Math.random() * Math.max(1, cfg.commentSpeedMax - cfg.commentSpeedMin)) * 1000);
+    }
+  }
+  function feedTaPickSticker() {
+    const saved = comStickerTab;
+    comStickerTab = 'ta';
+    const g = comStickerGroups();
+    comStickerTab = saved;
+    const srcs = [];
+    g.forEach(x => (x[1] || []).forEach(s => srcs.push(s)));
+    if (srcs.length && Math.random() < 0.7) return { src: srcs[Math.floor(Math.random() * srcs.length)] };
+    const EM = ['❤️', '😘', '🥰', '👍', '😂', '🌈', '✨', '🎀', '😻', '🤗'];
+    return { emoji: EM[Math.floor(Math.random() * EM.length)] };
+  }
+  function removeFeedSticker(pid, i) {
+    if (!window.openModal) return;
+    window.openModal('撤回这张贴纸？', '', () => {
+      const list = load();
+      const p = list.find(x => x.id === pid);
+      if (!p || !p.stickers || !p.stickers[i]) return;
+      p.stickers.splice(i, 1);
+      save(list);
+      refreshPostCard(pid);
+    }, { noInput: true });
+  }
+  // ===== #302 回忆闪回（那年今天）=====
+  function feedMemoryPost() {
+    const now = new Date();
+    const mmdd = (now.getMonth() + 1) + '-' + now.getDate();
+    let best = null;
+    feedSortedAll().forEach(p => {
+      const d = new Date(p.ts);
+      if (d.getFullYear() >= now.getFullYear()) return;
+      if ((d.getMonth() + 1) + '-' + d.getDate() !== mmdd) return;
+      if (!best || p.ts > best.ts) best = p;
+    });
+    return best;
+  }
+  function feedMemDismissed() {
+    try { return store.get('feed-mem-dismiss') === new Date().toDateString(); } catch (e) { return false; }
+  }
+  function feedMemBannerHtml(p) {
+    const y = new Date(p.ts).getFullYear();
+    const txt = String(p.content || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    const th = (p.imgs && p.imgs[0]) || p.img || '';
+    return '<div class="feed-mem-card glass" id="feed-mem-card" data-pid="' + esc(p.id) + '">' +
+      '<div class="feed-mem-label">📅 回忆闪回 · ' + y + ' 年的今天</div>' +
+      '<div class="feed-mem-body">' + (th ? '<img src="' + attrEsc(th) + '" alt="">' : '') + '<span>' + esc(txt || '（图片动态）') + '</span></div>' +
+      '<button class="feed-mem-dismiss" type="button">✕</button></div>';
+  }
+  // 点击回忆卡：定位到那条动态并高亮；「查看更早」窗口没渲染到就扩窗重渲染后再定位
+  function revealFeedPost(pid) {
+    const posts = feedSortedAll();
+    const idx = posts.findIndex(p => p.id === pid);
+    if (idx < 0) return;
+    if (idx >= feedShownMain) {
+      feedShownMain = Math.min(posts.length, idx + 20);
+      render();
+    }
+    const el = document.getElementById('feed-post-' + pid);
+    if (!el) return;
+    try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { try { el.scrollIntoView(); } catch (e2) {} }
+    el.classList.add('feed-hl');
+    setTimeout(() => el.classList.remove('feed-hl'), 2400);
   }
   // v3.10.x：单卡局部刷新——评论/回复/点赞只改动一条动态，原实现走 renderVisible()
   //   全量重渲染整个列表：所有卡片 HTML 字符串重建 + 全部 dataURL 配图重新解码 +
@@ -889,6 +1179,30 @@
     listEl.querySelectorAll('.feed-act[data-comment]').forEach(b => b.addEventListener('click', () => {
       showCommentBar(b.dataset.comment);
     }));
+    // #302：贴纸回复——打开选贴纸面板 / 点击我贴的贴纸撤回
+    listEl.querySelectorAll('.feed-act[data-sticker]').forEach(b => b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openFeedStickerPanel(b.dataset.sticker);
+    }));
+    listEl.querySelectorAll('.feed-sticker[data-sticker-del]').forEach(el2 => el2.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const parts = String(el2.dataset.stickerDel).split('|');
+      removeFeedSticker(parts[0], parseInt(parts[1], 10));
+    }));
+    // #302：回忆闪回卡——点击定位到那年今天的动态，✕ 今日不再显示
+    const memCard = listEl.querySelector('.feed-mem-card');
+    if (memCard) {
+      memCard.addEventListener('click', (e) => {
+        if (e.target && e.target.closest && e.target.closest('.feed-mem-dismiss')) return;
+        revealFeedPost(memCard.dataset.pid);
+      });
+      const dis = memCard.querySelector('.feed-mem-dismiss');
+      if (dis) dis.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try { store.set('feed-mem-dismiss', new Date().toDateString()); } catch (err) {}
+        memCard.remove();
+      });
+    }
     // 收藏：收藏到桌面收藏夹（我的收藏-朋友圈），按动态 ts 去重
     listEl.querySelectorAll('.feed-act[data-fav]').forEach(b => b.addEventListener('click', () => {
       const pid = b.dataset.fav;
@@ -1041,10 +1355,19 @@ function comStickerGroups() {
   // v3.11.x：只收 dataURL 表情——选中后会拼进评论/正文文本（data:image 正则识别），
   // 链接导入的 http(s) 表情拼进去只显示 URL 文字，先过滤掉
   const onlyData = (groups) => (groups || [])
-    .map(([n, a]) => [n, (a || []).filter(s => typeof s === 'string' && s.indexOf('data:') === 0)])
+    .map(([n, a]) => [n, (a || []).filter(s => typeof s === 'string' && (s.indexOf('data:') === 0 || (window.mochiMediaIsToken && window.mochiMediaIsToken(s))))])
     .filter(([, a]) => a.length);
   if (comStickerTab === 'ta') return onlyData((window.getMediaGroups && window.getMediaGroups('sticker')) || []);
-  // v3.12.x：我的表情包改全局键（与聊天面板同源，各桌面互通）
+  // FIX 2026-09-04 #154 朋友圈评论「我的表情包」与聊天面板不同步——优先取 chat.js
+  // 维护的最新内存副本（window.getMyEmojiGroups，启动/打开时已用 IDB 权威值自愈；
+  // store 层对该键可能停在旧 LS 快照或大键驻留挂起，读不到新值）。chat.js 异常时
+  // 保留旧 store 读路径兜底，行为不变。
+  try {
+    if (window.getMyEmojiGroups) {
+      const g = window.getMyEmojiGroups();
+      if (Array.isArray(g) && g.length) return onlyData(g);
+    }
+  } catch (e) {}
   try {
     const v = JSON.parse(window.xyStore('xy-home-v2').get('my-emoji-groups') || 'null');
     return Array.isArray(v) ? onlyData(v) : [];
@@ -1304,7 +1627,7 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
   // ================= 通知提醒（TA 点赞/评论/发布动态 → 未读角标 + 列表 + 点击跳转） =================
   // v3.5.81：通知文本里的 dataURL（表情包/图片）清洗为 [表情包]，避免乱码长串；面板显示缩略图
   function noticeTextClean(s) {
-    return String(s || '').replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[表情包]');
+    return String(s || '').replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, '[表情包]').replace(/@@m:[0-9a-f]{32}/g, '[表情包]');
   }
   function notices() { try { return JSON.parse(store.get('feed-notices') || '[]'); } catch (e) { return []; } }
   function saveNotices(list) { store.set('feed-notices', JSON.stringify(list)); }
@@ -1342,8 +1665,10 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
     // v3.5.107：新增朋友圈通知且不在朋友圈页 → 前台桌面弹窗（点击进朋友圈）
     if (window.showDeskPopup && !feedPageVisible()) {
       // v3.7.x：弹窗头像带发布者 TA 头像（跨桌面动态弹窗不显示当前桌面 TA 头像）
+      // v3.27.x：avFixed 防误回退——发布者头像为空时不回退当前桌面头像（bgNotifyCheck
+      // 无 avFixed 时 av 为空会兜底成当前桌面的 cs-avatar-partner，导致跨桌面显示错头像）
       const av = owner ? taAvFor(owner) : '';
-      window.showDeskPopup({ name: '朋友圈', text: (window.taFit ? window.taFit(noticeTextClean(text), owner) : noticeTextClean(text)), av: av, onClick: openFeedPage, isHidden: document.visibilityState === 'hidden' });
+      window.showDeskPopup({ name: '朋友圈', text: (window.taFit ? window.taFit(noticeTextClean(text), owner) : noticeTextClean(text)), av: av, avFixed: true, onClick: openFeedPage, isHidden: document.visibilityState === 'hidden' });
     } else if (feedPageVisible() && document.visibilityState !== 'hidden') {
       // v3.13.x：人在朋友圈页内时顶部横幅按设计不弹（v3.5.107，防遮挡）——但 TA
       // 评论/回复/点赞到达毫无感知（用户反馈：联系人回复我朋友圈评论没有提示，
@@ -1407,7 +1732,7 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
       const src = (n.ri != null && Array.isArray(p.comments[n.ci].replies) && p.comments[n.ci].replies[n.ri])
         ? p.comments[n.ci].replies[n.ri].content
         : p.comments[n.ci].content;
-      const m = /data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/.exec(String(src || ''));
+      const m = /(?:data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+|@@m:[0-9a-f]{32})/.exec(String(src || ''));
       return m ? m[0] : '';
     } catch (e) { return ''; }
   }
@@ -1607,8 +1932,9 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
     // v3.7.x 兜底：render 后若列表没出现刚发布的动态（Edge 上 IDB 慢/门槛暂存时序异常），
     //   强制把 list 直接落盘 + 重渲染，确保发布后立刻可见。用户主动发布应立即持久化，
     //   绕过 save 门槛（门槛防的是 maybeAutoPost 等自动 save 覆盖，用户主动发布含完整 list）
+    //   #187：仍走守卫——病理窗口下手上的 list 可能来自剥图快照，裸写会把无图版本盖进权威键
     if (!document.getElementById('feed-post-' + id)) {
-      try { store.set(KEY, JSON.stringify(list)); } catch (e) {}
+      feedGuardWrite(JSON.stringify(list));
       renderVisible();
     }
     toast('已发布');
@@ -1705,7 +2031,7 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
     const c = {};
     ['fd-like-prob', 'fd-like-speed-min', 'fd-like-speed-max', 'fd-comment-prob', 'fd-comment-speed-min', 'fd-comment-speed-max',
      'fd-reply-prob', 'fd-reply-speed-min', 'fd-reply-speed-max', 'fd-likeback-prob', 'fd-card-prob', 'fd-max-cards', 'fd-image-prob',
-     'fd-post-prob', 'fd-post-daily-max', 'fd-post-cool', 'fd-min-interval', 'fd-max-interval',
+     'fd-post-prob', 'fd-post-daily-max', 'fd-post-cool', 'fd-min-interval', 'fd-max-interval', 'fd-post-en',
      'fd-min-cards-post', 'fd-max-cards-post', 'fd-post-kaomoji', 'fd-post-emoji', 'fd-post-sticker', 'fd-post-image'].forEach(k => {
       try {
         const v = s.get('reply-' + k);
@@ -1720,6 +2046,8 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
       likeback: num('fd-likeback-prob', 50),
       cardProb: num('fd-card-prob', 80), maxCards: num('fd-max-cards', 5),
       imageProb: num('fd-image-prob', 50),
+      // #296：联系人主动发朋友圈总开关（默认开，关闭后 TA 不再自动发动态）
+      postEn: num('fd-post-en', 1),
       postProb: num('fd-post-prob', 40), dailyMax: num('fd-post-daily-max', 5),
       postCool: num('fd-post-cool', 30),
       minInterval: num('fd-min-interval', 1), maxInterval: num('fd-max-interval', 720),
@@ -1768,6 +2096,8 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
       const now = Date.now();
       // v3.7.x：各桌面的 TA 用各自桌面的朋友圈设置（原实现用当前桌面 cfg，串设置）
       const cfg = feedCfgFor(cid);
+      // #296：联系人主动发朋友圈总开关——关闭后该桌面 TA 不再自动发动态（点赞/评论互动不受影响）
+      if (!cfg.postEn) return;
       let last = parseInt(cs.get('feed-last'), 10); if (isNaN(last)) last = 0;
       let next = parseFloat(cs.get('feed-next')); if (isNaN(next)) next = 0;
       if (last > now || last < 0) { last = 0; next = 0; }
@@ -1864,6 +2194,8 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
       '<div class="feed-actions">' +
       '<button class="feed-act' + (liked ? ' liked' : '') + '" data-like="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 21s-7.5-4.7-9.3-9A5.3 5.3 0 0112 6.4a5.3 5.3 0 019.3 5.6c-1.8 4.3-9.3 9-9.3 9z"/></svg>赞</button>' +
       '<button class="feed-act" data-comment="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"/><circle cx="8.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="10.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10.5" r="1.2" fill="currentColor" stroke="none"/></svg>评论</button>' +
+      // #302：贴纸回复——仅配图动态出现，把表情贴纸贴到照片上
+      (((p.imgs && p.imgs.length) || p.img) ? '<button class="feed-act" data-sticker="' + p.id + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 007 0"/><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none"/></svg>贴纸</button>' : '') +
       '<button class="feed-act feed-fav' + (faved ? ' faved' : '') + '" data-fav="' + p.id + '"><svg viewBox="0 0 24 24" fill="' + (faved ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 2l2.4 5 5.6.8-4 4 .9 5.6-4.9-2.6-4.9 2.6.9-5.6-4-4 5.6-.8z"/></svg>收藏</button>' +
       '</div>' + likes +
       commentsHtmlFor(p, author) + '</div>';
@@ -2236,9 +2568,12 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
   function feedMergeFromIdb(v) {
     try {
       const pending = feedPending || [];
-      feedPending = null;
       let base = [];
-      if (v && typeof v === 'string' && v.length > 2) {
+      // v 是超长字符串＝权威读成功（'[]'≤2 字符按未读到处理，同原判定）；undefined＝
+      // 超时/异常，与键不存在不可分 → feedAuthSeen 只在真读到权威数据时置位
+      const authOk = !!(v && typeof v === 'string' && v.length > 2);
+      if (authOk) {
+        feedAuthSeen = true;
         const idbArr = JSON.parse(v);
         if (Array.isArray(idbArr)) base = idbArr.map(normPost);
       }
@@ -2247,7 +2582,27 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
       if (raw !== null) { try { const a = JSON.parse(raw); if (Array.isArray(a)) cur = a.map(normPost); } catch (e) {} }
       if (!cur.length) cur = loadSnap().map(normPost);
       const merged = mergePosts(base, mergePosts(cur, pending));
-      if (merged.length) store.set(KEY, JSON.stringify(merged));
+      if (!merged.length) { if (authOk && feedPending === pending) feedPending = null; return; }
+      // #187：写回走守卫——权威读失败且手上可能是剥图快照时，探测确认权威键仍在就绝不写回
+      feedGuardWrite(JSON.stringify(merged)).then(written => {
+        if (written) {
+          // 权威键已更新为 merged 才清暂存（期间新到的动态不误清）
+          if (feedPending === pending) feedPending = null;
+          return;
+        }
+        // 拒写＝权威键仍在 IDB 里（本次只是读超时）：增量留在内存继续渲染显示，
+        // persistSnap 已把文本落快照兜底；10s 后重读权威（最多 2 次）恢复完整视图
+        if (feedPending === null) feedPending = pending;
+        else if (feedPending !== pending) feedPending = mergePosts(pending, feedPending);
+        if (feedAuthRetried >= 2 || !window.idbGet) return;
+        feedAuthRetried++;
+        setTimeout(function () {
+          window.idbGet(uid + ':' + KEY).then(v2 => {
+            feedMergeFromIdb(v2);
+            if (v2 && typeof v2 === 'string' && v2.length > 2) render();
+          });
+        }, 10000);
+      });
     } catch (e) { /* 解析失败仍置就绪，避免下次启动重复合并 */ }
   }
   try {
@@ -2299,7 +2654,9 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
   //   正常情况 idbGet 早已返回，该保险只在病理场景触发，feedDbReady 已真时直接跳过）
   setTimeout(function () {
     if (feedDbReady) return;
-    try { const all = load(); if (all.length) store.set(KEY, JSON.stringify(all)); } catch (e) {}
+    // #187：保险丝写回同样走守卫——病理存储下 load() 可能只是剥图快照，直接写会把
+    //   无图版本盖进权威键（永久丢图），守卫探测确认权威键不存在时才落盘
+    try { const all = load(); if (all.length) feedGuardWrite(JSON.stringify(all)); } catch (e) {}
     feedDbReady = true;
     render();
   }, 15000);
@@ -2324,4 +2681,14 @@ if (comInput) comInput.addEventListener('keydown', (e) => { if (e.key === 'Enter
       return { text: p.text.indexOf(s) >= 0, kaomoji: p.kaomoji.indexOf(s) >= 0, emoji: p.emoji.indexOf(s) >= 0 };
     } catch (e) { return null; }
   };
+  // v3.26.x(#122)：注册朋友圈内置互动回应池跨分类搜索（字卡库列表页搜索同源可查，不再搜不到）
+  window.__cardSearchFns = window.__cardSearchFns || [];
+  window.__cardSearchFns.push({ name: '朋友圈互动', fn: function (kw) {
+    const out = [];
+    try {
+      TA_COMMENT_POOL.forEach(c => { if (String(c).toLowerCase().indexOf(kw) >= 0) out.push({ t: String(c), cat: 'TA评论' }); });
+      TA_REPLY_POOL.forEach(c => { if (String(c).toLowerCase().indexOf(kw) >= 0) out.push({ t: String(c), cat: 'TA回应回复' }); });
+    } catch (e) {}
+    return out;
+  } });
 })();

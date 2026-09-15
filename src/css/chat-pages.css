@@ -200,6 +200,10 @@
    列表改真虚拟滚动窗口（default-cards.js），首尾用 .cc-vspace 占位块撑起总高。 */
 #page-default-cards { overflow-y:auto; }
 #page-default-cards #dc-list { flex:0 0 auto; overflow:visible; min-height:0; -webkit-overflow-scrolling:auto; overscroll-behavior:auto; }
+#page-fun-cards { overflow-y:auto; }
+#page-fun-cards #fc-list { flex:0 0 auto; overflow:visible; min-height:0; -webkit-overflow-scrolling:auto; overscroll-behavior:auto; }
+#page-dict-cards { overflow-y:auto; }
+#page-dict-cards #d2-dict-list { flex:0 0 auto; overflow:visible; min-height:0; -webkit-overflow-scrolling:auto; overscroll-behavior:auto; }
 /* 虚拟窗口高度占位块：只用高度撑出滚动区间，本身无内容不可点 */
 .cc-vspace { display:block; margin:0; padding:0; pointer-events:none; }
 .dc-toggle {
@@ -1801,6 +1805,11 @@
   padding:9px 12px; font-size:13px; font-family:inherit; outline:none; background:#fff; color:var(--ink);
   resize:vertical; line-height:1.5;
 }
+/* v3.26.x #292：问问ta 添加表单/批量导入复用「帮我决定」一键清空 ✕（.dec-inp-wrap/.dec-inp-clear 全局款）——包装层接管原输入框的 flex 位，框内右侧留白给按钮 */
+.ta-add .dec-inp-wrap.ta-inp-flex { flex:1; min-width:0; }
+.ta-add .dec-inp-wrap.ta-opts-flex { flex:1 0 100%; }
+.ta-add .dec-inp-wrap input,
+.ta-add .dec-inp-wrap .ta-opts { padding-right:38px; box-sizing:border-box; }
 .ta-add .ta-opts[hidden] { display:none; }
 /* v3.23.x：设置页添加表单的选项框（安卓转 .ce-box）同样限高 + 框内滚动，
    防止选项多时把「添加」按钮顶出屏外（对齐 #chat-ask-opts / dec-opts 修法） */
