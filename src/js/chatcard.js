@@ -22,9 +22,133 @@
   function pubStore() { return window.xyStore(PUB_PREFIX); }
   function curStore() { return ccScope === 'public' ? pubStore() : store; }
   function curKey() { return ccScope === 'public' ? PUB_KEY : 'cc-groups'; }
+  // ================= v3.30.x：分组停用开关（公用 / 专属各自独立） =================
+  // 需求：可在字卡库管理页关闭某个分组的「使用」——关闭后该分组不再进入任何自动
+  // 回复池（聊天自动回复/拍一拍/表情包/语音/朋友圈/信箱/群聊/TA主动分享等），
+  // 字卡本身保留在库中（管理页仍完整显示、可编辑/删除），随时可重新开启。
+  // 存储与字卡键同构分作用域：公用 xy-home-v2:cc-groups-public-off（全局根键，
+  // 已登记 contacts.js EXCLUDE 防 migrateLegacy 迁走）/ 专属 <cid>:cc-groups-off；
+  // 格式 { 分类: [分组名, ...] }——同名分组按分类区分，停用专属某分组不影响公用同名分组。
+  const PUB_OFF_KEY = 'cc-groups-public-off';
+  const OFF_KEY = 'cc-groups-off';
+  let offCache = null; // 当前桌面专属停用集合缓存（切联系人失效）
+  let pubOffCache = null; // 公用停用集合缓存
+  function offStore(scope) { return scope === 'public' ? pubStore() : store; }
+  function offKey(scope) { return scope === 'public' ? PUB_OFF_KEY : OFF_KEY; }
+  function offLoad(scope) {
+    const c = scope === 'public' ? pubOffCache : offCache;
+    if (c) return c;
+    let o = {};
+    try {
+      const v = offStore(scope).get(offKey(scope));
+      if (v) { const p = JSON.parse(v); if (p && typeof p === 'object') o = p; }
+    } catch (e) {}
+    if (scope === 'public') pubOffCache = o; else offCache = o;
+    return o;
+  }
+  function offSave(scope, o) {
+    try { offStore(scope).set(offKey(scope), JSON.stringify(o)); } catch (e) {}
+    if (scope === 'public') pubOffCache = o; else offCache = o;
+  }
+  function offInvalidate() { offCache = null; pubOffCache = null; }
+  function isGroupOff(scope, type, gname) {
+    try { const o = offLoad(scope); return !!(o[type] && o[type].indexOf(gname) >= 0); } catch (e) { return false; }
+  }
+  // 管理页切换某分组的停用状态（按当前打开作用域），返回切换后是否停用
+  function toggleGroupOff(type, gname) {
+    const scope = ccScope === 'public' ? 'public' : 'own';
+    const o = offLoad(scope);
+    if (!o[type] || !Array.isArray(o[type])) o[type] = [];
+    const i = o[type].indexOf(gname);
+    const nowOff = i < 0;
+    if (nowOff) o[type].push(gname); else o[type].splice(i, 1);
+    if (!o[type].length) delete o[type];
+    offSave(scope, o);
+    return nowOff;
+  }
+  // 剔除某作用域字卡分组中被停用的分组（返回新对象，不修改入参；无停用记录时原样返回）
+  function filterGroupsByOff(g, scope) {
+    try {
+      const o = offLoad(scope);
+      let has = false;
+      for (const t in o) { if ((o[t] || []).length) { has = true; break; } }
+      if (!has) return g;
+      const out = {};
+      Object.keys(g).forEach(t => {
+        const offs = o[t] || [];
+        out[t] = (g[t] || []).filter(grp => offs.indexOf(grp[0]) < 0);
+      });
+      return out;
+    } catch (e) { return g; }
+  }
   // 解析公用键（带缓存：回复池每次发消息都会取合并池，不能反复 JSON.parse 大库）
   let pubCache = null;
   function pubInvalidate() { pubCache = null; }
+  // v3.26.x #377 巨型公用库内存瘦身（修 iOS 独立 PWA「用一会自动退回开屏」OOM 家族）：
+  // 重度用户公用库单键可达 45~189MB（贴纸/图片卡整份 dataURL），pubGroupsRaw 解析出的
+  // pubCache 连同原始串双份常驻（tmp-pool-mem 实测：179MB 种子→进桌面 371MB→开聊天
+  // 730MB 且永不回落），iOS WebKit 渲染进程被 jetsam 杀掉＝整页重载回开屏。
+  // 这里在缓存构建后对超大媒体卡做【内存内】令牌化：卡体换成 @@m:hash 令牌（内容寻址，
+  // 池键落 IDB 由 media-pool 托管、渲染/发送端令牌链路 #142/#283 已全通），原始库键
+  // 一个字节不动（字卡库页面/备份/编辑仍读写原始 dataURL，零数据风险）。
+  // · 只动 sticker/image 两类、单卡体 >64KB 的卡——小卡保持原文（朋友圈 onlyData 等
+  //   只认 data: 的消费端对小卡行为零变化，见 FIX-REGRESSION #373 说明）；
+  // · noCache:true=池命中/新写都不进 media-pool map 热缓存（否则令牌化省下的内存被
+  //   map 原样吃回），渲染时走 resolveImg 懒解析按需驻留；
+  // · 身份守卫：异步落令牌回写前核对卡原文未变（编辑/失效竞态不覆盖新内容）；
+  // · 每次会话重做（哈希内容寻址幂等）：池键若被 GC 清理，下次构建时重新落池即可。
+  const CC_MEDIA_TOKEN_THRESHOLD = 64 * 1024;
+  // FIX 2026-09-13 #398 令牌化管线串行化 + 会话哈希备忘（iPhone 14 Pro/16 Safari「持续卡顿动不了」
+  // 等多机型；与「最近两三天」起病时间吻合＝#377 上线）——旧实现对每张大卡并发发起
+  // mochiMediaTokenize（每张都 TextEncoder 全量编码 + SHA-256），大库一建缓存就是几百个编码
+  // 任务同挤主线程＝持续卡死；且每次缓存重建（切联系人/写库 pubInvalidate）都全量重算。
+  // 改为：①收集任务后串行执行、每张之间 setTimeout(0) 让出主线程（总时长不变但 UI 可交互）；
+  // ②会话内 body→token 备忘（FIFO 字符预算淘汰，上限 8M 字符≈16MB，不破坏 #377 瘦身目标），
+  // 重复构建零重算；③世代计数——pubInvalidate 重建后旧 pass 自动作废，memo 让重跑便宜。
+  let ccTokRun = 0;
+  const ccTokMemo = new Map();
+  let ccTokMemoChars = 0;
+  const CC_TOK_MEMO_MAX_CHARS = 8 * 1024 * 1024;
+  function ccTokenizeGiantMedia(g) {
+    if (!window.mochiMediaTokenize) return;
+    const gen = ++ccTokRun;
+    const jobs = [];
+    ['sticker', 'image'].forEach(function (t) {
+      (g[t] || []).forEach(function (grp) {
+        if (!Array.isArray(grp) || !Array.isArray(grp[1])) return;
+        grp[1].forEach(function (card, i) {
+          if (typeof card !== 'string' || card.indexOf('@@m:') >= 0) return;
+          const bar = card.indexOf('|||');
+          const body = bar >= 0 ? card.slice(bar + 3) : card;
+          if (body.length < CC_MEDIA_TOKEN_THRESHOLD || body.indexOf('data:image/') !== 0) return;
+          jobs.push({ grp: grp, i: i, card: card, bar: bar, body: body });
+        });
+      });
+    });
+    if (!jobs.length) return;
+    (async function () {
+      for (let k = 0; k < jobs.length; k++) {
+        if (gen !== ccTokRun) return; // 缓存已重建/失效，本次 pass 作废（memo 让重跑便宜）
+        const j = jobs[k];
+        let tok = ccTokMemo.get(j.body);
+        if (!tok) {
+          try { tok = await window.mochiMediaTokenize(j.body, { noCache: true }); } catch (e) { tok = null; }
+          if (gen !== ccTokRun) return;
+          if (tok) {
+            ccTokMemo.set(j.body, tok); ccTokMemoChars += j.body.length;
+            while (ccTokMemoChars > CC_TOK_MEMO_MAX_CHARS && ccTokMemo.size) {
+              const fk = ccTokMemo.keys().next().value;
+              ccTokMemoChars -= fk.length; ccTokMemo.delete(fk);
+            }
+          }
+        }
+        await new Promise(function (r) { setTimeout(r, 0); }); // 每张之间让出主线程，UI 可交互
+        if (gen !== ccTokRun) return;
+        if (!tok || j.grp[1][j.i] !== j.card) continue; // 身份守卫：卡原文已变则不覆盖
+        j.grp[1][j.i] = j.bar >= 0 ? (j.card.slice(0, j.bar + 3) + tok) : tok;
+      }
+    })();
+  }
   function pubGroupsRaw() {
     if (!pubCache) {
       pubCache = buildGroupsFrom(pubStore().get(PUB_KEY));
@@ -34,21 +158,57 @@
         try { pubStore().set(PUB_KEY, JSON.stringify(pubCache)); } catch (e) {}
         notifyVoiceHeal(_vhp.fixed, _vhp.removed);
       }
+      ccTokenizeGiantMedia(pubCache);
     }
     return pubCache;
   }
   function ownGroupsRaw() { return buildGroupsFrom(store.get('cc-groups')); }
   // 合并视图：当前作用域字卡 + 公用字卡（同分类分组拼接；只读，供回复池/搜索用）
   const CC_TYPES = ['text', 'kaomoji', 'emoji', 'sticker', 'image', 'poke', 'voice'];
+  // v3.32.x：其他互动功能字卡（自定义）——与系统预设【其他互动功能字卡】同 13 个功能分类。
+  // 存本作用域 cc-groups 的同名字段（公用库/专属库双作用域与分组停用开关全部沿用），
+  // 管理页（page-custom-cards）功能分类 tab 可查看/编辑/删除，各功能经 default-cards.js
+  // getLibPool 并入对应功能池抽取；CC_FUNC_KEYS 不进聊天通用回复池（getCustomCards*
+  // 遍历全部分类时排除，防止功能字卡被聊天自动回复误抽）。
+  const CC_FUNC_KEYS = ['fish', 'eat', 'period', 'water', 'garden', 'sync', 'reach', 'cjian', 'room', 'piggy', 'drift', 'interact', 'music',
+    'mjfree']; // #317 梦角自由造句：程序生成的重造句卡（dream-free.js），管理页可查看/删除，不进聊天通用池
+  const CC_ALL_TYPES = CC_TYPES.concat(CC_FUNC_KEYS);
+  // v3.26.x #139：GIF 动图上传大小上限（base64 长度）——GIF canvas 压缩会丢
+  // 动画只能直存原图，此前无上限，几 MB~几十 MB 的动图整份进库是字卡库膨胀大头之一。
+  // #160：4MB base64（≈3MB 文件）仍太大——用户库堆到 40MB/22MB（双作用域合计 62.8MB），
+  // 每次保存/读取对整库 JSON.stringify/parse 在 iOS WebKit 上是秒级长任务=卡死根因，
+  // 砍到 512KB base64（≈380KB 文件）守住单卡体积；已有大 GIF 靠用户手动清理（先备份）。
+  const CC_GIF_MAX_B64 = 512 * 1024;
   function mergeWithPublic(g) {
     const p = pubGroupsRaw();
     let has = false;
-    for (let i = 0; i < CC_TYPES.length; i++) { if ((p[CC_TYPES[i]] || []).length) { has = true; break; } }
+    for (let i = 0; i < CC_ALL_TYPES.length; i++) { if ((p[CC_ALL_TYPES[i]] || []).length) { has = true; break; } }
     if (!has) return g;
     const out = {};
-    CC_TYPES.forEach(t => { out[t] = (g[t] || []).concat(p[t] || []); });
+    CC_ALL_TYPES.forEach(t => { out[t] = (g[t] || []).concat(p[t] || []); });
     Object.keys(g).forEach(t => { if (!(t in out)) out[t] = g[t]; });
     return out;
+  }
+  // v3.30.x：回复池专用合并视图——专属/公用各自先剔除被停用分组再拼接。
+  // 不能直接在 mergeWithPublic 里过滤：它还被搜索/导出等管理视角使用（应看全部）；
+  // 分作用域过滤保证同名分组互不影响（停用专属「日常」不影响公用「日常」）。
+  function mergeFiltered(own, pub) {
+    const ownF = filterGroupsByOff(own, 'own');
+    const pubF = filterGroupsByOff(pub, 'public');
+    let hasPub = false;
+    for (let i = 0; i < CC_ALL_TYPES.length; i++) { if ((pubF[CC_ALL_TYPES[i]] || []).length) { hasPub = true; break; } }
+    if (!hasPub) return ownF;
+    const out = {};
+    CC_ALL_TYPES.forEach(t => { out[t] = (ownF[t] || []).concat(pubF[t] || []); });
+    Object.keys(ownF).forEach(t => { if (!(t in out)) out[t] = ownF[t]; });
+    return out;
+  }
+  // 当前桌面回复池合并视图（供 getCustomCards/getPokeCards/getMediaCards 等使用）
+  function replyPoolGroups() { return mergeFiltered(replyScopeGroups(), pubGroupsRaw()); }
+  // 指定联系人(cid)的回复池合并视图（朋友圈/群聊按联系人取池）
+  function replyPoolGroupsFor(cid) {
+    const raw = (window.storeFor && window.storeFor(cid) || window.xyStore('xy-home-v2:' + cid)).get('cc-groups');
+    return mergeFiltered(buildGroupsFrom(raw), pubGroupsRaw());
   }
 
   // 内置分组数据（key: 类型 -> [分组名, 字卡数组]）
@@ -261,6 +421,7 @@
       stripBuiltins(data);
       st.set(lsKey, JSON.stringify(data));
       pubInvalidate();
+      ccAuthMark(lsKey === PUB_KEY ? 'public' : 'own'); // v3.26.x #193：权威库已进内存，写路径放行
       // 只刷新与当前作用域一致的管理页视图；另一作用域只更新列表页角标
       if (lsKey === 'cc-groups' && ccScope === 'own' && window.activePrefix() === myPrefix) {
         groups = data;
@@ -292,6 +453,8 @@
         try {
           const data = typeof v === 'string' ? JSON.parse(v) : v;
           if (data && data.text) {
+            // v3.26.x #193：IDB 读到了权威库（无论是否覆盖内存），本会话已见过权威数据
+            if (idbFullKey === curFullKey()) ccAuthMark();
             let localData = null;
             try { localData = JSON.parse(st.get(lsKey) || 'null'); } catch (e) {}
             const localCount = localData && localData.text ? cardCount(localData) : -1;
@@ -318,7 +481,28 @@
       } catch (e) { kick(); }
     }
   })();
+  // v3.26.x #193：防覆盖守卫——本会话尚未确认「权威库已取回进内存」的作用域集合。
+  // 大库（几十 MB 公用库）被启动回填挂起在 IDB / openCcPage 的 hydrateCurScope 未落定 /
+  // 回填链被 iOS 挂后台打断读空时，内存 groups 只是空库或残缺快照，此时任何写路径
+  // （批量导入/上传图片/编辑/删除，全走 scheduleSave→saveGroups）整包写回都会把权威键
+  // 里的旧字卡覆盖没（iPhone 17 Pro Safari 实测：公用库 17.67MB，一次性批量导入文字卡
+  // 后旧字卡全部消失）。#139 防复制守卫只护 JSON 文件导入，此处是全写路径收口。
+  const ccAuthSeen = { public: false, own: false };
+  function ccAuthMark(scope) { try { ccAuthSeen[scope || ccScope] = true; } catch (e) {} }
+  function curFullKey() {
+    return ccScope === 'public' ? (PUB_PREFIX + ':' + PUB_KEY) : (window.activePrefix() + ':cc-groups');
+  }
   function saveGroups(groups) {
+    if (!ccAuthSeen[ccScope] && window.idbHasKey) {
+      // 未确认权威库已取回：先探测 IDB 是否真有权威数据——有 = 绝不整包写回，
+      // 走 rescueCcOverwrite 合并营救；健康连接确认无键（新装/空库）才放行直写
+      ccDirty = true;
+      rescueCcOverwrite();
+      return;
+    }
+    saveGroupsNow(groups);
+  }
+  function saveGroupsNow(groups) {
     // 统一走适配层：localStorage 快照 + IndexedDB 权威（配额满也不丢，启动自动恢复）
     // v3.11.x：按当前作用域写入对应键
     curStore().set(curKey(), JSON.stringify(groups));
@@ -326,6 +510,40 @@
     refreshLibCounts(true);
     ccDirty = false; // 本次待写已落盘（LS 同步 + IDB 异步发起）
   }
+  // v3.26.x #193：把内存库（空/残缺快照 + 用户新增）按分组合并进权威库——同名分组
+  // 按「权威没有的卡才补」去重追加，权威没有的分组整组补入；旧字卡与本次导入都不丢
+  function mergeCcGroupsInto(auth, mem) {
+    Object.keys(mem || {}).forEach(t => {
+      if (!Array.isArray(auth[t])) auth[t] = [];
+      (mem[t] || []).forEach(pair => {
+        const name = pair[0], cards = pair[1] || [];
+        let g = auth[t].find(p => p[0] === name);
+        if (!g) { g = [name, []]; auth[t].push(g); }
+        const have = new Set(g[1]);
+        cards.forEach(c => { if (!have.has(c)) { g[1].push(c); have.add(c); } });
+      });
+    });
+    return auth;
+  }
+  let ccRescueInflight = null;
+  function rescueCcOverwrite() {
+    if (ccRescueInflight) return;
+    const mem = groups; // hydrateCurScope 落定后会用权威库重载 groups，先保住内存增量
+    ccRescueInflight = Promise.resolve(window.idbHasKey(curFullKey())).then(exists => {
+      if (!exists) { ccAuthMark(); saveGroupsNow(groups); return null; }
+      return hydrateCurScope().then(() => {
+        groups = mergeCcGroupsInto(loadGroups(), mem);
+        ccAuthMark();
+        saveGroupsNow(groups);
+        try { renderGroupsBar(); render(); } catch (e0) {}
+        return null;
+      });
+    }).catch(() => {
+      // 探测/取回失败按「权威可能存在」处理：宁可缓写也绝不拿残缺库覆盖权威键
+      return null;
+    }).then(() => { ccRescueInflight = null; });
+  }
+
 
   let groups = loadGroups();
   let cur = 'text';
@@ -424,6 +642,56 @@
 
   // v3.6.x：HTML 转义——文件名/字卡内容/分组名是用户输入，直接拼 innerHTML 会破坏结构或注入
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+  // ================= v3.30.x：分组停用开关 UI =================
+  // 分组 header 右侧眼睛按钮：点击停用/启用该分组。停用只影响「使用」
+  //（回复池/面板不再出现该分组），字卡保留在库中，可随时重新启用。
+  const ICON_EYE_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const ICON_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><path d="M14.12 14.12a3 3 0 11-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
+  function ccOffScope() { return ccScope === 'public' ? 'public' : 'own'; }
+  // 分组 header HTML（停用标记 + 眼睛按钮），render 与局部重建共用
+  function groupHeaderHtml(gname, count) {
+    const off = isGroupOff(ccOffScope(), cur, gname);
+    return '<span class="ccg-name">' + esc(gname) + (off ? '<em class="ccg-off-tag">已停用</em>' : '') + '</span>' +
+      '<span class="ccg-count">' + count + '</span>' +
+      '<button type="button" class="ccg-toggle' + (off ? ' off' : '') + '" title="' + (off ? '启用该分组' : '停用该分组') + '">' + (off ? ICON_EYE_OFF : ICON_EYE_ON) + '</button>';
+  }
+  // 绑定 header 开关事件（render 与局部重建共用）
+  function bindGroupToggle(h, gname) {
+    const tog = h.querySelector('.ccg-toggle');
+    if (!tog) return;
+    tog.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const off = toggleGroupOff(cur, gname);
+      refreshGroupHeaderUI(gname);
+      toast(off ? '已停用分组「' + gname + '」：该分组字卡不再被联系人使用' : '已启用分组「' + gname + '」：该分组字卡恢复使用');
+    });
+  }
+  // 就地更新某个分组的 header 停用视觉（不重建列表 DOM）
+  function refreshGroupHeaderUI(gname) {
+    const sel = (window.CSS && CSS.escape) ? CSS.escape(String(gname)) : String(gname).replace(/["\\]/g, '\\$&');
+    const h = list.querySelector('.cc-group-header[data-g="' + sel + '"]');
+    if (!h) return;
+    const off = isGroupOff(ccOffScope(), cur, gname);
+    h.classList.toggle('off', off);
+    const nm = h.querySelector('.ccg-name');
+    if (nm) {
+      const tag = nm.querySelector('.ccg-off-tag');
+      if (off && !tag) {
+        const e = document.createElement('em');
+        e.className = 'ccg-off-tag';
+        e.textContent = '已停用';
+        nm.appendChild(e);
+      } else if (!off && tag) { tag.remove(); }
+    }
+    const tog = h.querySelector('.ccg-toggle');
+    if (tog) {
+      tog.classList.toggle('off', off);
+      tog.title = off ? '启用该分组' : '停用该分组';
+      tog.innerHTML = off ? ICON_EYE_OFF : ICON_EYE_ON;
+    }
+  }
 
   // 字卡项 HTML：图片 dataURL 显示缩略图，否则文字（删除统一走【管理字卡】）
   function cardItemHtml(c) {
@@ -616,14 +884,21 @@
   // v3.11.x：字卡库列表页「公用字卡 / 专属字卡」两行入口的角标计数。
   // 角标与当前打开作用域无关（公用行恒显全局键总量、专属行恒显当前联系人键总量）；
   // 带缓存：render→updateCountsOnly 高频触发，不重复 JSON.parse 大库，变更方强制刷新
-  const libCounts = { pub: -1, own: -1 };
+  // v3.32.x：fun=专属库功能字卡数；pubFun=公用库功能字卡数（与 pub 同缓存节奏）
+  const libCounts = { pub: -1, own: -1, fun: -1, pubFun: -1 };
   function countOf(g) {
     let n = 0;
     try { Object.keys(g || {}).forEach(t => (g[t] || []).forEach(grp => { if (Array.isArray(grp) && Array.isArray(grp[1])) n += grp[1].length; })); } catch (e) {}
     return n;
   }
+  // v3.32.x：只统计指定分类（功能字卡入口角标用）
+  function countOfKeys(g, keys) {
+    let n = 0;
+    try { (keys || []).forEach(t => (g[t] || []).forEach(grp => { if (Array.isArray(grp) && Array.isArray(grp[1])) n += grp[1].length; })); } catch (e) {}
+    return n;
+  }
   function refreshLibCounts(force) {
-    if (force) { libCounts.pub = -1; libCounts.own = -1; pubInvalidate(); }
+    if (force) { libCounts.pub = -1; libCounts.own = -1; libCounts.fun = -1; libCounts.pubFun = -1; pubInvalidate(); }
     // v3.25.x：计数 0 不再缓存——iOS 慢回填场景角标先算成 0 并缓存，之后数据落进
     // 内存缓存也没人失效它，列表页两行角标永远 0（点进作用域页却能看到字卡，真机反馈）。
     // 空库重复 countOf 只是解析 null 零负担；大库计数 >0 仍走缓存，不会反复 JSON.parse。
@@ -633,11 +908,30 @@
       // 别处再 parse 一次，等于每次返回字卡库把多 MB 公用库 JSON.parse 两遍。
       const n = countOf(pubGroupsRaw());
       libCounts.pub = n > 0 ? n : -1;
+      libCounts.pubFun = countOfKeys(pubGroupsRaw(), CC_FUNC_KEYS);
     }
-    if (libCounts.own < 0) {
-      const n = countOf(ownGroupsRaw());
-      libCounts.own = n > 0 ? n : -1;
+    if (libCounts.own < 0 || libCounts.fun < 0) {
+      // v3.32.x：own 与 fun 共用同一次 parse（失效总是一起，防重复 JSON.parse 大库）
+      const og = ownGroupsRaw();
+      if (libCounts.own < 0) {
+        const n = countOf(og);
+        libCounts.own = n > 0 ? n : -1;
+      }
+      if (libCounts.fun < 0) libCounts.fun = countOfKeys(og, CC_FUNC_KEYS);
     }
+    if (libCounts.pubFun < 0) {
+      // v3.32.x：公用功能字卡计数与 cc-pub-count 同缓存节奏——只在 force 后重算一次。
+      // 红线：绝不在进页路径上为角标 parse 公用大库（openCcPage 每次都会 pubInvalidate()，
+      // 若这里无条件 pubGroupsRaw() = 每次点开字卡库都整库 JSON.parse 一遍 → 点开必卡，
+      // 用户实测反馈过的卡顿根因，勿回退）
+      libCounts.pubFun = countOfKeys(pubGroupsRaw(), CC_FUNC_KEYS);
+    }
+    // v3.32.x：功能字卡双入口角标——专属行=专属库功能字卡、公用行=公用库功能字卡
+    //（各自走缓存，本函数零解析；与 公用字卡/专属字卡 两行口径一致）
+    const pfe = document.getElementById('cc-fun-count');
+    if (pfe) pfe.textContent = String(libCounts.fun < 0 ? 0 : libCounts.fun);
+    const pfpe = document.getElementById('cc-fun-pub-count');
+    if (pfpe) pfpe.textContent = String(libCounts.pubFun < 0 ? 0 : libCounts.pubFun);
     const pe = document.getElementById('cc-pub-count');
     if (pe) pe.textContent = libCounts.pub < 0 ? 0 : libCounts.pub;
     const oe = document.getElementById('cc-list-count');
@@ -683,9 +977,10 @@
     if (!g) return; // 分组整体已删（走删除分组流程，不经过这里）
     // 重建 header（数量更新；空分组显示 0 张）
     const h = document.createElement('div');
-    h.className = 'cc-group-header';
+    h.className = 'cc-group-header' + (isGroupOff(ccOffScope(), cur, gname) ? ' off' : '');
     h.dataset.g = gname;
-    h.innerHTML = '<span class="ccg-name">' + esc(gname) + '</span><span class="ccg-count">' + g[1].length + '</span>';
+    h.innerHTML = groupHeaderHtml(gname, g[1].length);
+    bindGroupToggle(h, gname);
     // 找插入锚点：下一个分组的 header（按 DOM 顺序），否则 list 末尾
     const grpNames = grps.map(x => x[0]);
     const nextIdx = grpNames.indexOf(gname) + 1;
@@ -906,9 +1201,10 @@
     let pos = 0;
     const build = (el, it) => {
       if (it.header) {
-        el.className = 'cc-group-header';
+        el.className = 'cc-group-header' + (isGroupOff(ccOffScope(), cur, it.gname) ? ' off' : '');
         el.dataset.g = it.gname;
-        el.innerHTML = '<span class="ccg-name">' + esc(it.gname) + '</span><span class="ccg-count">' + it.count + '</span>';
+        el.innerHTML = groupHeaderHtml(it.gname, it.count);
+        bindGroupToggle(el, it.gname);
       } else {
         el.className = 'cc-item glass';
         el.dataset.g = it.gname;
@@ -1057,6 +1353,7 @@
   window.__cardSearchFns.push({ name: '默认聊天字卡', fn: function (kw) {
     const out = [];
     try {
+      if (window.cardLockOpen && !window.cardLockOpen()) return out; // #319 锁定＝搜不到系统预设字卡
       const d = window.DEFAULT_CARD_DATA || {};
       Object.keys(d).forEach(function (k) { (d[k] || []).forEach(function (grp) { const gname = grp[0]; const cards = grp[1] || []; cards.forEach(function (c) { if (c && String(c).toLowerCase().indexOf(kw) >= 0) out.push({ t: String(c), cat: gname }); }); }); });
     } catch (e) {}
@@ -1412,15 +1709,34 @@
   const mcBtn = document.getElementById('cc-manage-cards');
   if (mcBtn) mcBtn.addEventListener('click', () => { if (manageMode) exitManage(); else enterManage(); });
 
-  // ================= 去重复字卡（同一分组内内容完全相同的字卡只保留 1 张） =================
+  // ================= 去重复字卡 =================
+  // #360：跨分组去重——seen 集合按「分类」建、不按「分组」建，同分类下换了分组也能清出重复；
+  // 对象型字卡（表情包/图片/语音）按稳定序列化内容判重（原 new Set(arr) 按引用比较，对象永远判不出）。
+  function ccCardDupKey(cat, c) {
+    if (typeof c === 'string') return cat + '|s|' + c;
+    try {
+      return cat + '|o|' + JSON.stringify(c, (k, v) => {
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          const o = {};
+          Object.keys(v).sort().forEach(k2 => { o[k2] = v[k2]; });
+          return o;
+        }
+        return v;
+      });
+    } catch (e) { return cat + '|r|' + Math.random(); } // 序列化失败宁可不删
+  }
   const ccDedupe = document.getElementById('cc-dedupe');
   if (ccDedupe) {
     ccDedupe.addEventListener('click', () => {
       // 先统计重复数量（不修改数据），确认后才真正删除
       let dup = 0;
       Object.keys(groups).forEach(cat => {
-        (groups[cat] || []).forEach(([gname, arr]) => {
-          dup += (arr || []).length - new Set(arr || []).size;
+        const seen = new Set();
+        (groups[cat] || []).forEach(([, arr]) => {
+          (arr || []).forEach(c => {
+            const k = ccCardDupKey(cat, c);
+            if (seen.has(k)) dup++; else seen.add(k);
+          });
         });
       });
       if (!dup) { toast('没有发现重复字卡'); return; }
@@ -1428,12 +1744,13 @@
         window.openModal('去重 ' + dup + ' 张重复字卡？', '', () => {
           let removed = 0;
           Object.keys(groups).forEach(cat => {
-            (groups[cat] || []).forEach(([gname, arr]) => {
+            const seen = new Set();
+            (groups[cat] || []).forEach(([, arr]) => {
               const kept = [];
-              const seen = new Set();
               (arr || []).forEach(c => {
-                if (seen.has(c)) { removed++; return; }
-                seen.add(c); kept.push(c);
+                const k = ccCardDupKey(cat, c);
+                if (seen.has(k)) { removed++; return; }
+                seen.add(k); kept.push(c);
               });
               arr.length = 0;
               arr.push.apply(arr, kept);
@@ -1445,7 +1762,7 @@
           toast('已去除 ' + removed + ' 张重复字卡');
         }, {
           noInput: true,
-          staticText: '将删除同一分组内内容完全相同的重复字卡（每种内容只保留 1 张），并同步清理各分组的数量显示。'
+          staticText: '将删除当前字卡库内同分类各分组中内容完全相同的重复字卡（跨分组也计重复，每种内容只保留 1 张，保留最先出现的那张），并同步清理各分组的数量显示。'
         });
       }
     });
@@ -1455,9 +1772,13 @@
   const ccExport = document.getElementById('cc-export');
   if (ccExport) {
     // 7 大分类 key + 显示名（与分类 tab 一致）
+    // v3.32.x：补其他互动功能字卡 13 分类（与分类 tab 一致，导出含功能字卡）
     const EXPORT_CATS = [
       ['text', '主字卡'], ['kaomoji', '颜文字'], ['emoji', 'emoji'],
-      ['sticker', '表情包'], ['image', '图片'], ['poke', '拍一拍'], ['voice', '语音']
+      ['sticker', '表情包'], ['image', '图片'], ['poke', '拍一拍'], ['voice', '语音'],
+      ['fish', '摸鱼'], ['eat', '吃饭'], ['period', '经期'], ['water', '喝水'], ['garden', '花园'],
+      ['sync', '同频'], ['reach', '伸手'], ['cjian', '此间'], ['room', '房间'], ['piggy', '存钱罐'],
+      ['drift', '漂流瓶'], ['interact', '互动回应'], ['music', '音乐']
     ];
     const ceMask = document.getElementById('cc-export-mask');
     const ceCats = document.getElementById('ce-cats');
@@ -1550,7 +1871,8 @@
       if (ceDo) {
         ceDo.addEventListener('click', () => {
           try {
-            const out = { text: [], kaomoji: [], emoji: [], sticker: [], image: [], poke: [], voice: [] };
+            const out = {};
+            CC_ALL_TYPES.forEach(t => { out[t] = []; });
             EXPORT_CATS.forEach(([key]) => {
               const st = ceState[key];
               if (!st || !st.on) return;
@@ -1580,7 +1902,7 @@
   // 文件先完整解析、确认含有效字卡后才写入：格式错误/空文件不会改动现有字卡库
   const ccImportData = document.getElementById('cc-import-data');
   if (ccImportData) {
-    const CAT_NAMES = { text: '主字卡', kaomoji: '颜文字', emoji: 'emoji', sticker: '表情包', image: '图片', poke: '拍一拍', voice: '语音' };
+    const CAT_NAMES = { text: '主字卡', kaomoji: '颜文字', emoji: 'emoji', sticker: '表情包', image: '图片', poke: '拍一拍', voice: '语音', fish: '摸鱼', eat: '吃饭', period: '经期', water: '喝水', garden: '花园', sync: '同频', reach: '伸手', cjian: '此间', room: '房间', piggy: '存钱罐', drift: '漂流瓶', interact: '互动回应', music: '音乐' };
     ccImportData.addEventListener('click', () => {
       if (window.openModal) {
         const curName = CAT_NAMES[cur] || '当前分类';
@@ -1605,22 +1927,85 @@
       pickFiles('', false, (files) => {
         const f = files && files[0];
         if (!f) return;
+        const fname = f.name || '未命名文件';
+        const fsize = f.size ? Math.max(1, Math.round(f.size / 1024)) + 'KB' : '空文件';
+        // v3.26.x #171：iOS Safari 导 milk json 报「格式错误」——旧版一个 catch 把三类
+        // 完全不同的失败（JSON 解析失败／文件转存损坏／导入处理自身抛错）混成同一句
+        // 「文件格式不正确」，真因永远看不到。拆开：
+        //   ① 解析失败给真实原因 + 针对性自救（UTF-16 转存重读／裁剪提取首{到末}／
+        //      空文件=网盘未下载完整／网页=存成了 HTML），不再一律「格式错误」；
+        //   ② applyImportData 抛错单独提示，存储类失败不再伪装成格式问题；
+        //   ③ 失败现场写 __jsErrors → 设置页「复制诊断信息」直接带出真因（iOS 报障自证）。
         const reader = new FileReader();
-        reader.onload = () => {
+        let rawHead = ''; // 诊断用文件头（先 slice 再 replace，绝不全文扫描——200MB 级文件全文 replace 本身就是一次 OOM 风险）
+        const diag = (why) => {
           try {
-            let txt = String(reader.result || '');
-            // 部分安卓文件管理器/浏览器写入的 json 带 BOM，JSON.parse 会直接抛错
-            if (txt.charCodeAt(0) === 0xFEFF) txt = txt.slice(1);
-            const data = JSON.parse(txt);
-            if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('格式错误');
-            applyImportData(data, mode);
-          } catch (e) {
-            // 带上文件名/大小：vivo/雨见偶发读到空内容（size>0 内容空）时用户能对照排查
-            toast('导入失败：文件格式不正确（' + (f.name || '未命名文件') + '·' + (f.size ? Math.max(1, Math.round(f.size / 1024)) + 'KB' : '空文件') + '）');
+            if (window.__jsErrors) window.__jsErrors.push('[字卡导入] ' + why + ' | ' + fname + '·' + fsize + ' | 开头: ' + rawHead);
+          } catch (e0) {}
+        };
+        // v3.26.x #182：200MB 级字卡库在 iOS WebKit（含 iOS Chrome）上解析/写盘峰值可达 GB 级，
+        // OOM（RangeError / Out of memory）会被旧提示误标成「格式错误」——统一识别给对应指引
+        const oomErr = (e) => /rangeerror|out of memory|memory|内存/i.test(String((e && (e.message || e.name)) || e || ''));
+        const applyOk = (data) => {
+          try { applyImportData(data, mode); } catch (e) {
+            toast(oomErr(e)
+              ? '文件约 ' + Math.max(1, Math.round(f.size / 1048576)) + 'MB，本机内存不足以一次性导入——请先在「查看存储→字卡库瘦身」删掉超大表情/图片分组后重新导出分批导入，或改用「设置→数据备份」整包恢复'
+              : '导入处理失败：' + ((e && e.message) || '内部错误') + '（' + fname + '）');
+            diag('applyImportData 异常 ' + ((e && e.message) || e));
           }
         };
+        const fail = (why) => { toast('导入失败：' + why + '（' + fname + '·' + fsize + '）'); diag(why); };
+        const onReadErr = () => toast('导入失败：文件读取失败，请重选文件再试');
+        // recover=已用过的自救方式（utf16/trim），非空则不再二次自救
+        const handleText = (raw, recover) => {
+          let txt = String(raw || '');
+          // 部分安卓文件管理器/浏览器写入的 json 带 BOM/零宽字符，JSON.parse 会直接抛错
+          txt = txt.replace(/^[\uFEFF\u200B\u200E\u200F]+/, '');
+          if (!txt.trim()) { fail('文件内容为空——iCloud/网盘文件可能没下载完整，请在「文件」App 点开该文件确认有内容后再导入'); return; }
+          let data = null, perr = null;
+          try { data = JSON.parse(txt); } catch (e) { perr = e; }
+          if (perr) {
+            // v3.26.x #182：解析阶段 OOM（超大库）单独给瘦身/整包恢复指引
+            if (oomErr(perr)) {
+              fail('文件约 ' + Math.max(1, Math.round(f.size / 1048576)) + 'MB，本机内存不足以一次性解析导入——请先删掉超大表情/图片分组后重新导出分批导入，或改用「设置→数据备份」整包恢复');
+              return;
+            }
+            // 自救①：微信/邮件/文本编辑转存常把文件变 UTF-16——按 UTF-8 读出来成串 NUL，
+            // 数 NUL 落在奇/偶位定字节序，换对应编码重读一遍再走原流程
+            if (!recover && /\u0000/.test(txt.slice(0, 400))) {
+              let odd = 0, even = 0;
+              for (let i = 0; i < Math.min(txt.length, 400); i++) { if (txt.charCodeAt(i) === 0) { if (i % 2) odd++; else even++; } }
+              reader.onload = () => handleText(reader.result, 'utf16');
+              reader.onerror = onReadErr;
+              reader.readAsText(f, odd >= even ? 'utf-16le' : 'utf-16be');
+              return;
+            }
+            // 自救②：转存时前后被包了说明文字/网页源码——裁出首个 { 到末个 } 再试
+            // （#182：大文件不做——200MB 级 slice 复制一份本身就是 GB 级峰值推手，得不偿失）
+            const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+            if (!recover && a >= 0 && b > a && (b - a) < 80 * 1024 * 1024) { handleText(txt.slice(a, b + 1), 'trim'); return; }
+            const isHtml = txt.charAt(0) === '<' || /<html[\s>]/i.test(txt.slice(0, 200));
+            fail(isHtml
+              ? '文件是网页不是 JSON——请在 milk 里用导出按钮重新导出，分享时选「存储到文件」'
+              : 'JSON 解析失败：' + ((perr && perr.message) || '内容不是合法 JSON') + (recover ? '（自救 ' + recover + ' 后仍失败）' : ''));
+            return;
+          }
+          if (!data || typeof data !== 'object' || Array.isArray(data)) { fail('文件顶层不是 JSON 对象'); return; }
+          // v3.26.x #182：进写盘阶段前松开源文本引用——JSON.stringify(groups) 是 200MB 级新分配，
+          // 此刻源文本（同样 200MB 级）必须已是可回收状态，两个大头不能同时钉在堆上
+          txt = ''; raw = null;
+          applyOk(data);
+        };
+        reader.onload = () => {
+          const raw = String(reader.result || '');
+          rawHead = raw.slice(0, 300).replace(/\s+/g, ' ').slice(0, 120);
+          // 松开 FileReader 对整份内容的持有（onload/onerror 引用一断，超大 result 随 reader 可回收；
+          // 诊断只留 rawHead，绝不把 200MB 源文本带进写盘阶段）
+          reader.onload = null; reader.onerror = null;
+          handleText(raw, '');
+        };
         // 读取失败（onload 不触发）旧版无任何提示，像「点了没反应」
-        reader.onerror = () => toast('导入失败：文件读取失败，请重选文件再试');
+        reader.onerror = onReadErr;
         reader.readAsText(f);
       });
     }
@@ -1628,7 +2013,8 @@
     function writeImport(byCat, mode, targetCat) {
       let added = 0, dup = 0;
       if (mode === 'replace') {
-        groups = { text: [], kaomoji: [], emoji: [], sticker: [], image: [], poke: [], voice: [] };
+        groups = {};
+        CC_ALL_TYPES.forEach(t => { groups[t] = []; });
         Object.keys(byCat).forEach(cat => {
           const pairs = byCat[cat];
           groups[cat] = pairs.map(([n, cs]) => [n, cs.slice()]);
@@ -1758,9 +2144,16 @@
       // 导出格式，提示「文件里没有可导入的字卡」（公用/专属页表现一致）。这里按当前作用域
       // 从备份里取出字卡库键（公用 xy-home-v2:cc-groups-public / 专属 <前缀>:cc-groups），
       // 解析成标准格式后交给下方本应用格式分支正常导入
+      // v3.26.x #253：bag/fromPubFallback 原声明在下方「全量备份提取」分支块内，而函数尾部
+      // #139 防复制守卫要读它们——块级作用域不可见 ⇒ 任何格式（milk/星言/本应用/备份）只要
+      // 成功解析出字卡、走到尾部守卫必抛 ReferenceError「fromPubFallback is not defined」
+      //（#171 的 catch 提示成「导入处理失败」；华为Pro70+Edge 诊断启动文件异常三条实锤，
+      // 机型无关）。提升到函数作用域，语义零变化：非备份格式 bag 恒空对象、标记恒 false。
+      let bag = {}; // v3.26.x #253：从备份提取分支块内提升到函数作用域（仅备份分支填充，尾部 #139 守卫要读）
+      let fromPubFallback = false; // v3.26.x #253：同上提升（#139 专属页兜底取到「公用库内容」时置位，落盘前防整份复制）
       if (!fmt && data && typeof data === 'object' &&
           ((data.ls && typeof data.ls === 'object') || (data.idb && typeof data.idb === 'object'))) {
-        const bag = {};
+        bag = {};
         ['ls', 'idb'].forEach(k => {
           if (data[k] && typeof data[k] === 'object' && !Array.isArray(data[k])) Object.assign(bag, data[k]);
         });
@@ -1769,7 +2162,7 @@
           raw = bag[PUB_PREFIX + ':' + PUB_KEY] || '';
         } else {
           const ap = (typeof window.activePrefix === 'function' && window.activePrefix()) || PUB_PREFIX;
-          raw = bag[ap + ':cc-groups'] || bag[PUB_PREFIX + ':cc-groups'] || '';
+          raw = bag[ap + ':cc-groups'] || '';
           if (!raw) {
             // 换机/重装后联系人前缀可能变化：兜底取内容最多的一个专属键
             let best = '';
@@ -1778,6 +2171,11 @@
             });
             raw = best;
           }
+          // v3.26.x #139：公用库兜底放最后——诊断实证（三桌面专属库与公用库逐字节同大小，
+          // ≈415MB 冗余）本分支是整份复制的来源之一：备份里没有当前桌面专属键时，把公用库
+          // 内容导进专属键等于整份复制。保留兜底（换机后公用/专属归属判断失据时仍能拿回字卡），
+          // 但落盘前用 fromPubFallback 守卫拦截「合并结果与公用库完全相同」的写入。
+          if (!raw) { raw = bag[PUB_PREFIX + ':' + PUB_KEY] || ''; fromPubFallback = !!raw; }
         }
         try {
           const parsed = JSON.parse(String(raw || ''));
@@ -1841,12 +2239,325 @@
       }
       if (!imported) { toast('文件里没有可导入的字卡'); return; }
       const res = writeImport(byCat, mode, cur);
+      // v3.26.x #139：防复制守卫——专属页兜底导入「公用库内容」且合并结果与备份里的公用库
+      // 完全相同时不写专属键（写了就是整份复制）；回复池本就合并公用+专属，跳过零功能损失。
+      // 专属库有自己的内容时合并结果必然不同，照常保存。
+      if (fromPubFallback && ccScope === 'own') {
+        let newRaw = '';
+        try { newRaw = JSON.stringify(groups); } catch (e) {}
+        const pubBagRaw = String(bag[PUB_PREFIX + ':' + PUB_KEY] || '');
+        if (pubBagRaw && newRaw && newRaw === pubBagRaw) {
+          pubInvalidate();
+          renderGroupsBar();
+          render();
+          toast('备份的专属字卡库与公用库相同，已跳过写入专属库（公用字卡照常可用）');
+          return;
+        }
+      }
       saveGroups(groups);
       renderGroupsBar();
       render();
       if (mode === 'replace') toast('已替换字卡库 · 共 ' + res.added + ' 张字卡' + fmt + (dropped ? '，丢弃 ' + dropped + ' 条非法媒体' : ''));
       else if (mode === 'current') toast('已导入 ' + res.added + ' 张字卡到「' + (CAT_NAMES[cur] || '当前分类') + '」' + fmt + (res.dup ? '，自动去重 ' + res.dup + ' 条' : '') + (dropped ? '，丢弃 ' + dropped + ' 条非法媒体' : ''));
       else toast('已导入 ' + res.added + ' 张字卡' + fmt + (res.dup ? '，自动去重 ' + res.dup + ' 条' : '') + (dropped ? '，丢弃 ' + dropped + ' 条非法媒体' : ''));
+    }
+  }
+
+  // ================= v3.34.x：自定义字卡全量导入导出（字卡库列表页） =================
+  // 需求：此前只有【公用字卡】【专属字卡】两入口有导入导出，自定义区其余各库都没有出入口
+  //（功能卡存在 cc-groups 内随双作用域走；寻踪日常/今日情话/TA 六类题库的「我的添加」各自散落）。
+  // 这里在字卡库列表页提供一份覆盖全部自定义字卡的 json：
+  //   聊天字卡双作用域（公用 cc-groups-public / 专属 cc-groups，含 13 功能分类与分组停用开关）
+  //   + 寻踪日常三分类（checkin-cards-* 我的添加+自定义分组）
+  //   + 今日情话（quote-cards 我的添加+自定义分组）
+  //   + TA 六类题库（ta-ask/ta-choose/ta-curious/ta-roast/ta-checkin/ta-invite 的 questions+groups，
+  //     不含 settings/问答历史——只搬字卡，概率/开关等属功能设置不随库迁移）。
+  // 导入支持 追加合并（按内容去重）/ 整包替换（以文件为准）；读写前先走 hydrateLibScopes
+  // 权威取回（v3.15.x 懒加载收口同款），避免大键挂起在 IDB 时按空快照读写（#193 同防线）。
+  const CC_FULL_MARK = 'mochi-ccfull';
+  const CC_FULL_CK_KEYS = ['place', 'action', 'msg'];
+  const CC_FULL_TA_LIBS = [['taAsk', 'ta-ask'], ['taChoose', 'ta-choose'], ['taCurious', 'ta-curious'], ['taRoast', 'ta-roast'], ['taCheckin', 'ta-checkin'], ['taInvite', 'ta-invite']];
+  function ccFullRd(st, k, dft) {
+    try { const v = JSON.parse(st.get(k) || 'null'); return v == null ? dft : v; } catch (e) { return dft; }
+  }
+  function ccFullCardCount(g) {
+    let n = 0;
+    try { Object.keys(g || {}).forEach(t => (g[t] || []).forEach(x => { if (Array.isArray(x) && Array.isArray(x[1])) n += x[1].length; })); } catch (e) {}
+    return n;
+  }
+  function ccFullNormCc(o) {
+    const out = (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+    CC_ALL_TYPES.forEach(t => { if (!Array.isArray(out[t])) out[t] = []; });
+    return out;
+  }
+  // cc 双作用域合并：同分类同名分组内按字卡内容去重追加，没有的分组整组补入
+  function ccFullMergeCc(cur, inc) {
+    const out = ccFullNormCc(cur);
+    let added = 0;
+    Object.keys(inc || {}).forEach(t => {
+      if (!Array.isArray(inc[t])) return;
+      if (!Array.isArray(out[t])) out[t] = [];
+      inc[t].forEach(pair => {
+        if (!Array.isArray(pair) || !pair[0] || typeof pair[0] !== 'string') return;
+        const name = pair[0];
+        const cards = Array.isArray(pair[1]) ? pair[1].filter(c => typeof c === 'string' && c) : [];
+        let g = null;
+        for (let i = 0; i < out[t].length; i++) { if (Array.isArray(out[t][i]) && out[t][i][0] === name) { g = out[t][i]; break; } }
+        if (!g) { g = [name, []]; out[t].push(g); }
+        const have = new Set(g[1]);
+        cards.forEach(c => { if (!have.has(c)) { g[1].push(c); have.add(c); added++; } });
+      });
+    });
+    return { obj: out, added: added };
+  }
+  // 寻踪/情话条目合并：旧字符串与新 {t,grp} 对象统一归一后按文本去重
+  function ccFullNormItem(x) {
+    if (typeof x === 'string') return x.trim() ? { t: x.trim() } : null;
+    if (x && typeof x === 'object' && x.t != null && String(x.t).trim()) {
+      const o = { t: String(x.t).trim() };
+      if (x.grp) o.grp = String(x.grp);
+      return o;
+    }
+    return null;
+  }
+  function ccFullMergeItems(cur, inc) {
+    const arr = (Array.isArray(cur) ? cur : []).map(ccFullNormItem).filter(Boolean);
+    const have = {};
+    arr.forEach(x => { have[x.t] = true; });
+    let added = 0;
+    (Array.isArray(inc) ? inc : []).forEach(x => {
+      const n = ccFullNormItem(x);
+      if (n && !have[n.t]) { arr.push(n); have[n.t] = true; added++; }
+    });
+    return { list: arr, added: added };
+  }
+  // 自定义分组定义（[{id,name}]）合并：按 id 或名称去重
+  function ccFullMergeGrpDefs(cur, inc) {
+    const arr = (Array.isArray(cur) ? cur : []).filter(g => g && g.id && g.name);
+    const byId = {}, byName = {};
+    arr.forEach(g => { byId[g.id] = true; byName[g.name] = true; });
+    let added = 0;
+    (Array.isArray(inc) ? inc : []).forEach(g => {
+      if (!g || !g.id || !g.name) return;
+      if (byId[g.id] || byName[g.name]) return;
+      arr.push({ id: g.id, name: g.name });
+      byId[g.id] = true; byName[g.name] = true; added++;
+    });
+    return { list: arr, added: added };
+  }
+  // TA 六类题库合并：按题目文本/ID 去重并入 questions（文件含系统预设，同文本不重复）+ 分组；
+  // 不动 settings/mergedIds/问答历史——各模块下次 load 按既有 merge 规则自行补齐预设
+  function ccFullMergeTa(key, inc) {
+    const cur = ccFullRd(store, key, null);
+    const base = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? cur : {};
+    if (!Array.isArray(base.questions)) base.questions = [];
+    if (!Array.isArray(base.groups)) base.groups = [];
+    const haveId = {}, haveText = {};
+    base.questions.forEach(q => { if (q && typeof q === 'object') { if (q.id) haveId[q.id] = true; if (q.text != null && String(q.text)) haveText[String(q.text)] = true; } });
+    let added = 0;
+    (Array.isArray(inc.questions) ? inc.questions : []).forEach(q => {
+      if (!q || typeof q !== 'object') return;
+      const t = q.text != null ? String(q.text) : '';
+      if (!t.trim()) return;
+      if (q.id && haveId[q.id]) return;
+      if (haveText[t]) return;
+      const nq = Object.assign({}, q);
+      if (!nq.id) nq.id = 'q' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36) + added;
+      base.questions.push(nq);
+      haveId[nq.id] = true; haveText[t] = true; added++;
+    });
+    base.groups = ccFullMergeGrpDefs(base.groups, inc.groups).list;
+    store.set(key, JSON.stringify(base));
+    return added;
+  }
+  // 分组停用开关合并：并集（同分类同名分组）
+  function ccFullMergeOff(st, key, inc) {
+    const cur = ccFullRd(st, key, {});
+    const o = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? cur : {};
+    Object.keys(inc || {}).forEach(t => {
+      if (!Array.isArray(inc[t])) return;
+      if (!Array.isArray(o[t])) o[t] = [];
+      inc[t].forEach(n => { if (typeof n === 'string' && o[t].indexOf(n) < 0) o[t].push(n); });
+    });
+    st.set(key, JSON.stringify(o));
+  }
+  const liCcFullExport = document.getElementById('li-cc-full-export');
+  if (liCcFullExport) {
+    liCcFullExport.addEventListener('click', () => {
+      const build = () => {
+        try {
+          const data = {};
+          data.ccPub = ccFullNormCc(ccFullRd(pubStore(), PUB_KEY, null));
+          data.ccOwn = ccFullNormCc(ccFullRd(store, 'cc-groups', null));
+          data.ccPubOff = ccFullRd(pubStore(), PUB_OFF_KEY, null);
+          data.ccOwnOff = ccFullRd(store, OFF_KEY, null);
+          data.checkin = {};
+          CC_FULL_CK_KEYS.forEach(k => {
+            data.checkin[k] = {
+              list: ccFullRd(store, 'checkin-cards-' + k, []),
+              groups: ccFullRd(store, 'checkin-cards-groups-' + k, [])
+            };
+          });
+          data.quote = {
+            list: ccFullRd(store, 'quote-cards', []),
+            groups: ccFullRd(store, 'quote-cards-groups', [])
+          };
+          CC_FULL_TA_LIBS.forEach(([name, key]) => {
+            const d = ccFullRd(store, key, null);
+            data[name] = (d && typeof d === 'object' && !Array.isArray(d))
+              ? { questions: Array.isArray(d.questions) ? d.questions : [], groups: Array.isArray(d.groups) ? d.groups : [] }
+              : { questions: [], groups: [] };
+          });
+          let nItems = 0, nTa = 0;
+          CC_FULL_CK_KEYS.forEach(k => { nItems += Array.isArray(data.checkin[k].list) ? data.checkin[k].list.length : 0; });
+          nItems += Array.isArray(data.quote.list) ? data.quote.list.length : 0;
+          CC_FULL_TA_LIBS.forEach(([name]) => { nTa += Array.isArray(data[name].questions) ? data[name].questions.length : 0; });
+          const out = { app: CC_FULL_MARK, v: 1, time: Date.now(), data: data };
+          const blob = new Blob([JSON.stringify(out)], { type: 'application/json' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'mochi自定义字卡全量.json';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 300);
+          toast('已导出全量字卡：聊天字卡 ' + (ccFullCardCount(data.ccPub) + ccFullCardCount(data.ccOwn)) + ' 张 · 寻踪/情话 ' + nItems + ' 条 · TA 题库 ' + nTa + ' 题');
+        } catch (e) { toast('导出失败：' + ((e && e.message) || '内部错误')); }
+      };
+      // 导出前也走权威取回链：挂起在 IDB 的大键先拉回 store 再读（与列表页角标同一防线）
+      Promise.resolve(hydrateLibScopes(['public', 'own'])).then(build);
+    });
+  }
+  const liCcFullImport = document.getElementById('li-cc-full-import');
+  if (liCcFullImport) {
+    liCcFullImport.addEventListener('click', () => {
+      if (!window.openModal) return;
+      window.openModal('导入自定义字卡（全量）', '', (mode) => { ccFullPickFile(mode); }, {
+        noInput: true,
+        staticText: '选择导入方式：\n· 追加合并：保留现有字卡，按内容去重并入（推荐）\n· 整包替换：文件里包含的各库清空后完全使用文件内容，未包含在文件里的现有字卡会丢失',
+        pills: [
+          { label: '追加合并（自动去重）', value: 'merge' },
+          { label: '整包替换（覆盖现有）', value: 'replace' }
+        ],
+        pill: 'merge'
+      });
+    });
+    function ccFullPickFile(mode) {
+      // accept 放开为全文件（同字卡库导入 v3.23.x 口径：部分安卓壳对 .json 过滤灰显），
+      // 格式由读取后的内容校验兜底
+      pickFiles('', false, (files) => {
+        const f = files && files[0];
+        if (!f) return;
+        const fname = f.name || '未命名文件';
+        const reader = new FileReader();
+        const fail = (why) => toast('导入失败：' + why + '（' + fname + '）');
+        const handleText = (raw, recover) => {
+          let txt = String(raw || '');
+          txt = txt.replace(/^[\uFEFF\u200B\u200E\u200F]+/, '');
+          if (!txt.trim()) { fail('文件内容为空——iCloud/网盘文件可能没下载完整'); return; }
+          let data = null, perr = null;
+          try { data = JSON.parse(txt); } catch (e) { perr = e; }
+          if (perr) {
+            if (/rangeerror|out of memory|内存/i.test(String((perr && (perr.message || perr.name)) || perr || ''))) { fail('文件过大，本机内存不足以一次性解析导入'); return; }
+            // 自救①：转存变 UTF-16（读出成串 NUL）——按字节序换编码重读一遍
+            if (!recover && /\u0000/.test(txt.slice(0, 400))) {
+              let odd = 0, even = 0;
+              for (let i = 0; i < Math.min(txt.length, 400); i++) { if (txt.charCodeAt(i) === 0) { if (i % 2) odd++; else even++; } }
+              reader.onload = () => handleText(reader.result, 'utf16');
+              reader.onerror = () => fail('文件读取失败');
+              reader.readAsText(f, odd >= even ? 'utf-16le' : 'utf-16be');
+              return;
+            }
+            // 自救②：前后被包了说明文字/网页源码——裁出首个 { 到末个 } 再试
+            const ja = txt.indexOf('{'), jb = txt.lastIndexOf('}');
+            if (!recover && ja >= 0 && jb > ja && (jb - ja) < 80 * 1024 * 1024) { handleText(txt.slice(ja, jb + 1), 'trim'); return; }
+            fail('JSON 解析失败：' + ((perr && perr.message) || '内容不是合法 JSON'));
+            return;
+          }
+          txt = ''; raw = null;
+          const d = (data && typeof data === 'object' && !Array.isArray(data)) ? data.data : null;
+          if (!d || typeof d !== 'object' || data.app !== CC_FULL_MARK) {
+            fail('不是「自定义字卡·全量导出」文件——公用/专属聊天字卡请进对应管理页用「导入数据」，整包恢复请用「设置→数据备份」');
+            return;
+          }
+          // 大键先走权威取回链（同导出口径），落定后再合并/替换写入
+          Promise.resolve(hydrateLibScopes(['public', 'own'])).then(() => { ccFullApply(d, mode); });
+        };
+        reader.onload = () => {
+          const raw = String(reader.result || '');
+          reader.onload = null; reader.onerror = null;
+          handleText(raw, '');
+        };
+        reader.onerror = () => toast('导入失败：文件读取失败，请重选文件再试');
+        reader.readAsText(f);
+      });
+    }
+    function ccFullApply(d, mode) {
+      try {
+        const stat = { cc: 0, items: 0, ta: 0 };
+        if (mode === 'replace') {
+          // 整包替换：文件里包含的各库清空后按文件写入；文件里没有的库不动
+          if (d.ccPub && typeof d.ccPub === 'object') { const o = ccFullNormCc(d.ccPub); pubStore().set(PUB_KEY, JSON.stringify(o)); stat.cc += ccFullCardCount(o); }
+          if (d.ccOwn && typeof d.ccOwn === 'object') { const o = ccFullNormCc(d.ccOwn); store.set('cc-groups', JSON.stringify(o)); stat.cc += ccFullCardCount(o); }
+          if (d.ccPubOff && typeof d.ccPubOff === 'object') pubStore().set(PUB_OFF_KEY, JSON.stringify(d.ccPubOff));
+          if (d.ccOwnOff && typeof d.ccOwnOff === 'object') store.set(OFF_KEY, JSON.stringify(d.ccOwnOff));
+          CC_FULL_CK_KEYS.forEach(k => {
+            const c = d.checkin && d.checkin[k];
+            if (!c || typeof c !== 'object') return;
+            store.set('checkin-cards-' + k, JSON.stringify(Array.isArray(c.list) ? c.list : []));
+            store.set('checkin-cards-groups-' + k, JSON.stringify(Array.isArray(c.groups) ? c.groups : []));
+            stat.items += Array.isArray(c.list) ? c.list.length : 0;
+          });
+          if (d.quote && typeof d.quote === 'object') {
+            store.set('quote-cards', JSON.stringify(Array.isArray(d.quote.list) ? d.quote.list : []));
+            store.set('quote-cards-groups', JSON.stringify(Array.isArray(d.quote.groups) ? d.quote.groups : []));
+            stat.items += Array.isArray(d.quote.list) ? d.quote.list.length : 0;
+          }
+          CC_FULL_TA_LIBS.forEach(([name, key]) => {
+            const inc = d[name];
+            if (!inc || typeof inc !== 'object') return;
+            store.set(key, JSON.stringify({
+              questions: Array.isArray(inc.questions) ? inc.questions : [],
+              groups: Array.isArray(inc.groups) ? inc.groups : []
+            }));
+            stat.ta += Array.isArray(inc.questions) ? inc.questions.length : 0;
+          });
+        } else {
+          if (d.ccPub && typeof d.ccPub === 'object') { const r = ccFullMergeCc(ccFullRd(pubStore(), PUB_KEY, {}), d.ccPub); pubStore().set(PUB_KEY, JSON.stringify(r.obj)); stat.cc += r.added; }
+          if (d.ccOwn && typeof d.ccOwn === 'object') { const r = ccFullMergeCc(ccFullRd(store, 'cc-groups', {}), d.ccOwn); store.set('cc-groups', JSON.stringify(r.obj)); stat.cc += r.added; }
+          if (d.ccPubOff && typeof d.ccPubOff === 'object') ccFullMergeOff(pubStore(), PUB_OFF_KEY, d.ccPubOff);
+          if (d.ccOwnOff && typeof d.ccOwnOff === 'object') ccFullMergeOff(store, OFF_KEY, d.ccOwnOff);
+          CC_FULL_CK_KEYS.forEach(k => {
+            const c = d.checkin && d.checkin[k];
+            if (!c || typeof c !== 'object') return;
+            const r1 = ccFullMergeItems(ccFullRd(store, 'checkin-cards-' + k, []), c.list);
+            store.set('checkin-cards-' + k, JSON.stringify(r1.list));
+            store.set('checkin-cards-groups-' + k, JSON.stringify(ccFullMergeGrpDefs(ccFullRd(store, 'checkin-cards-groups-' + k, []), c.groups).list));
+            stat.items += r1.added;
+          });
+          if (d.quote && typeof d.quote === 'object') {
+            const r1 = ccFullMergeItems(ccFullRd(store, 'quote-cards', []), d.quote.list);
+            store.set('quote-cards', JSON.stringify(r1.list));
+            store.set('quote-cards-groups', JSON.stringify(ccFullMergeGrpDefs(ccFullRd(store, 'quote-cards-groups', []), d.quote.groups).list));
+            stat.items += r1.added;
+          }
+          CC_FULL_TA_LIBS.forEach(([name, key]) => {
+            const inc = d[name];
+            if (!inc || typeof inc !== 'object') return;
+            stat.ta += ccFullMergeTa(key, inc);
+          });
+        }
+        pubInvalidate();
+        refreshLibCounts(true);
+        // 其他库的列表页角标由各自模块维护——暴露的刷新函数存在就同步刷一把
+        if (window.quoteCardsRefreshCounts) { try { window.quoteCardsRefreshCounts(); } catch (e) {} }
+        if (window.ckCardsRefreshCounts) { try { window.ckCardsRefreshCounts(); } catch (e) {} }
+        toast(mode === 'replace'
+          ? '已整包替换：聊天字卡 ' + stat.cc + ' 张 · 寻踪/情话 ' + stat.items + ' 条 · TA 题库 ' + stat.ta + ' 题'
+          : '已合并导入：聊天字卡新增 ' + stat.cc + ' 张 · 寻踪/情话新增 ' + stat.items + ' 条 · TA 题库新增 ' + stat.ta + ' 题');
+      } catch (e) {
+        toast('导入处理失败：' + ((e && e.message) || '内部错误'));
+        try { if (window.__jsErrors) window.__jsErrors.push('[字卡全量导入] ' + ((e && e.message) || e)); } catch (e0) {}
+      }
     }
   }
 
@@ -1873,7 +2584,7 @@
           renderGroupsBar();
           render();
           toast('已清除全部字卡与分组');
-        }, { noInput: true, staticText: '将删除全部 ' + total + ' 张字卡及所有分组（主字卡、颜文字、emoji、表情包、图片、拍一拍、语音），且无法恢复。确定继续吗？' });
+        }, { noInput: true, staticText: '将删除全部 ' + total + ' 张字卡及所有分组（主字卡、颜文字、emoji、表情包、图片、拍一拍、语音及其他互动功能字卡），且无法恢复。确定继续吗？' });
       }
     });
   }
@@ -1990,7 +2701,16 @@
                 // v3.7.x：GIF 动图跳过 canvas 压缩——canvas 只能画出第一帧，
                 // 重绘成 PNG/JPEG 会把动图压成静态图，这里直存原图保留动画
                 const isGif = /image\/gif/i.test(f.type || '') || /\.gif$/i.test(f.name || '');
-                if (isGif) { process(reader.result); return; }
+                if (isGif) {
+                  // v3.26.x #139：直存原图前拦截超大 GIF（超限跳过并提示，与压缩失败同路径）
+                  if (String(reader.result || '').length > CC_GIF_MAX_B64) {
+                    skipped++; done++;
+                    if (done === files.length) finishUpload(done - skipped, skipped);
+                    toast('GIF「' + ((f && f.name) || '动图') + '」超过 380KB，已跳过');
+                    return;
+                  }
+                  process(reader.result); return;
+                }
                 // v3.7.x：原 260px 在 3x 高清屏被放大 2~3 倍导致模糊。
                 //   图片分类当大图显示，压到 720px JPEG 0.85；表情包多小图且需透明背景，用 PNG 480px
                 const isImg = cur === 'image';
@@ -2074,7 +2794,12 @@
           render();
           toast('已导入 ' + imported + ' 条字卡' + (dup ? '，自动去重 ' + dup + ' 条' : '') + (newGroups ? '，新建 ' + newGroups + ' 个分组' : ''));
         }, {
+          // FIX 2026-09-07 #255：批量导入弹窗放大——默认 .modal 宽 272px 多行框太小
+          //（用户报障「打开的页面太小了」），走 opts.big 宽版（420px/94vw + 52vh 上限）
+          // 并把原生 textarea 提到 8 行（iOS 不做 ce-box 转换，rows 决定实际高度）
+          big: true,
           textarea: true,
+          textareaRows: 8,
           textareaPlaceholder: '【日常】\n你今天真好看\n我想你了',
           txtImport: true,
           // v3.6.x：传入当前分类的现有分组——openModal 的「目标分组」下拉只在
@@ -2233,6 +2958,8 @@
     if (playingAudio) {
       try { playingAudio.pause(); } catch (e) {}
       try { playingAudio.removeAttribute('src'); playingAudio.load(); } catch (e) {}
+      // FIX 2026-09-12 #359：与挂载对称，停播即卸——end/end-error/连点切播三路都经 stopPlay 收口
+      try { if (playingAudio.parentNode) playingAudio.parentNode.removeChild(playingAudio); } catch (e) {}
       playingAudio = null;
     }
     if (playingBtn) { playingBtn.classList.remove('playing'); playingBtn = null; }
@@ -2253,6 +2980,12 @@
     } catch (err) {
       stopPlay(); toast('该语音无法播放'); return;
     }
+    // FIX 2026-09-12 #359 字卡库语音点播无声：把 Audio 挂到 DOM 再播——部分安卓内核
+    // （荣耀X50 Edge/雨见等 Chromium 系）对未挂载的 Audio 静默空放，play() 走完不出声，
+    // 多机型同现。与聊天语音气泡（chat.js playVoiceInChat #358）、录音试听
+    //（toggleVoicePlay）同款加固：挂载后再 play，走标准解码管线；停播即卸（见 stopPlay）。
+    nextAudio.style.display = 'none';
+    document.body.appendChild(nextAudio);
     stopPlay();
     playingAudio = nextAudio;
     playingBtn = btn;
@@ -2303,32 +3036,46 @@
   }
   window.getCustomCards = function () {
     maybeHydrateReplyPool();
-    const g = mergeWithPublic(replyScopeGroups());
+    const g = replyPoolGroups();
     const out = [];
-    Object.keys(g).forEach(t => g[t].forEach(([name, arr]) => arr.forEach(c => out.push(c))));
+    // v3.32.x：功能字卡分类（fish/eat/…）不进聊天通用回复池——它们只归对应功能抽取
+    Object.keys(g).forEach(t => {
+      if (CC_FUNC_KEYS.indexOf(t) >= 0) return;
+      g[t].forEach(([name, arr]) => arr.forEach(c => out.push(c)));
+    });
     return out;
   };
   // 拍一拍字卡（自定义字卡里【拍一拍】分类）
   window.getPokeCards = function () {
     maybeHydrateReplyPool();
-    const g = mergeWithPublic(replyScopeGroups());
+    const g = replyPoolGroups();
     const out = [];
     (g['poke'] || []).forEach(([name, arr]) => arr.forEach(c => out.push(c)));
     return out;
   };
   // 拍一拍分组（分组名 + 字卡数组），供拍一拍页面展示
   window.getPokeGroups = function () {
-    return (mergeWithPublic(replyScopeGroups())['poke'] || []).slice();
+    return (replyPoolGroups()['poke'] || []).slice();
   };
   // 媒体字卡：表情包/图片 的图片 dataURL 列表、语音（文件名|||音频）列表（供回复/表情面板）
   // v3.11.x：链接导入的 http(s) 图片字卡同样放行（聊天气泡按 type 渲染 <img src>，
   // 对远程链接天然兼容；仅信件正文嵌入/朋友圈配图等「拼进文本」的场景仍只收 dataURL）
   function isMediaImg(c) {
-    return typeof c === 'string' && (c.indexOf('data:image') === 0 || /^https?:\/\/[^\s"'<>]+$/i.test(c));
+    // #377：补认媒体池令牌 @@m:hash——大库内存瘦身令牌化后（pubGroupsRaw），超大贴纸卡
+    // 在回复池里以令牌形态存在，渲染端 media-pool 观察器会解回真图；不补认则令牌卡被
+    // 本过滤器整个剔出表情包/图片池＝令牌化的卡再也不会被抽到（行为回退）
+    if (typeof c !== 'string') return false;
+    if (c.indexOf('data:image') === 0 || /^https?:\/\/[^\s"'<>]+$/i.test(c)) return true;
+    if (c.indexOf('@@m:') === 0 && window.mochiMediaIsToken && window.mochiMediaIsToken(c)) {
+      // FIX 2026-09-13 #387 池里确认没有的令牌卡不再当媒体载荷（无池数据设备不再发/显白图卡；
+      // 导入完整备份补回池后 missing 解除自动恢复）
+      return !(window.mochiMediaTokenMissing && window.mochiMediaTokenMissing(c));
+    }
+    return false;
   }
   window.getMediaCards = function (type) {
     maybeHydrateReplyPool();
-    const g = mergeWithPublic(replyScopeGroups());
+    const g = replyPoolGroups();
     const out = [];
     (g[type] || []).forEach(([name, arr]) => arr.forEach(c => {
       if (type === 'voice') {
@@ -2342,8 +3089,45 @@
   };
   // 媒体分组：表情包/图片 的分组结构（供表情面板展示）
   window.getMediaGroups = function (type) {
-    const g = mergeWithPublic(replyScopeGroups());
+    const g = replyPoolGroups();
     return (g[type] || []).map(([name, arr]) => [name, arr.filter(isMediaImg)]);
+  };
+  // ================= v3.32.x：自定义功能字卡池（其他互动功能字卡） =================
+  // 返回某功能分类（fish/eat/…/music）下用户自建的全部文字字卡（专属+公用合并，
+  // 各自剔除被停用分组），供 default-cards.js getLibPool 并入对应功能池抽取。
+  // 只收纯文字（媒体 dataURL/语音不该出现在功能池，防御性过滤）；非功能分类返回 []。
+  // 专属侧带原始串身份缓存：store.get 命中 memoryCache 时两次取到同一字符串对象，
+  // 引用相等 O(1) 判新；任何写库（set 换新串）自动失效重算——功能触发频率高，
+  // 每次都 buildGroupsFrom 整库 JSON.parse 会卡（大库百 MB 级，用户实测卡顿根因之一）。
+  let ccFuncOwnSrc = null, ccFuncOwnMap = null;
+  function ownFuncMap() {
+    let raw = null;
+    try { raw = store.get('cc-groups'); } catch (e) {}
+    if (ccFuncOwnMap && ccFuncOwnSrc === raw) return ccFuncOwnMap;
+    const map = {};
+    CC_FUNC_KEYS.forEach(k => { map[k] = []; });
+    try {
+      const g = filterGroupsByOff(buildGroupsFrom(raw), 'own');
+      CC_FUNC_KEYS.forEach(k => (g[k] || []).forEach(grp => {
+        if (!Array.isArray(grp) || !Array.isArray(grp[1])) return;
+        grp[1].forEach(c => { if (typeof c === 'string' && c && c.indexOf('data:') !== 0) map[k].push(c); });
+      }));
+    } catch (e) {}
+    ccFuncOwnMap = map;
+    ccFuncOwnSrc = raw;
+    return map;
+  }
+  window.getCustomFuncCards = function (cat) {
+    if (CC_FUNC_KEYS.indexOf(cat) < 0) return [];
+    const out = ownFuncMap()[cat].slice();
+    try {
+      const pg = filterGroupsByOff(pubGroupsRaw(), 'public');
+      (pg[cat] || []).forEach(grp => {
+        if (!Array.isArray(grp) || !Array.isArray(grp[1])) return;
+        grp[1].forEach(c => { if (typeof c === 'string' && c && c.indexOf('data:') !== 0) out.push(c); });
+      });
+    } catch (e) {}
+    return out;
   };
   // v3.26.x：把「要嵌进正文文本」的 dataURL 压缩成小图（信箱正文/朋友圈动态/评论区
   //   TA 自动选表情包写信/发动态时都用它）。根因：自定义表情包常是几百 KB 的原图
@@ -2388,7 +3172,7 @@
   if (!window._shrunkStickerCache) window._shrunkStickerCache = {};
   function warmShrunkCache() {
     try {
-      const g = mergeWithPublic ? mergeWithPublic(replyScopeGroups()) : null;
+      const g = replyPoolGroups();
       if (!g) return;
       ['sticker', 'image'].forEach(function (t) {
         (g[t] || []).forEach(function (entry) {
@@ -2412,15 +3196,61 @@
   });
   // v3.11.x：按作用域取分组（不合并）——聊天页拍一拍/表情包面板三分区展示：
   //   scope='public' 只读公用键；scope='own' 只读当前桌面专属键。
-  //   回复池仍走合并视图（getPokeCards/getMediaCards/getMediaGroups 不变），
-  //   联系人自动回复/拍一拍继续同时使用 公用+专属 两份字卡。
+  //   v3.30.x：已停用分组同样从面板隐藏（关闭=该分组完全不再被使用，含主动面板）。
   window.getScopedGroups = function (type, scope) {
-    const src = (scope === 'public') ? pubGroupsRaw() : buildGroupsFrom(store.get('cc-groups'));
+    const src = filterGroupsByOff(
+      (scope === 'public') ? pubGroupsRaw() : buildGroupsFrom(store.get('cc-groups')),
+      scope === 'public' ? 'public' : 'own'
+    );
     const arr = (src[type] || []).slice();
     if (type === 'sticker' || type === 'image') {
       return arr.map(g => [g[0], (g[1] || []).filter(isMediaImg)]);
     }
     return arr;
+  };
+
+  // #317 梦角自由造句：程序化追加字卡进指定作用域库的指定分类/分组
+  //（dream-free.js 造句入库用）。写守卫（ccAuthSeen/rescueCcOverwrite）、分组去重、
+  // 延迟持久化（scheduleSave）与手动添加完全同路；当前页若开着同分类列表则局部刷新。
+  // #324 scope：'own'=专属库（默认，当前联系人）/ 'public'=公用库（全桌面共享）——
+  // 公用库走 pubGroupsRaw 缓存 + pubStore 整包回写 + pubInvalidate，与公用页保存同路。
+  window.ccAppendCards = function (type, group, cards, scope) {
+    try {
+      if (CC_ALL_TYPES.indexOf(type) < 0 || type === 'sticker' || type === 'image' || type === 'voice') return false;
+      const arr = (Array.isArray(cards) ? cards : [cards]).filter(c => typeof c === 'string' && c && c.indexOf('data:') !== 0 && c.indexOf('|||') < 0);
+      if (!arr.length || !group) return false;
+      const isPub = scope === 'public';
+      if (isPub) {
+        // FIX 2026-09-13 #387 写回泄漏堵口——pubGroupsRaw() 是 #377 令牌化后的内存缓存，
+        // 整包 set(PUB_KEY) 会把全库令牌持久化进原始键，随公用库/备份传到无池数据设备
+        // ＝纯白图/空分组/乱码。改用原始键现解析（本路径低频，一次性 40MB parse 可接受），
+        // 写回的永远是原始数据；pubInvalidate 后下次回复池照常走令牌化瘦身。
+        const g = buildGroupsFrom(pubStore().get(PUB_KEY));
+        if (!g[type]) g[type] = [];
+        let grp = g[type].find(p => p[0] === group);
+        if (!grp) { grp = [group, []]; g[type].push(grp); }
+        let added = 0;
+        arr.forEach(c => { if (grp[1].indexOf(c) < 0) { grp[1].push(c); added++; } });
+        if (added) {
+          try { pubStore().set(PUB_KEY, JSON.stringify(g)); } catch (e) {}
+          pubInvalidate();
+          libCounts.pub = -1; libCounts.pubFun = -1;
+          if (cur === type && !document.getElementById('page-custom-cards').hidden) { try { render(); } catch (e) {} }
+        }
+        return added > 0;
+      }
+      if (!groups[type]) groups[type] = [];
+      let g = groups[type].find(p => p[0] === group);
+      if (!g) { g = [group, []]; groups[type].push(g); }
+      let added = 0;
+      arr.forEach(c => { if (g[1].indexOf(c) < 0) { g[1].push(c); added++; } });
+      if (added) {
+        scheduleSave();
+        renderGroupsBar();
+        if (cur === type && !document.getElementById('page-custom-cards').hidden) { try { render(); } catch (e) {} }
+      }
+      return added > 0;
+    } catch (e) { return false; }
   };
 
   // ---- 多桌面：按指定联系人(cid)读取字卡（供朋友圈 TA 取各自桌面字卡）----
@@ -2435,7 +3265,9 @@
   document.addEventListener('contact-switched', function () {
     if (editSaveTimer) { clearTimeout(editSaveTimer); editSaveTimer = null; }
     pubInvalidate();
-    libCounts.pub = -1; libCounts.own = -1;
+    offInvalidate(); // v3.30.x：专属停用集合按联系人隔离，切桌面必须失效缓存
+    ccAuthSeen.own = false; // v3.26.x #193：新桌面的权威键尚未取回，写守卫重新生效
+    libCounts.pub = -1; libCounts.own = -1; libCounts.fun = -1; libCounts.pubFun = -1;
     groups = loadGroups();
     refreshLibCounts(false);
     try { renderGroupsBar(); render(); } catch (e) {}
@@ -2445,26 +3277,28 @@
   });
   // v3.11.x：For 系列同样合并公用字卡——朋友圈/信箱/群聊等按联系人取池时，
   // 公用字卡对该联系人生效（专属部分仍读各自桌面）
+  // v3.30.x：按 cid 过滤该桌面的专属停用分组 + 全局公用停用分组
   window.getCustomCardsFor = function (cid) {
     try { if (window.hydrateLibForCid) window.hydrateLibForCid(cid); } catch (e) {}
-    const raw = (window.storeFor && window.storeFor(cid) || window.xyStore('xy-home-v2:' + cid)).get('cc-groups');
-    const g = mergeWithPublic(buildGroupsFrom(raw));
+    const g = replyPoolGroupsFor(cid);
     const out = [];
-    Object.keys(g).forEach(t => (g[t] || []).forEach(([name, arr]) => (arr || []).forEach(c => out.push(c))));
+    // v3.32.x：功能字卡分类不进聊天/群聊通用回复池（同 getCustomCards）
+    Object.keys(g).forEach(t => {
+      if (CC_FUNC_KEYS.indexOf(t) >= 0) return;
+      (g[t] || []).forEach(([name, arr]) => (arr || []).forEach(c => out.push(c)));
+    });
     return out;
   };
   window.getPokeCardsFor = function (cid) {
     try { if (window.hydrateLibForCid) window.hydrateLibForCid(cid); } catch (e) {}
-    const raw = (window.storeFor && window.storeFor(cid) || window.xyStore('xy-home-v2:' + cid)).get('cc-groups');
-    const g = mergeWithPublic(buildGroupsFrom(raw));
+    const g = replyPoolGroupsFor(cid);
     const out = [];
     (g['poke'] || []).forEach(([name, arr]) => (arr || []).forEach(c => out.push(c)));
     return out;
   };
   window.getMediaCardsFor = function (cid, type) {
     try { if (window.hydrateLibForCid) window.hydrateLibForCid(cid); } catch (e) {}
-    const raw = (window.storeFor && window.storeFor(cid) || window.xyStore('xy-home-v2:' + cid)).get('cc-groups');
-    const g = mergeWithPublic(buildGroupsFrom(raw));
+    const g = replyPoolGroupsFor(cid);
     const out = [];
     (g[type] || []).forEach(([name, arr]) => (arr || []).forEach(c => {
       if (type === 'voice') {
@@ -2511,7 +3345,7 @@
             pubInvalidate();
             try { st.remove('cc-groups'); } catch (e2) {} // 迁走即清，防回复池公用+专属重复
             if (isDefault) { try { gRoot.remove('cc-groups'); } catch (e2) {} }
-            libCounts.pub = -1; libCounts.own = -1;
+            libCounts.pub = -1; libCounts.own = -1; libCounts.fun = -1; libCounts.pubFun = -1;
             if (cid === (window.__activeCid || 'default')) {
               if (ccScope === 'own') { groups = loadGroups(); try { renderGroupsBar(); render(); } catch (e2) {} }
               else refreshLibCounts(false);
@@ -2544,6 +3378,136 @@
         ownRestoreP.then(run);
       });
     }
+  })();
+
+  // ================= v3.26.x #139：专属字卡库重复副本一次性幂等清理 =================
+  // 诊断实证（#139 用户机）：cc-groups-public 与 cmt37eved7if / cmt4hxra06tx 两桌面的
+  // 专属 cc-groups 逐字节同大小（138.22MB×3），cmt34ty8537s=148.89MB 疑似公用+增量——
+  // 专属页导入全量备份的兜底（raw = bag[PUB_PREFIX+':cc-groups']）会把公用库整份写进
+  // 专属键，每次恢复/导入复制一份 ≈415MB 纯冗余。回复池本就「专属+公用」合并读取
+  // （replyPoolGroups / replyPoolGroupsFor），与公用重复的专属内容删除零功能损失。
+  // 清理规则（宁可不删，不可删错）：
+  //   ① 整库相等（长度+逐字符一致）→ 删专属键（公用库始终保留一份）；
+  //   ② 分组级相等：专属库中与公用库同名同分类、内容完全一致的分组剔除——剔完为空删键，
+  //      剩余 <15MB 才回写瘦身库（防大字符串重写；剩余过大留给手动批量管理）；
+  //   ③ 预检用 __big-idx 尺寸（免读大值）：已体检且两侧长度未变的键直接跳过，
+  //      稳态零开销；任一步异常放弃该键；公用库只读绝不改写。
+  (function () {
+    const DD_KEY = 'cc-dedupe-v1';
+    const DD_REWRITE_LIMIT = 15 * 1024 * 1024;
+    const DD_PARSE_LIMIT = 300 * 1024 * 1024;
+    function ddLoad() {
+      try {
+        const o = JSON.parse(pubStore().get(DD_KEY) || '{}');
+        return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+      } catch (e) { return {}; }
+    }
+    function ddSave(o) { try { pubStore().set(DD_KEY, JSON.stringify(o)); } catch (e) {} }
+    function ddCount(g) {
+      let n = 0;
+      try { CC_TYPES.forEach(t => (g[t] || []).forEach(x => n += (Array.isArray(x[1]) ? x[1].length : 0))); } catch (e) {}
+      return n;
+    }
+    function refreshAfter(cid) {
+      libCounts.own = -1; libCounts.fun = -1;
+      if (cid === (window.__activeCid || 'default')) {
+        pubInvalidate();
+        if (ccScope === 'own') { groups = loadGroups(); try { renderGroupsBar(); render(); } catch (e2) {} }
+        else refreshLibCounts(false);
+      } else refreshLibCounts(false);
+    }
+    function run() {
+      // 低内存设备不跑（瞬时驻留两份大库字符串；宁留冗余不冒崩溃险）
+      let devGB = 8;
+      try { devGB = navigator.deviceMemory || 8; } catch (e) {}
+      if (devGB < 4) return;
+      if (!window.idbGetAllKeys || !window.idbGet || !window.storeFor) return;
+      window.idbGetAllKeys().then(function (allKeys) {
+        const ownKeys = (allKeys || []).map(String).filter(k => /^xy-home-v2:[^:]+:cc-groups$/.test(k));
+        if (!ownKeys.length) return;
+        window.idbGet(PUB_PREFIX + ':' + PUB_KEY).then(function (pubRaw) {
+          if (typeof pubRaw !== 'string' || pubRaw.length < 1024) return;
+          const marks = ddLoad();
+          let markDirty = false;
+          let i = 0;
+          (function step() {
+            if (i >= ownKeys.length) { if (markDirty) ddSave(marks); return; }
+            const full = ownKeys[i++];
+            const cid = full.slice(PUB_PREFIX.length + 1, full.length - ':cc-groups'.length);
+            const next = function () { setTimeout(step, 0); };
+            // 预检：__big-idx 尺寸没记录（本会话未回填该键）或与上次体检一致 → 免读大值
+            const ownLen = (window.idbBigSize && window.idbBigSize(full)) || null;
+            if (typeof ownLen !== 'number' || ownLen < 65536) { next(); return; }
+            if (marks[cid] && marks[cid][0] === pubRaw.length && marks[cid][1] === ownLen) { next(); return; }
+            window.idbGet(full).then(function (ownRaw) {
+              try {
+                if (typeof ownRaw !== 'string' || ownRaw.length < 1024) {
+                  marks[cid] = [pubRaw.length, (typeof ownRaw === 'string' ? ownRaw.length : 0)]; markDirty = true; next(); return;
+                }
+                // ① 整库相等 → 删专属键（storeFor.remove 同步清 memoryCache/LS/IDB/wrj/bigIdx）
+                if (ownRaw === pubRaw) {
+                  try { window.storeFor(cid).remove('cc-groups'); } catch (e2) {}
+                  delete marks[cid]; markDirty = true;
+                  try { toast('已清理与公用字卡库完全重复的专属库「' + cid + '」（省 ' + Math.round(ownRaw.length / 1048576) + 'MB）'); } catch (e2) {}
+                  refreshAfter(cid);
+                  next(); return;
+                }
+                // ② 分组级去重：同名同分类且内容完全一致的分组剔除
+                if (ownRaw.length + pubRaw.length > DD_PARSE_LIMIT) {
+                  marks[cid] = [pubRaw.length, ownRaw.length]; markDirty = true; next(); return;
+                }
+                const pubG = buildGroupsFrom(pubRaw);
+                const ownG = buildGroupsFrom(ownRaw);
+                const pubIdx = {};
+                CC_TYPES.forEach(t => {
+                  pubIdx[t] = {};
+                  (pubG[t] || []).forEach(g => { if (Array.isArray(g) && g[0] != null && !(g[0] in pubIdx[t])) pubIdx[t][String(g[0])] = JSON.stringify(g[1] || []); });
+                });
+                const reduced = {};
+                let removedCards = 0;
+                CC_TYPES.forEach(t => {
+                  reduced[t] = (ownG[t] || []).filter(g => {
+                    if (!Array.isArray(g)) return false;
+                    const key = String(g[0]);
+                    const pubCards = pubIdx[t] && pubIdx[t][key];
+                    if (pubCards != null && pubCards === JSON.stringify(g[1] || [])) { removedCards += (g[1] || []).length; return false; }
+                    return true;
+                  });
+                });
+                if (!ddCount(reduced)) {
+                  try { window.storeFor(cid).remove('cc-groups'); } catch (e2) {}
+                  delete marks[cid]; markDirty = true;
+                  try { toast('专属库「' + cid + '」的 ' + removedCards + ' 张字卡与公用库重复，已清理'); } catch (e2) {}
+                  refreshAfter(cid);
+                  next(); return;
+                }
+                const newRaw = JSON.stringify(reduced);
+                if (removedCards > 0 && newRaw.length < DD_REWRITE_LIMIT && newRaw.length < ownRaw.length) {
+                  try { window.storeFor(cid).set('cc-groups', newRaw); } catch (e2) {}
+                  try { toast('专属库「' + cid + '」去重 ' + removedCards + ' 张与公用重复的字卡（省 ' + Math.round((ownRaw.length - newRaw.length) / 1048576) + 'MB）'); } catch (e2) {}
+                  refreshAfter(cid);
+                  marks[cid] = [pubRaw.length, newRaw.length];
+                } else {
+                  marks[cid] = [pubRaw.length, ownRaw.length];
+                }
+                markDirty = true;
+                next();
+              } catch (e) { try { marks[cid] = [pubRaw.length, (typeof ownRaw === 'string' ? ownRaw.length : 0)]; markDirty = true; } catch (e2) {} next(); }
+            }).catch(next);
+          })();
+        }).catch(function () {});
+      }).catch(function () {});
+    }
+    let ddKicked = false;
+    function ddKick() { if (ddKicked) return; ddKicked = true; setTimeout(run, 30000); }
+    if (window.__mochiDataReady) ownRestoreP.then(ddKick);
+    else {
+      document.addEventListener('mochi-restore-done', function h() {
+        document.removeEventListener('mochi-restore-done', h);
+        ownRestoreP.then(ddKick);
+      });
+    }
+    setTimeout(ddKick, 60000); // restore 挂起/事件丢失兜底（ddKicked 防重入）
   })();
 
   // ================= v3.11.x：字卡库 公用/专属 变动一次性提醒 =================
@@ -2618,21 +3582,79 @@
     // v3.15.x：统一走 hydrateScope（成功后自动清缓存/刷新角标与界面）
     return hydrateScope(ccScope === 'public' ? 'public' : 'own');
   }
-  function openCcPage(scope) {
+  // v3.32.x：公用/专享字卡「只加了一点点」时的使用提醒——【默认聊天字卡】触发概率默认
+  // 只有 30%。用户自建字卡很少时，联系人(TA)回复约 70% 会反复抽那几十张自建卡 + 30% 用
+  // 默认卡补位，体感「一直重复相同内容」。进入公用/专属字卡页（基础聊天入口）且满足条件
+  // 时提醒，频控 = 每天最多一次（cc-lowcard-remind 存上次提醒日期，同日不再弹，次日首触
+  // 再弹——条件不满足的日子不打扰；用户要求「每天首次使用也会提醒」）。触发条件：
+  //   ① 自建聊天字卡（公用+专属，剔除功能分类）>0 且 <5000；
+  //   ② 默认聊天字卡总开关开启、聊天场景使用开启；
+  //   ③ 聊天触发概率仍维持默认 30%（dc-overall-chat 未设或 ==30）。
+  // 说明：仅当用户完全没添加任何自建聊天字卡时才会 100% 走默认字卡（getPool 兜底已保证，
+  // 此需求确认现有行为即可，不改回复池逻辑）。
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function maybeLowCardsRemind() {
+    try {
+      if (!(window.activeStore && window.activeStore().get && window.activeStore().set && window.openModal)) return;
+      if (CC_FUNC_KEYS.indexOf(cur) >= 0) return; // 其他互动功能字卡入口不提醒
+      let n = 0;
+      [ownGroupsRaw(), pubGroupsRaw()].forEach(src => {
+        if (!src) return;
+        CC_TYPES.forEach(t => { ((src[t] || []) || []).forEach(g => { if (Array.isArray(g) && Array.isArray(g[1])) n += g[1].length; }); });
+      });
+      if (!(n > 0 && n < 5000)) return;
+      const dcfg = (window.defaultCardCfg && window.defaultCardCfg()) || {};
+      if (dcfg.enabled === false) return;
+      if (window.defaultCardUse && !window.defaultCardUse('chat')) return;
+      const p = window.activeStore().get('dc-overall-chat');
+      if (p !== null && Number(p) !== 30) return; // 已调过概率→不提醒
+      const tk = todayKey();
+      if (window.activeStore().get('cc-lowcard-remind') === tk) return; // 今天已提醒过
+      try { window.activeStore().set('cc-lowcard-remind', tk); } catch (e) {}
+      window.openModal('字卡使用提醒', '', null, {
+        noInput: true,
+        staticText: '你现在自建了 ' + n + ' 张聊天字卡，但【默认聊天字卡】的触发概率仍是默认的 30%。\n\n' +
+          '如果你不再多添加自建字卡、也不把【默认聊天字卡】的触发概率调高，联系人(TA)回复时可能因为自建字卡太少，一直重复使用相同内容的字卡。\n\n' +
+          '建议：在字卡库里多添加一些自建字卡，或在「预设字卡 → 聊天默认字卡」里把触发概率调高。\n\n' +
+          '（说明：只有当你完全没添加任何自建字卡时，联系人才会 100% 使用默认聊天字卡。）'
+      });
+    } catch (e) {}
+  }
+  function openCcPage(scope, startTab) {
     // v3.29.x：先落盘上一作用域的未保存变更——原 clearTimeout 会静默丢弃 120ms
     // 防抖窗口内刚上传/编辑的内容（切到另一作用域后刷新即丢）
     flushCcSave();
     ccScope = scope === 'public' ? 'public' : 'own';
     pubInvalidate();
-    cur = 'text'; q = ''; curGroup = '';
+    // v3.32.x：startTab 可指定起始分类（其他互动功能字卡入口直接落到第一个功能 tab）
+    cur = (startTab && CC_ALL_TYPES.indexOf(startTab) >= 0) ? startTab : 'text';
+    q = ''; curGroup = '';
     const ttl = document.getElementById('cc-page-title');
-    if (ttl) ttl.textContent = ccScope === 'public' ? '公用字卡' : '专属字卡';
+    if (ttl) ttl.textContent = (CC_FUNC_KEYS.indexOf(cur) >= 0)
+      ? '其他互动功能字卡·' + (ccScope === 'public' ? '公用' : '专属')
+      : (ccScope === 'public' ? '公用字卡' : '专属字卡');
     const s1 = document.getElementById('cc-search-input');
     if (s1) s1.value = '';
-    tabsWrap.querySelectorAll('.cc-tab').forEach(t => t.classList.toggle('sel', t.dataset.type === 'text'));
+    // v3.32.x：三大入口 tab 分区隔离——「其他互动功能字卡」入口只显示 13 个功能分类，
+    // 公用/专属入口只显示 7 个基础分类（用户反馈：功能页不应看到基础分类，且三入口
+    // 要分开）。hidden 每次进页重建，入口互不残留
+    // #317→#353：mjfree（梦角自由造句）只在【可自定义字卡】（公用/专属大分类）显示；
+    // 【其他互动功能字卡】入口不再展示（用户反馈与大分类重复），数据仍存 cc-groups
+    // 的 mjfree 字段，dream-free.js 写入/抽取不受影响
+    const ccFuncOnly = CC_FUNC_KEYS.indexOf(cur) >= 0;
+    tabsWrap.querySelectorAll('.cc-tab').forEach(t => {
+      const isFunc = CC_FUNC_KEYS.indexOf(t.dataset.type) >= 0;
+      const isMjfree = t.dataset.type === 'mjfree';
+      t.classList.toggle('sel', t.dataset.type === cur);
+      t.hidden = ccFuncOnly ? (!isFunc || isMjfree) : (isFunc && !isMjfree);
+    });
     document.querySelectorAll('.page').forEach(p => p.hidden = true);
     const ccPage = document.getElementById('page-custom-cards');
     if (ccPage) ccPage.hidden = false;
+    maybeLowCardsRemind(); // v3.32.x：自建聊天字卡很少时提醒默认字卡 30% 概率
     hydrateCurScope().then(() => {
       groups = loadGroups();
       try { renderGroupsBar(); render(); } catch (e) {}
@@ -2656,6 +3678,12 @@
   if (liPub) liPub.addEventListener('click', () => openCcPage('public'));
   const li = document.getElementById('li-custom-cards');
   if (li) li.addEventListener('click', () => openCcPage('own'));
+  // v3.32.x：其他互动功能字卡双入口（公用/专属）——直接落到第一个功能分类 tab，
+  // 页面标题按作用域带 ·公用 / ·专属 后缀；功能字卡取池本就合并双作用域
+  const liFunMine = document.getElementById('li-fun-cards-mine');
+  if (liFunMine) liFunMine.addEventListener('click', () => openCcPage('own', 'fish'));
+  const liFunPub = document.getElementById('li-fun-cards-public');
+  if (liFunPub) liFunPub.addEventListener('click', () => openCcPage('public', 'fish'));
   const ccBack = document.getElementById('cc-back');
   if (ccBack) {
     ccBack.addEventListener('click', () => {
@@ -2698,6 +3726,22 @@
       });
     });
   });
+
+  // #319 系统预设分区锁状态说明：锁定＝联系人与各功能取不到系统预设字卡，需开屏输二级密码解锁；
+  // 解锁/上锁都只发生在开屏卡（clock.js），这里只读状态展示，随 mochi-cardlock-* 事件实时刷新
+  (function ccPresetLockHint() {
+    const el = document.getElementById('cc-preset-lock-hint');
+    if (!el || !window.cardLockOpen) return;
+    function render() {
+      const open = window.cardLockOpen();
+      el.textContent = open
+        ? '当前状态：系统预设字卡已解锁（二级验证已通过），联系人回复与各功能可正常取用。'
+        : '当前状态：系统预设字卡已全部锁定（防未成年人保护，不是 bug），联系人回复与各功能均取不到系统预设字卡。不输密码也能正常使用，密码只管两件事：解锁系统预设字卡、跳过开屏的 2 个问答；如已成年，请回开屏公告区点「输入密码解锁」输入二级验证密码，解锁后刷新生效。注意：锁定时若自定义字卡（含 mj 字卡）一张都没添加，回复会只能重复发兜底内容（如「嗯嗯」），先在自定义字卡里添加几张即可。';
+    }
+    render();
+    document.addEventListener('mochi-cardlock-open', render);
+    document.addEventListener('mochi-cardlock-locked', render);
+  })();
 
   // v3.15.x：顶部两大分类 tab 显示字卡总数徽标——
   // 汇总各自分区里全部条目的 .t 计数。各模块（quote-cards/p2-features/ta-ask/
@@ -2784,14 +3828,25 @@
           ? !!(window.storeFor && window.storeFor(cid).get('cc-groups'))
           : (scope === 'public' ? !!pubStore().get(PUB_KEY) : !!store.get('cc-groups'));
       } catch (e) {}
-      if (hasData) return Promise.resolve(false);
+      if (hasData) {
+        // v3.26.x #193：三路读已有数据（LS/内存/缓存）= 内存即权威口径，写路径放行
+        if (fullKey === curFullKey()) ccAuthMark();
+        return Promise.resolve(false);
+      }
     }
     if (hydInflight[fullKey]) return hydInflight[fullKey];
     hydInflight[fullKey] = window.idbHydrateKey(fullKey).then(ok => {
       delete hydInflight[fullKey];
-      if (ok === null) { hydAbsent[fullKey] = true; return false; }
+      if (ok === null) {
+        hydAbsent[fullKey] = true;
+        // v3.26.x #193：健康连接确认 IDB 无此键（新装/空库）= 内存空库就是全部，放行直写
+        if (fullKey === curFullKey()) ccAuthMark();
+        return false;
+      }
+      // v3.26.x #193：权威库已取回进 store，写路径放行
+      if (fullKey === curFullKey()) ccAuthMark();
       pubInvalidate();
-      libCounts.pub = -1; libCounts.own = -1;
+      libCounts.pub = -1; libCounts.own = -1; libCounts.fun = -1; libCounts.pubFun = -1;
       const scopeLive = (scope === 'public') ? (ccScope === 'public') : (ccScope === 'own');
       if (scopeLive) {
         try { groups = loadGroups(); renderGroupsBar(); render(); } catch (e) {}
@@ -2876,7 +3931,9 @@
         hydrateLibScopes(['public', 'own']);
       }).observe(libPage, { attributes: true, attributeFilter: ['hidden'] });
     }
-  });
+    // #266 修复标记：本块必须立即调用（结尾 `})();`）。漏掉调用括号＝语法仍合法、
+    // node --check 与哨兵都查不出，但整段兜底取回变死代码 → iOS 回填被打断后字卡库永久空载。
+  })();
 
   // v3.26.x：字卡/回复/收藏 存储明细诊断——报障「该分类 583MB 是否正常」一眼定位
   // 哪个键大、是否有 LS 残留大键（双倍计算）、旧 my-emoji-groups 各桌面遗留（应清未清）。

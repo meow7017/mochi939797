@@ -32,20 +32,24 @@
   function apiFor(st) {
     const gE = function () { const v = st.get('dc-enabled'); return v === null ? true : v === '1'; };
     const gO = function () { const v = st.get('dc-overall'); return v === null ? 30 : Number(v); };
-    const gP = function (k) { const v = st.get('dc-prob-' + k); return v === null ? 30 : Number(v); };
+    // v3.28.x：场景概率——dc-overall-<k>（聊天/信箱/朋友圈）未设置时回退整体概率 dc-overall；
+    //   朋友圈历史行为是「始终混入」（100），由消费方（feed.js）在键缺失时按 100 兜底
+    const gOS = function (k) { const v = st.get('dc-overall-' + k); return v === null ? gO() : Number(v); };
+    const gP = function (k) { const v = st.get('dc-prob-' + k); return v === null ? 25 : Number(v); };
     const gU = function (k) { const v = st.get('dc-use-' + k); return v === null ? true : v === '1'; };
     const gC = function (k) { const v = st.get('dc-cat-' + k); return v === null ? true : v === '1'; };
     const gOff = function (cat, c) { return st.get('dc-off-' + cat + ':' + c) === '1'; };
     return {
       enabled: gE,
       overall: gO,
+      overallFor: gOS,
       prob: gP,
       use: gU,
       cat: gC,
       isOff: gOff,
       // 不依赖 this（箭头闭包）——调用方解构单个方法也不会丢上下文
       cfg: function () {
-        return { enabled: gE(), overall: gO(), probs: { main: gP('main'), kaomoji: gP('kaomoji'), emoji: gP('emoji'), touch: gP('touch') } };
+        return { enabled: gE(), overall: gO(), overallFor: gOS, probs: { main: gP('main'), kaomoji: gP('kaomoji'), emoji: gP('emoji'), touch: gP('touch') } };
       }
     };
   }
@@ -71,6 +75,82 @@
 
   // 数据（提取自星言 08_default_cards_data.js）
   const DATA = (window.DEFAULT_CARD_DATA) || { main: [], kaomoji: [], emoji: [] };
+  // #319 防未成年人二级验证锁：锁定时系统预设字卡整体视为不存在（字卡库/回复池/词典拼字/
+  //   各功能同源池全部取空），用户自建字卡不受影响——card-lock.js 先于本文件加载。
+  const LOCKED = () => !(window.cardLockOpen && window.cardLockOpen());
+
+  // ================= v3.28.x #301：词典自建词条（词典 tab 内自由新增/删除） =================
+  // 存储：全局命名空间 xy-home-v2:dict-custom-quotes / dict-custom-words（JSON 数组）——
+  // 词典是语言资源，不随联系人桌面隔离。语录并入「语录·自建」分组（进拼字抽句池），
+  // 词并入「词库·自建」分组（进切词词典）；内置词条不可删（可单卡关闭），自建词条可删。
+  // v3.28.x #301 v3：词典扩展——DEFAULT_CARD_DATA.dict_ext（dict-ext-data.js，jieba 高频
+  // ~3.8 万词按字数分组）并入词典分类；拼接规则＝组名前缀：语录* 进抽句池、词库* 进切词。
+  const DICT_CUST_QKEY = 'dict-custom-quotes';
+  const DICT_CUST_WKEY = 'dict-custom-words';
+  // 页面加载时的内置词典快照（基础 dict + 扩展 dict_ext）：每次并组都从它重建，避免重复追加
+  const PRESET_DICT = (DATA.dict || []).concat(DATA.dict_ext || []).map(g => [g[0], (g[1] || []).slice()]);
+  function dictCustRead(key) {
+    try {
+      const raw = window.xyStore('xy-home-v2').get(key);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.filter(x => typeof x === 'string' && x) : [];
+    } catch (e) { return []; }
+  }
+  function dictCustWrite(key, arr) {
+    try { window.xyStore('xy-home-v2').set(key, JSON.stringify(arr)); } catch (e) {}
+  }
+  // 内置（基础+扩展）+自建并成 DATA.dict（重复调用安全：每次从 PRESET_DICT 重建）；
+  // 同时刷新 window.__dictCustomSet（列表「自建」徽标依据，makeNode 读）
+  function mergeDictCustom() {
+    try {
+      const qs = dictCustRead(DICT_CUST_QKEY);
+      const ws = dictCustRead(DICT_CUST_WKEY);
+      const base = PRESET_DICT.map(g => [g[0], g[1].slice()]);
+      // v3.33.x：取消独立「词库·自建」分组（用户要求删掉）——自建词并入内置「词库」组
+      //（组名仍以「词库」开头，切词词典消费不受影响）；「自建」徽标仍由 __dictCustomSet 标注。
+      // 语录/词库兜底组仅在有内容时才创建，避免空分组占位。
+      const gq = base.find(g => g[0] === '语录');
+      if (gq) gq[1] = gq[1].concat(qs);
+      else if (qs.length) base.push(['语录·自建', qs.slice()]);
+      const gw = base.find(g => g[0].indexOf('词库') === 0);
+      if (gw) gw[1] = gw[1].concat(ws);
+      else if (ws.length) base.push(['词库·自建', ws.slice()]);
+      DATA.dict = base;
+      window.__dictCustomSet = new Set(qs.concat(ws));
+    } catch (e) {}
+  }
+  mergeDictCustom();
+  function dictCustomAdd(kind, text) {
+    const v = String(text == null ? '' : text).replace(/\s+/g, '');
+    if (!v) return { ok: false, msg: '内容为空，先输入再保存' };
+    if (v.indexOf('data:') === 0 || v.indexOf('|||') >= 0 || (window.mochiMediaIsToken && window.mochiMediaIsToken(v))) return { ok: false, msg: '该内容不能作为词典词条' }; // FIX 2026-09-13 #394 媒体池令牌串不得进词典
+    const pref = kind === 'quote' ? '语录' : '词库';
+    const dupPreset = PRESET_DICT.some(g => g[0].indexOf(pref) === 0 && g[1].indexOf(v) >= 0);
+    if (dupPreset) return { ok: false, msg: '内置词典已有这条' };
+    const key = kind === 'quote' ? DICT_CUST_QKEY : DICT_CUST_WKEY;
+    const arr = dictCustRead(key);
+    if (arr.indexOf(v) >= 0) return { ok: false, msg: '已存在这条自建词条' };
+    arr.push(v);
+    dictCustWrite(key, arr);
+    mergeDictCustom();
+    try { if (window.quoteSpellResetDict) window.quoteSpellResetDict(); } catch (e) {}
+    return { ok: true, msg: (kind === 'quote' ? '已存为语录：' : '已存为词：') + v };
+  }
+  function dictCustomRemove(text) {
+    const v = String(text == null ? '' : text).replace(/\s+/g, '');
+    if (!v) return false;
+    let n = 0;
+    [DICT_CUST_QKEY, DICT_CUST_WKEY].forEach(k => {
+      const arr = dictCustRead(k);
+      const i = arr.indexOf(v);
+      if (i >= 0) { arr.splice(i, 1); dictCustWrite(k, arr); n++; }
+    });
+    if (n) {
+      mergeDictCustom();
+      try { if (window.quoteSpellResetDict) window.quoteSpellResetDict(); } catch (e) {}
+    }
+    return n > 0;
+  }
 
   // v3.16.x：字卡库入口角标数量动态化——template.html 里写死的「3260」早已过期
   //（主字卡现 4621，全库含互动回应/摸鱼/吃什么/经期/喝水/花园等同源功能池共 5800+），
@@ -80,6 +160,8 @@
   // sync/reach/cjian/room/piggy/drift/interact）。
   // deskcheck（联系人跨桌面查岗）独立成系统预设字卡里的单独入口，见 page-deskcheck。
   const FUNC_KEYS = ['fish', 'eat', 'period', 'water', 'garden', 'sync', 'reach', 'cjian', 'room', 'piggy', 'drift', 'interact', 'music'];
+  // 词典（dict）已独立成大分类（page-dict-cards，见 dictView），不再并入默认聊天字卡——
+  // BASE_KEYS 只含默认字卡四大分类；词典数据仅由词典独立页与词典拼字（quote-spell.js）消费。
   const BASE_KEYS = ['main', 'kaomoji', 'emoji', 'touch'];
   // v3.26.x：搜索跨全库（聊天默认字卡页 + 其他互动功能字卡页全部 tab），
   // 不再局限于当前 tab——用户搜「轻轻抵着」在任意页面都能找到经期温柔动作字卡。
@@ -103,6 +185,8 @@
   function refreshLibCount() {
     const el = document.getElementById('dc-lib-count');
     if (el) el.textContent = String(sumKeys(BASE_KEYS));
+    const del = document.getElementById('dc-dict-count');
+    if (del) del.textContent = String(sumKeys(['dict']));
     const fel = document.getElementById('fc-lib-count');
     if (fel) fel.textContent = String(sumKeys(FUNC_KEYS));
     const dkel = document.getElementById('dk-lib-count');
@@ -151,6 +235,7 @@
     grp.parentNode.insertBefore(note, grp.nextSibling);
   })();
   // v3.8.x：分类开关绑定——主字卡 / 颜文字 / emoji / 拍一拍 分别控制默认字卡分类使用
+  // （词典已独立成大分类，不再归属默认字卡分类；词典拼字启用由词典独立页/回复设置控制）
   [['main', '主字卡'], ['kaomoji', '颜文字'], ['emoji', 'emoji'], ['touch', '拍一拍']].forEach(([k, label]) => {
     const el = document.getElementById('dc-cat-' + k);
     if (!el) return;
@@ -160,6 +245,98 @@
       toast((el.checked ? '已开启' : '已关闭') + '：默认字卡' + label + '使用');
     });
   });
+  // v3.28.x：使用概率绑定——聊天 / 信箱 / 朋友圈 三场景各自可调默认字卡出现概率
+  //   存键 dc-overall-<k>（未设置=该场景历史默认：聊天/信箱 30，朋友圈 100 始终混入）
+  const DC_OVERALL_DEF = { chat: 30, mail: 30, feed: 100 };
+  function dcOverallVal(k) { const v = ls.get('dc-overall-' + k); return v === null ? DC_OVERALL_DEF[k] : Number(v); }
+  function dcOverallSet(k, nv) { ls.set('dc-overall-' + k, String(nv)); }
+  [['chat', '聊天'], ['mail', '写信'], ['feed', '朋友圈']].forEach(([k, label]) => {
+    const box = document.getElementById('dc-overall-' + k);
+    const valEl = document.getElementById('dc-overall-' + k + '-val');
+    if (!box || !valEl) return;
+    valEl.value = String(dcOverallVal(k));
+    box.querySelector('.stp-min').addEventListener('click', () => {
+      const nv = Math.max(0, (parseInt(valEl.value, 10) || 0) - 5);
+      valEl.value = String(nv); dcOverallSet(k, nv);
+      toast('默认字卡' + label + '使用概率：' + nv + '%');
+    });
+    box.querySelector('.stp-max').addEventListener('click', () => {
+      const nv = Math.min(100, (parseInt(valEl.value, 10) || 0) + 5);
+      valEl.value = String(nv); dcOverallSet(k, nv);
+      toast('默认字卡' + label + '使用概率：' + nv + '%');
+    });
+  });
+  // v3.33.x：分类占比绑定——默认字卡命中后四大分类按占比分配（四类合计 100%）。
+  //   存键 dc-prob-<k>（未设置=等权 25，行为与旧权重等价）；改动即生效，
+  //   抽取按相对权重归一（drawCards 用权重滚动），单独调一档不强制影响其它档。
+  function dcProbSet(k, nv) { ls.set('dc-prob-' + k, String(nv)); }
+  [['main', '主字卡'], ['kaomoji', '颜文字'], ['emoji', 'emoji'], ['touch', '拍一拍']].forEach(([k, label]) => {
+    const box = document.getElementById('dc-prob-' + k);
+    const valEl = document.getElementById('dc-prob-' + k + '-val');
+    if (!box || !valEl) return;
+    valEl.value = String(getProb(k));
+    box.querySelector('.stp-min').addEventListener('click', () => {
+      const nv = Math.max(0, (parseInt(valEl.value, 10) || 0) - 5);
+      valEl.value = String(nv); dcProbSet(k, nv);
+      toast('默认字卡' + label + '占比：' + nv + '%');
+    });
+    box.querySelector('.stp-max').addEventListener('click', () => {
+      const nv = Math.min(100, (parseInt(valEl.value, 10) || 0) + 5);
+      valEl.value = String(nv); dcProbSet(k, nv);
+      toast('默认字卡' + label + '占比：' + nv + '%');
+    });
+  });
+  // v3.32.x：功能字卡使用概率绑定——其他互动功能字卡页（含查岗页）每个分类一个
+  //   stepper，存键 dcf-<分类>（per-cid，随桌面命名空间）。未设置时回退该分类的
+  //   历史默认值（= 改版前代码里写死的触发概率），行为不变；设 0 即该分类字卡
+  //   触发后不再随机出现。消费方统一走 window.dcfGet(分类) 读。
+  const DCF_DEF = { fish: 35, eat: 35, period: 25, water: 35, garden: 40, sync: 60, reach: 55, cjian: 100, room: 100, piggy: 100, drift: 100, interact: 100, music: 100, deskcheck: 50 };
+  // v3.33.x：功能字卡总开关——【其他互动功能字卡】可整体开启/关闭（dcf-enabled 键，默认开启）。
+  //   开启/关闭分别存 '1'/'0'；关闭后 FUNC_KEYS 各功能触发字卡都不再随机出现（dcfVal 返回 0），
+  //   各分类概率（dcf-prob-*）仍保留。独立入口「联系人跨桌面查岗」(deskcheck) 不受此开关约束。
+  function dcfEnabled() {
+    try { const v = window.activeStore().get('dcf-enabled'); return v === null ? true : v === '1'; } catch (e) { return true; }
+  }
+  function dcfEnableSet(on) { try { window.activeStore().set('dcf-enabled', on ? '1' : '0'); } catch (e) {} }
+  window.dcfEnabled = dcfEnabled;
+  function dcfVal(k) {
+    if (FUNC_KEYS.indexOf(k) >= 0 && !dcfEnabled()) return 0;
+    if (!(k in DCF_DEF)) return 100;
+    try { const v = window.activeStore().get('dcf-' + k); if (v !== null && v !== undefined) { const n = Number(v); if (!isNaN(n)) return Math.max(0, Math.min(100, n)); } } catch (e) {}
+    return DCF_DEF[k];
+  }
+  window.dcfGet = dcfVal;
+  // 总开关 UI 绑定：存在则同步勾选状态、监听变更写键并轻提示
+  (function () {
+    const el = document.getElementById('dcf-enabled');
+    if (!el) return;
+    el.checked = dcfEnabled();
+    el.addEventListener('change', () => {
+      dcfEnableSet(el.checked);
+      toast((el.checked ? '已开启' : '已关闭') + '：使用其他互动功能字卡');
+    });
+  })();
+  function bindDcfProb() {
+    Object.keys(DCF_DEF).forEach((k) => {
+      const box = document.getElementById('dcf-prob-' + k);
+      const valEl = document.getElementById('dcf-prob-' + k + '-val');
+      if (!box || !valEl) return;
+      valEl.value = String(dcfVal(k));
+      box.querySelector('.stp-min').addEventListener('click', () => {
+        const nv = Math.max(0, (parseInt(valEl.value, 10) || 0) - 5);
+        valEl.value = String(nv);
+        try { window.activeStore().set('dcf-' + k, String(nv)); } catch (e) {}
+        toast('字卡使用概率（' + k + '）：' + nv + '%');
+      });
+      box.querySelector('.stp-max').addEventListener('click', () => {
+        const nv = Math.min(100, (parseInt(valEl.value, 10) || 0) + 5);
+        valEl.value = String(nv);
+        try { window.activeStore().set('dcf-' + k, String(nv)); } catch (e) {}
+        toast('字卡使用概率（' + k + '）：' + nv + '%');
+      });
+    });
+  }
+  bindDcfProb();
   // v3.26.x：小键写日志异步合并（idb.js mochi-wrj-heal）把 dc-* 键修正后，重同步
   // 总开关/场景开关/分类开关的 UI——修荣耀 Edge 杀进程回滚 LS 后「开关退出重进变回去」
   // 且已打开的设置页仍显示旧值的问题
@@ -174,6 +351,24 @@
         const el = document.getElementById('dc-cat-' + k);
         if (el) el.checked = getCat(k);
       });
+      // v3.28.x：使用概率 stepper 同样随 heal 重同步
+      ['chat', 'mail', 'feed'].forEach(function (k) {
+        const valEl = document.getElementById('dc-overall-' + k + '-val');
+        if (valEl) valEl.value = String(dcOverallVal(k));
+      });
+      // v3.33.x：分类占比 stepper 同样随 heal 重同步
+      ['main', 'kaomoji', 'emoji', 'touch'].forEach(function (k) {
+        const valEl = document.getElementById('dc-prob-' + k + '-val');
+        if (valEl) valEl.value = String(getProb(k));
+      });
+      // v3.32.x：功能字卡概率 stepper 同样随 heal 重同步
+      Object.keys(DCF_DEF).forEach(function (k) {
+        const valEl = document.getElementById('dcf-prob-' + k + '-val');
+        if (valEl) valEl.value = String(dcfVal(k));
+      });
+      // v3.33.x：功能字卡总开关同样随 heal 重同步
+      const deEl = document.getElementById('dcf-enabled');
+      if (deEl) deEl.checked = dcfEnabled();
     } catch (e) {}
   });
 
@@ -291,9 +486,9 @@
       } else {
         const off = isCardOff(it.cat, it.c);
         d.className = 'cc-item glass' + (off ? ' off' : '');
-        // 整页为系统预设字卡，统一标【系统】与自定义字卡区分；
+        // 整页为系统预设字卡，统一标【系统】与自定义字卡区分（#301：词典自建词条标「自建」）；
         // 右侧单卡开关——逐张开启/关闭该字卡（关闭后功能/聊天回复不再抽取）
-        d.innerHTML = '<div class="cc-txt"><div class="t">' + it.c + ' <span class="tc-known">系统</span></div></div>' +
+        d.innerHTML = '<div class="cc-txt"><div class="t">' + it.c + ' <span class="tc-known">' + (window.__dictCustomSet && window.__dictCustomSet.has(it.c) ? '自建' : '系统') + '</span></div></div>' +
           '<label class="toggle ccard-toggle"><input type="checkbox"' + (off ? '' : ' checked') + '><span class="tk"></span></label>';
       }
       d.dataset.idx = i;
@@ -476,13 +671,176 @@
       renderGroupsBar();
       render();
     }
-    return { view, ensureRendered };
+    return { view, ensureRendered, render };
   }
 
   // 聊天默认字卡页：仅四大基础分类（搜索跨全库，可在本页搜到功能字卡）
   const dcView = mountCardView({
     list: 'dc-list', tabs: 'dc-tabs', groupsBar: 'dc-groups-bar', search: 'dc-search-input', page: 'page-default-cards'
   }, BASE_KEYS, '暂无默认字卡', ALL_KEYS);
+  // #301 词典 tab 自建词条行：仅词典 tab 显示；「存为语录/存为词」进词典分组与拼字引擎，
+  // 「删自建」按原文精确删除（内置词条不可删，走单卡关闭）
+  // #317：UI 行已按用户要求移除（词典是梦角语言资源，不提供手动存词条入口）——
+  // dictCustomAdd/Remove API 与存储保留（历史自建词条仍在库中展示，可单卡关闭）
+  (function () {
+    const row = document.getElementById('dc-dict-add');
+    if (!row || !dcView) return;
+    const inp = document.getElementById('dc-dict-input');
+    const sync = function () { try { row.hidden = dcView.view.cur !== 'dict'; } catch (e) {} };
+    const tabs = document.getElementById('dc-tabs');
+    if (tabs) tabs.addEventListener('click', function (e) {
+      const t = e.target.closest('.cc-tab[data-type]');
+      if (t) setTimeout(sync, 0);
+    });
+    const origEnsure = dcView.ensureRendered;
+    dcView.ensureRendered = function () { const r = origEnsure.apply(null, arguments); sync(); return r; };
+    const commit = function (kind) {
+      const r = dictCustomAdd(kind, inp ? inp.value : '');
+      toast(r.msg);
+      if (r.ok) {
+        if (inp) inp.value = '';
+        if (dcView.render) dcView.render();
+      }
+    };
+    const bq = document.getElementById('dc-dict-add-q');
+    const bw = document.getElementById('dc-dict-add-w');
+    if (bq) bq.addEventListener('click', () => commit('quote'));
+    if (bw) bw.addEventListener('click', () => commit('word'));
+    const bd = document.getElementById('dc-dict-del');
+    if (bd) bd.addEventListener('click', () => {
+      if (!window.openModal) { toast('弹窗组件不可用'); return; }
+      window.openModal('删除自建词典词条', '', function (v) {
+        if (v && dictCustomRemove(v)) {
+          toast('已删除：' + String(v).replace(/\s+/g, ''));
+          if (dcView.render) dcView.render();
+        } else toast('未找到这条自建词条（内置词条不可删，可在列表里逐张关闭）');
+      }, { staticText: '输入要删除的自建语录或词的原文（精确匹配）。内置词条无法删除，但可以在列表里逐张关闭。' });
+    });
+  })();
+  // v3.35.x：词典独立分类——系统预设字卡里的单独入口（page-dict-cards），整页展示
+  // DEFAULT_CARD_DATA.dict（语录+词库+扩展常用词），与「词典拼字」抽句/切词共用同一份数据。
+  const dictView = mountCardView({
+    list: 'd2-dict-list', tabs: 'd2-dict-tabs', groupsBar: 'd2-dict-groups-bar', search: 'd2-dict-search', page: 'page-dict-cards'
+  }, ['dict'], '暂无词典字卡', ['dict']);
+  // 词典自建词条行（本页全为词典，常驻显示）：存为语录/词、删自建，复用 dictCustomAdd/Remove
+  // #317：UI 行已移除（用户要求），绑定代码随 getElementById(null) 自然空转，保留结构最小改动
+  (function () {
+    if (!dictView) return;
+    const inp = document.getElementById('d2-dict-input');
+    const commit = function (kind) {
+      const r = dictCustomAdd(kind, inp ? inp.value : '');
+      toast(r.msg);
+      if (r.ok) { if (inp) inp.value = ''; if (dictView.render) dictView.render(); }
+    };
+    const bq = document.getElementById('d2-dict-add-q');
+    const bw = document.getElementById('d2-dict-add-w');
+    if (bq) bq.addEventListener('click', () => commit('quote'));
+    if (bw) bw.addEventListener('click', () => commit('word'));
+    const bd = document.getElementById('d2-dict-del');
+    if (bd) bd.addEventListener('click', () => {
+      if (!window.openModal) { toast('弹窗组件不可用'); return; }
+      window.openModal('删除自建词典词条', '', function (v) {
+        if (v && dictCustomRemove(v)) {
+          toast('已删除：' + String(v).replace(/\s+/g, ''));
+          if (dictView.render) dictView.render();
+        } else toast('未找到这条自建词条（内置词条不可删，可在列表里逐张关闭）');
+      }, { staticText: '输入要删除的自建语录或词的原文（精确匹配）。内置词条无法删除，但可以在列表里逐张关闭。' });
+    });
+  })();
+  // v3.36.x：词典使用设置绑定（词典独立页）——场景开关（dict-use-chat/mail/feed）+
+  //   使用概率（dict-overall-chat/mail/feed）+「使用的全部关闭」一键按钮。
+  //   存储 per-cid（随桌面命名空间，同 dc-use-* 语义）；默认全开，概率默认：聊天 75
+  //   （v3.40.x #370c 应需求从 100 降为 75——词典拼字是「概率触发」不该恒 100 全用了，保留正常
+  //   回复空间）、写信/朋友圈 30（新混入场景）。
+  //   消费方统一走 window.dictUse(scene) / window.dictOverall(scene) 读：
+  //   quote-spell.js（聊天门）、mail.js taLetterContent（写信混入）、feed.js cardPool（朋友圈混入）。
+  (function () {
+    if (!dictView) return;
+    const st = function () { try { return window.activeStore(); } catch (e) { return null; } };
+    const gUse = function (k) { const s = st(); const v = s ? s.get('dict-use-' + k) : null; return v === null ? true : v === '1'; };
+    const sUse = function (k, on) { const s = st(); if (s) s.set('dict-use-' + k, on ? '1' : '0'); };
+    const DICT_OVERALL_DEF = { chat: 75, mail: 30, feed: 30 };
+    const gOv = function (k) { const s = st(); const v = s ? s.get('dict-overall-' + k) : null; return v === null ? DICT_OVERALL_DEF[k] : Math.max(0, Math.min(100, Number(v))); };
+    const sOv = function (k, nv) { const s = st(); if (s) s.set('dict-overall-' + k, String(nv)); };
+    // 只读 API（跨文件消费）
+    window.dictUse = function (scene) { return gUse(scene === 'mail' ? 'mail' : scene === 'feed' ? 'feed' : 'chat'); };
+    window.dictOverall = function (scene) { return gOv(scene === 'mail' ? 'mail' : scene === 'feed' ? 'feed' : 'chat'); };
+    // #390：二级锁与词典的关系提示——「防未成年人锁定」锁的是全部系统内置字卡（词典是其中
+    //   一类），锁定时聊天/写信/朋友圈都不会用词典，下方场景开关全开也没效果。此前这层关系
+    //   只在回复设置链路自检里提了一句「二级锁未解锁」，用户在词典页看到开关全开却无效果、
+    //   看不懂和开屏二级密码的关系（用户实报）。这里在词典页顶部当场讲清：锁定=词典整体停用
+    //   +去哪解锁；解锁/重锁事件即时刷新（card-lock.js 在本文件之前加载，cardLockOpen 必在）。
+    const lockHint = document.getElementById('dict-lock-hint');
+    function renderDictLockHint() {
+      if (!lockHint) return;
+      let locked = false;
+      try { locked = !!(window.cardLockOpen && !window.cardLockOpen()); } catch (e) { locked = false; }
+      if (!locked) { lockHint.hidden = true; lockHint.textContent = ''; return; }
+      lockHint.hidden = false;
+      lockHint.textContent = '防未成年人锁定开启中：词典属于系统内置字卡，锁定时聊天 / 写信 / 朋友圈都不会使用词典（下方开关全开也没效果，不是没保存）。到开屏公告区「防未成年人·内置字卡锁定」卡输入密码解锁，解锁后自动恢复，无需改这里任何开关。';
+    }
+    renderDictLockHint();
+    document.addEventListener('mochi-cardlock-open', renderDictLockHint);
+    document.addEventListener('mochi-cardlock-locked', renderDictLockHint);
+    [['chat', '聊天'], ['mail', '写信'], ['feed', '朋友圈']].forEach(function (pair) {
+      const k = pair[0], label = pair[1];
+      const el = document.getElementById('dict-use-' + k);
+      if (el) {
+        el.checked = gUse(k);
+        el.addEventListener('change', function () {
+          sUse(k, el.checked);
+          toast((el.checked ? '已开启' : '已关闭') + '：词典' + label + '使用');
+        });
+      }
+      const box = document.getElementById('dict-overall-' + k);
+      const valEl = document.getElementById('dict-overall-' + k + '-val');
+      if (box && valEl) {
+        valEl.value = String(gOv(k));
+        const step = function (d) {
+          const nv = Math.max(0, Math.min(100, (parseInt(valEl.value, 10) || 0) + d));
+          valEl.value = String(nv); sOv(k, nv);
+          toast('词典' + label + '使用概率：' + nv + '%');
+        };
+        const bMin = box.querySelector('.stp-min');
+        const bMax = box.querySelector('.stp-max');
+        if (bMin) bMin.addEventListener('click', function () { step(-5); });
+        if (bMax) bMax.addEventListener('click', function () { step(5); });
+      }
+    });
+    // 使用的全部关闭：三场景一键停用（弹窗确认；之后可逐个再打开）
+    const ca = document.getElementById('dict-use-closeall');
+    if (ca) ca.addEventListener('click', function () {
+      const doClose = function () {
+        ['chat', 'mail', 'feed'].forEach(function (k) {
+          sUse(k, false);
+          const el = document.getElementById('dict-use-' + k);
+          if (el) el.checked = false;
+        });
+        toast('已关闭词典全部场景使用');
+      };
+      if (!window.openModal) { doClose(); return; }
+      window.openModal('词典使用的全部关闭', '将同时关闭词典的聊天 / 写信 / 朋友圈三个场景使用（单卡开关不受影响，可随时再逐个打开）。', function () {
+        doClose();
+      }, { staticText: '确定执行？' });
+    });
+  })();
+  const liDict = document.getElementById('li-dict-cards');
+  if (liDict) {
+    liDict.addEventListener('click', () => {
+      document.querySelectorAll('.page').forEach(p => p.hidden = true);
+      const page = document.getElementById('page-dict-cards');
+      if (page) page.hidden = false;
+      if (dictView) dictView.ensureRendered();
+    });
+  }
+  const dictBack = document.getElementById('dict-back');
+  if (dictBack) {
+    dictBack.addEventListener('click', () => {
+      document.querySelectorAll('.page').forEach(p => p.hidden = true);
+      const home = document.getElementById('page-chatcard');
+      if (home) home.hidden = false;
+    });
+  }
   // 其他互动功能字卡页：仅功能分类（模板已预置全部功能 tab；搜索同样跨全库）
   const fcView = mountCardView({
     list: 'fc-list', tabs: 'fc-tabs', groupsBar: 'fc-groups-bar', search: 'fc-search-input', page: 'page-fun-cards'
@@ -566,12 +924,17 @@
   // 返回当前分类下按权重选中一个分组的字卡数组；未触发返回 []
   // v3.12.x：核心逻辑抽成 getDefaultCardsFor(st)——st 传目标桌面 store；
   //   群聊用它按成员所在桌面抽取（成员桌面关了聊天使用 → 该成员在群聊里也不用默认字卡）
-  function drawCards(a) {
-    // v3.7.x：聊天场景开关——关闭后聊天回复混入/拍一拍均不使用默认字卡
-    if (!a.use('chat')) return [];
+  // v3.28.x：scene 参数化——概率/场景开关按场景读（chat/mail/feed；缺省 chat）。
+  //   drawCards 目前仅聊天类调用（getDefaultCards*），写信/朋友圈各走自己的消费逻辑
+  function drawCards(a, scene) {
+    scene = scene || 'chat';
+    if (LOCKED()) return []; // #319 锁定＝不抽任何系统预设字卡
+    // v3.7.x：场景开关——关闭后该场景不混入默认字卡
+    if (!a.use(scene)) return [];
     const cfg = a.cfg();
     if (!cfg.enabled) return [];
-    if (Math.random() * 100 >= cfg.overall) return [];
+    const overall = cfg.overallFor ? cfg.overallFor(scene) : cfg.overall;
+    if (Math.random() * 100 >= overall) return [];
     // 按 probs 加权选分类（v3.8.x：已关闭的分类权重按 0 处理，不参与抽取）
     const keys = ['main', 'kaomoji', 'emoji', 'touch'];
     const weights = keys.map(k => (a.cat(k) ? Math.max(0, cfg.probs[k] || 0) : 0));
@@ -592,10 +955,11 @@
     const text = g[1][Math.floor(Math.random() * g[1].length)];
     return { text: text, type: chosen === 'touch' ? 'poke' : 'text' };
   }
-  window.getDefaultCardsFor = function (st) { return drawCards(apiFor(st)); };
-  window.getDefaultCards = function () { return drawCards(api); };
+  window.getDefaultCardsFor = function (st, scene) { return drawCards(apiFor(st), scene); };
+  window.getDefaultCards = function (scene) { return drawCards(api, scene); };
   // 默认字卡分组（供页面按分组查看）
   window.getDefaultCardGroups = function (cat) {
+    if (LOCKED()) return []; // #319 锁定＝系统预设字卡不存在
     return (DATA[cat] || []).slice();
   };
   // v3.7.x：互动回应预设池读取（供互动卡片回复侧使用）——name 分组名（邀请TA·接受/
@@ -603,10 +967,20 @@
   // 与「互动回应」tab 展示同源（DEFAULT_CARD_DATA.interact）；数据缺失时回退 fallback
   // v3.13.x：泛化为 getLibPool(分类, 分组, 兜底)——摸鱼浮字/花园/同频/伸手/喝水/存钱罐
   // 各功能统一走它取同源池（消费侧再按 isDefaultCardOff(分类, 文案) 过滤已关卡片）
+  // v3.32.x：并入用户自建的功能字卡（字卡库→可自定义字卡→其他互动功能字卡，存 cc-groups
+  // 功能分类字段）——自定义卡追加在同源池后一起随机抽取；非功能分类/无自定义时不影响原行为
   window.getLibPool = function (cat, group, fallback) {
+    if (LOCKED()) { // #319 锁定＝只回自建功能字卡，内置同源池与 fallback 兜底都不给
+      try { return (window.getCustomFuncCards && window.getCustomFuncCards(cat)) || []; } catch (e) { return []; }
+    }
     const g = (DATA[cat] || []).find(x => x[0] === group);
-    const arr = g && Array.isArray(g[1]) && g[1].length ? g[1] : (Array.isArray(fallback) ? fallback : []);
-    return arr.slice();
+    let arr = g && Array.isArray(g[1]) && g[1].length ? g[1] : (Array.isArray(fallback) ? fallback : []);
+    arr = arr.slice();
+    try {
+      const cf = (window.getCustomFuncCards && window.getCustomFuncCards(cat)) || [];
+      if (cf.length) arr = arr.concat(cf);
+    } catch (e) {}
+    return arr;
   };
   window.getInteractPool = function (name, fallback) {
     return window.getLibPool('interact', name, fallback);
